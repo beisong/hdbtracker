@@ -115,11 +115,11 @@ const TransactionMap = {
       const tier = this.getLeaseTier(tx.remaining_lease_years || 0);
       const tierKey = `${tx.flat_type}|${tier}`;
       const medianPsm = tierMedianPsm[tierKey] || typeMedianPsm[tx.flat_type] || overallMedianPsm;
-      const color = this.getValueColor(tx.price_per_sqm || 0, medianPsm);
+      const style = this.getValueStyle(tx.price_per_sqm || 0, medianPsm);
 
       const marker = L.circleMarker([tx.lat, tx.lng], {
-        radius: 7,
-        fillColor: color,
+        radius: style.radius,
+        fillColor: style.color,
         color: '#fff',
         weight: 1,
         opacity: 0.6,
@@ -209,12 +209,44 @@ const TransactionMap = {
     return 'older';
   },
 
-  getValueColor(pricePerSqm, medianPsm) {
-    if (!medianPsm || medianPsm === 0) return '#60a5fa';
+  /**
+   * 3-color spectrum: Green → Blue → Red based on price-to-median ratio.
+   * Green = good value, Blue = fair, Red = premium.
+   * Also returns a suggested marker radius (bigger = better deal).
+   */
+  getValueStyle(pricePerSqm, medianPsm) {
+    if (!medianPsm || medianPsm === 0) return { color: '#60a5fa', radius: 7 };
     const ratio = pricePerSqm / medianPsm;
-    if (ratio < 0.90) return '#22c55e';
-    if (ratio <= 1.10) return '#60a5fa';
-    return '#ef4444';
+
+    // Anchor colors as RGB
+    const green = [34, 197, 94];   // #22c55e — good value
+    const blue  = [96, 165, 250];  // #60a5fa — fair price
+    const red   = [239, 68, 68];   // #ef4444 — premium
+
+    let r, g, b;
+    if (ratio <= 1.0) {
+      // Green → Blue (interpolate from ratio 0.70→1.00)
+      const t = Math.max(0, Math.min(1, (ratio - 0.70) / 0.30));
+      r = Math.round(green[0] + (blue[0] - green[0]) * t);
+      g = Math.round(green[1] + (blue[1] - green[1]) * t);
+      b = Math.round(green[2] + (blue[2] - green[2]) * t);
+    } else {
+      // Blue → Red (interpolate from ratio 1.00→1.30)
+      const t = Math.max(0, Math.min(1, (ratio - 1.0) / 0.30));
+      r = Math.round(blue[0] + (red[0] - blue[0]) * t);
+      g = Math.round(blue[1] + (red[1] - blue[1]) * t);
+      b = Math.round(blue[2] + (red[2] - blue[2]) * t);
+    }
+
+    // Radius: bigger for good deals, smaller for overpriced
+    const clamped = Math.max(0.70, Math.min(1.30, ratio));
+    const tNorm = (clamped - 0.70) / 0.60;
+    const radius = Math.max(5, Math.min(9, 9 - tNorm * 4));
+
+    return {
+      color: `rgb(${r}, ${g}, ${b})`,
+      radius: radius,
+    };
   },
 };
 

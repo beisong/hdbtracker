@@ -1,0 +1,19 @@
+{
+  "name": "worthornot",
+  "version": "1.0.0",
+  "description": "Singapore HDB Resale Flat Value Detective",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "download": "python3 scripts/download_data.py",
+    "download-venv": "source venv/bin/activate 2>/dev/null; python3 scripts/download_data.py"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.0",
+    "node-fetch": "^2.7.0"
+  }
+}

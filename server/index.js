@@ -312,22 +312,104 @@ app.get('/api/resolve', async (req, res) => {
   }
 });
 
+// Compress street names: full words → DB abbreviations
+function compressStreetName(name) {
+  const compressions = {
+    'STREET': 'ST', 'AVENUE': 'AVE', 'ROAD': 'RD', 'DRIVE': 'DR',
+    'CRESCENT': 'CRES', 'COURT': 'CRT', 'PLACE': 'PL', 'TERRACE': 'TERR',
+    'LORONG': 'LOR', 'BUKIT': 'BT', 'KAMPONG': 'KG', 'JALAN': 'JLN',
+    'UPPER': 'UPP', 'LOWER': 'LOW', 'CENTRAL': 'CTRL', 'PARK': 'PK',
+    'SQUARE': 'SQ', 'GARDENS': 'GDNS', 'HEIGHTS': 'HTS', 'CLOSE': 'CL',
+    'NORTH': 'NTH', 'SOUTH': 'STH',
+    // Note: EAST and WEST stay as-is in DB, not abbreviated
+    'FARMWAY': 'FWY',
+  };
+  let result = ' ' + name.toUpperCase() + ' ';
+  for (const [full, abbr] of Object.entries(compressions)) {
+    result = result.replace(new RegExp(' ' + full + ' ', 'g'), ' ' + abbr + ' ');
+  }
+  return result.trim();
+}
+
+// Find matching DB street name(s) from a OneMap road name
+function findDbStreets(roadName, town) {
+  if (!roadName) return [];
+  const road = roadName.toUpperCase().trim();
+  const townUpper = town.toUpperCase();
+
+  // Helper: try a pattern against the DB
+  const tryMatch = (pattern) => {
+    if (!pattern) return [];
+    const likePattern = '%' + pattern.replace(/\s+/g, '%') + '%';
+    return db.prepare(`
+      SELECT DISTINCT street_name FROM transactions
+      WHERE town = ? AND UPPER(street_name) LIKE ?
+    `).all(townUpper, likePattern).map(r => r.street_name);
+  };
+
+  // 1. Try the road name as-is
+  let matches = tryMatch(road);
+  if (matches.length > 0) return matches;
+
+  // 2. Try compressed form (STREET→ST, NORTH→NTH, BUKIT→BT, etc.)
+  const compressed = compressStreetName(road);
+  if (compressed !== road) {
+    matches = tryMatch(compressed);
+    if (matches.length > 0) return matches;
+  }
+
+  // 3. Try expanded form (ST→STREET, AVE→AVENUE, etc.)
+  const expanded = expandStreetName(road);
+  if (expanded !== road) {
+    matches = tryMatch(expanded);
+    if (matches.length > 0) return matches;
+  }
+
+  // 4. Keyword fallback — extract meaningful words, strip road type words
+  const stopWords = ['STREET', 'ST', 'AVENUE', 'AVE', 'ROAD', 'RD', 'DRIVE', 'DR',
+    'CRESCENT', 'CRES', 'COURT', 'CRT', 'PLACE', 'PL', 'TERRACE', 'TERR',
+    'JALAN', 'JLN', 'LORONG', 'LOR', 'BUKIT', 'BT', 'UPPER', 'UPP', 'LOWER',
+    'CENTRAL', 'CTRL', 'PARK', 'PK', 'GARDENS', 'GDNS', 'CLOSE', 'CL',
+    'NORTH', 'NTH', 'SOUTH', 'STH', 'EAST', 'EST', 'WEST', 'WST',
+    'HEIGHTS', 'HTS', 'SQUARE', 'SQ', 'KAMPONG', 'KG', 'THE', 'OF'];
+  const keywords = road.split(/\s+/).filter(w => w.length > 2 && !stopWords.includes(w));
+
+  for (const kw of keywords) {
+    matches = tryMatch(kw);
+    if (matches.length > 0) return matches;
+  }
+
+  return [];
+}
+
 /**
  * GET /api/area-overview — Main endpoint for area market overview
  */
 app.get('/api/area-overview', (req, res) => {
   try {
-    const { town, flat_type } = req.query;
+    const { town, flat_type, street } = req.query;
     if (!town) return res.status(400).json({ error: 'Missing town parameter' });
 
     const townUpper = town.toUpperCase();
     const flatTypeFilter = flat_type && flat_type !== 'ALL' ? flat_type.toUpperCase() : null;
+    const streetFilter = street || null;
+
+    // Build street filter clause
+    let streetNames = [];
+    if (streetFilter) {
+      streetNames = findDbStreets(streetFilter, townUpper);
+      console.log(`[area-overview] street filter: "${streetFilter}" → matched ${streetNames.length} streets: ${streetNames.slice(0, 5).join(', ')}`);
+    }
+
+    const streetClause = streetNames.length > 0
+      ? ` AND street_name IN (${streetNames.map(() => '?').join(',')})`
+      : '';
 
     const latestMonth = db.prepare('SELECT MAX(month) as m FROM transactions').get().m;
 
-    // 1. Median prices by flat type (last 12 months)
+    // 1. Median prices by flat type (last 12 months) — apply street + flat_type filter
     const monthsAgo12 = monthsAgoStr(12);
-    const pricesByType = db.prepare(`
+    let pricesByTypeQuery = `
       SELECT
         flat_type,
         COUNT(*) as count,
@@ -335,37 +417,27 @@ app.get('/api/area-overview', (req, res) => {
         ROUND(AVG(price_per_sqm), 0) as median_psm
       FROM transactions
       WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
-      GROUP BY flat_type
-      ORDER BY median_price
-    `).all(townUpper, monthsAgo12);
+    `;
+    const pricesByTypeParams = [townUpper, monthsAgo12];
+    if (flatTypeFilter) { pricesByTypeQuery += ' AND flat_type = ?'; pricesByTypeParams.push(flatTypeFilter); }
+    if (streetClause) { pricesByTypeQuery += streetClause; pricesByTypeParams.push(...streetNames); }
+    pricesByTypeQuery += ' GROUP BY flat_type ORDER BY median_price';
+    const pricesByType = db.prepare(pricesByTypeQuery).all(...pricesByTypeParams);
 
-    // 2. Town summary (all types, last 12 months)
-    let townSummaryQuery, townSummaryParams;
-    if (flatTypeFilter) {
-      townSummaryQuery = `
-        SELECT
-          COUNT(*) as total_transactions,
-          ROUND(AVG(resale_price)) as median_price,
-          ROUND(AVG(price_per_sqm), 0) as median_psm,
-          MIN(resale_price) as min_price,
-          MAX(resale_price) as max_price
-        FROM transactions
-        WHERE town = ? AND flat_type = ? AND resale_price IS NOT NULL AND month >= ?
-      `;
-      townSummaryParams = [townUpper, flatTypeFilter, monthsAgo12];
-    } else {
-      townSummaryQuery = `
-        SELECT
-          COUNT(*) as total_transactions,
-          ROUND(AVG(resale_price)) as median_price,
-          ROUND(AVG(price_per_sqm), 0) as median_psm,
-          MIN(resale_price) as min_price,
-          MAX(resale_price) as max_price
-        FROM transactions
-        WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
-      `;
-      townSummaryParams = [townUpper, monthsAgo12];
-    }
+    // 2. Town summary (last 12 months) — apply street filter if present
+    let townSummaryQuery = `
+      SELECT
+        COUNT(*) as total_transactions,
+        ROUND(AVG(resale_price)) as median_price,
+        ROUND(AVG(price_per_sqm), 0) as median_psm,
+        MIN(resale_price) as min_price,
+        MAX(resale_price) as max_price
+      FROM transactions
+      WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
+    `;
+    const townSummaryParams = [townUpper, monthsAgo12];
+    if (flatTypeFilter) { townSummaryQuery += ' AND flat_type = ?'; townSummaryParams.push(flatTypeFilter); }
+    if (streetClause) { townSummaryQuery += streetClause; townSummaryParams.push(...streetNames); }
     const townSummary = db.prepare(townSummaryQuery).get(...townSummaryParams);
 
     // Most popular type
@@ -376,16 +448,14 @@ app.get('/api/area-overview', (req, res) => {
       GROUP BY flat_type ORDER BY c DESC LIMIT 1
     `).get(townUpper, monthsAgo12);
 
-    // 3. Price percentiles
+    // 3. Price percentiles — apply street + flat_type filter
     let priceQuery = `
       SELECT resale_price FROM transactions
       WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
     `;
     const priceParams = [townUpper, monthsAgo12];
-    if (flatTypeFilter) {
-      priceQuery += ' AND flat_type = ?';
-      priceParams.push(flatTypeFilter);
-    }
+    if (flatTypeFilter) { priceQuery += ' AND flat_type = ?'; priceParams.push(flatTypeFilter); }
+    if (streetClause) { priceQuery += streetClause; priceParams.push(...streetNames); }
     priceQuery += ' ORDER BY resale_price ASC LIMIT 10000';
     const allPrices = db.prepare(priceQuery).all(...priceParams).map(r => r.resale_price);
 
@@ -469,7 +539,7 @@ app.get('/api/area-overview', (req, res) => {
       counts.push(count);
     }
 
-    // 6. Recent transactions (50)
+    // 6. Recent transactions — apply street + flat_type filter
     let txQuery = `
       SELECT month, town, flat_type, block, street_name, storey_range,
              floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
@@ -477,16 +547,16 @@ app.get('/api/area-overview', (req, res) => {
       WHERE town = ? AND resale_price IS NOT NULL
     `;
     const txParams = [townUpper];
-    if (flatTypeFilter) {
-      txQuery += ' AND flat_type = ?';
-      txParams.push(flatTypeFilter);
-    }
+    if (flatTypeFilter) { txQuery += ' AND flat_type = ?'; txParams.push(flatTypeFilter); }
+    if (streetClause) { txQuery += streetClause; txParams.push(...streetNames); }
     txQuery += ' ORDER BY month DESC, resale_price DESC LIMIT 200';
     const recentTransactions = db.prepare(txQuery).all(...txParams);
 
     res.json({
       town: townUpper,
       flat_type: flatTypeFilter || 'ALL',
+      street_filtered: streetNames.length > 0,
+      street_names: streetNames,
       data_as_of: latestMonth,
       prices_by_type: pricesByType,
       town_summary: {

@@ -5,6 +5,7 @@
 const App = {
   selectedFlatType: 'ALL',
   currentTown: null,
+  currentStreet: null,  // street filter for postal code searches
   allTransactions: [],
   lastResolvedData: null,
 
@@ -59,7 +60,10 @@ const App = {
         btn.classList.add('active');
         this.selectedFlatType = btn.dataset.value;
         // Re-search if we have a town
-        if (this.currentTown) this.search();
+        if (this.currentTown) {
+          this.selectedFlatType = btn.dataset.value;
+          this.search();
+        }
       });
     });
     document.querySelector('.flat-type-btn[data-value="ALL"]').classList.add('active');
@@ -97,10 +101,14 @@ const App = {
 
       this.currentTown = resolved.town;
       this.lastResolvedData = resolved;
-      const addressInfo = resolved.address ? ` (${resolved.address})` : '';
 
-      // Fetch area overview
-      const data = await API.getAreaOverview(resolved.town, this.selectedFlatType);
+      // If postal code search, filter by nearby street
+      const isPostalCode = /^\d{6}$/.test(input);
+      this.currentStreet = (isPostalCode && resolved.road) ? resolved.road : null;
+
+      // Fetch area overview (with street filter for postal codes)
+      const data = await API.getAreaOverview(resolved.town, this.selectedFlatType, this.currentStreet);
+      const addressInfo = resolved.address ? ` (${resolved.address})` : '';
       this.renderResults(data, addressInfo);
 
     } catch (err) {
@@ -123,8 +131,17 @@ const App = {
     document.getElementById('town-title').textContent = title + addressInfo;
 
     const ts = data.town_summary;
-    const flatLabel = data.flat_type === 'ALL' ? 'All Types' : data.flat_type;
-    document.getElementById('town-subtitle').textContent = `${flatLabel} • ${ts.total_transactions_12m.toLocaleString()} transactions in last 12 months • Data as of ${this.formatMonth(data.data_as_of)}`;
+
+    // Show proximity badge if street-filtered
+    const subtitleParts = [];
+    if (data.street_filtered && data.street_names.length > 0) {
+      subtitleParts.push(`📍 Near ${data.street_names[0]} — ${ts.total_transactions_12m.toLocaleString()} nearby transactions`);
+    } else {
+      const flatLabel = data.flat_type === 'ALL' ? 'All Types' : data.flat_type;
+      subtitleParts.push(`${flatLabel} • ${ts.total_transactions_12m.toLocaleString()} transactions in last 12 months`);
+    }
+    subtitleParts.push(`Data as of ${this.formatMonth(data.data_as_of)}`);
+    document.getElementById('town-subtitle').textContent = subtitleParts.join(' • ');
 
     // Trend badge
     const trend = data.price_trend;

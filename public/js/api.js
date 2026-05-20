@@ -23,8 +23,9 @@ const API = {
     return resp.json();
   },
 
-  async getAreaOverview(town, flatType = 'ALL') {
+  async getAreaOverview(town, flatType = 'ALL', street = null) {
     const params = new URLSearchParams({ town, flat_type: flatType });
+    if (street) params.set('street', street);
     const resp = await fetch(`${this.baseUrl}/api/area-overview?${params}`);
     if (!resp.ok) throw new Error('Failed to get area overview');
     return resp.json();

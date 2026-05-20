@@ -110,15 +110,32 @@ const TransactionMap = {
     const overallPsm = markerData.map(m => m.price_per_sqm || 0).sort((a, b) => a - b);
     const overallMedianPsm = overallPsm[Math.floor(overallPsm.length / 2)] || 0;
 
-    // Add transaction markers
+    // Group transactions by address for combined popups
+    const addressGroups = {};
     for (const tx of markerData) {
-      const tier = this.getLeaseTier(tx.remaining_lease_years || 0);
-      const tierKey = `${tx.flat_type}|${tier}`;
-      const medianPsm = tierMedianPsm[tierKey] || typeMedianPsm[tx.flat_type] || overallMedianPsm;
-      const style = this.getValueStyle(tx.price_per_sqm || 0, medianPsm);
+      const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
+      if (!addressGroups[key]) addressGroups[key] = [];
+      addressGroups[key].push(tx);
+    }
 
-      const marker = L.circleMarker([tx.lat, tx.lng], {
-        radius: style.radius,
+    // Add one marker per unique address with all transactions in popup
+    for (const [addrKey, txList] of Object.entries(addressGroups)) {
+      const first = txList[0];
+      // Sort by date descending (newest first)
+      txList.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+
+      // Color based on most recent transaction
+      const recent = txList[0];
+      const tier = this.getLeaseTier(recent.remaining_lease_years || 0);
+      const tierKey = `${recent.flat_type}|${tier}`;
+      const medianPsm = tierMedianPsm[tierKey] || typeMedianPsm[recent.flat_type] || overallMedianPsm;
+      const style = this.getValueStyle(recent.price_per_sqm || 0, medianPsm);
+
+      // Size based on number of transactions
+      const radius = Math.min(12, Math.max(style.radius, 6 + txList.length));
+
+      const marker = L.circleMarker([first.lat, first.lng], {
+        radius: radius,
         fillColor: style.color,
         color: '#fff',
         weight: 1,
@@ -126,39 +143,36 @@ const TransactionMap = {
         fillOpacity: 0.85,
       }).addTo(this.map);
 
+      // Build popup with all transactions
+      const txRows = txList.map((tx, i) => {
+        const priceColor = i === 0 ? '#60a5fa' : '#cbd5e1';
+        return `
+          <div style="padding:4px 0; ${i > 0 ? 'border-top:1px solid #334155;' : ''}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#94a3b8; font-size:11px;">${App.formatMonth(tx.month)}</span>
+              <span style="font-weight:700; color:${priceColor}; font-size:13px;">$${App.formatNumber(tx.resale_price)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
+              <span>${tx.flat_type} · ${tx.floor_area_sqm}sqm</span>
+              <span>$${App.formatNumber(tx.price_per_sqm)}/sqm</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#64748b;">
+              <span>Floor: ${tx.storey_range || '--'}</span>
+              <span>Lease: ${tx.remaining_lease_years ? Math.round(tx.remaining_lease_years) + 'y' : '--'}</span>
+            </div>
+          </div>`;
+      }).join('');
+
       const popupContent = `
-        <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:180px;">
-          <div style="font-weight:700; font-size:13px; margin-bottom:4px;">${tx.block} ${tx.street_name || ''}</div>
-          <div style="color:#94a3b8;">${App.formatMonth(tx.month)}</div>
-          <div style="margin-top:6px; display:flex; justify-content:space-between;">
-            <span style="color:#94a3b8;">Type</span>
-            <span style="font-weight:600;">${tx.flat_type}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#94a3b8;">Price</span>
-            <span style="font-weight:700; color:#60a5fa;">$${App.formatNumber(tx.resale_price)}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#94a3b8;">$/sqm</span>
-            <span style="font-weight:600;">$${App.formatNumber(tx.price_per_sqm)}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#94a3b8;">Area</span>
-            <span>${tx.floor_area_sqm} sqm</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#94a3b8;">Floor</span>
-            <span>${tx.storey_range || '--'}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#94a3b8;">Lease</span>
-            <span>${tx.remaining_lease_years ? Math.round(tx.remaining_lease_years) + 'y' : '--'}</span>
-          </div>
+        <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:220px; max-height:300px; overflow-y:auto;">
+          <div style="font-weight:700; font-size:13px; margin-bottom:2px;">${addrKey}</div>
+          <div style="color:#94a3b8; font-size:11px; margin-bottom:6px;">${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
+          ${txRows}
         </div>
       `;
-      marker.bindPopup(popupContent, { className: 'dark-popup' });
+      marker.bindPopup(popupContent, { className: 'dark-popup', maxHeight: 300 });
       this.markers.push(marker);
-      bounds.push([tx.lat, tx.lng]);
+      bounds.push([first.lat, first.lng]);
     }
 
     // Add postal code pin if available

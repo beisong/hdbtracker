@@ -12,6 +12,171 @@ const TransactionMap = {
   map: null,
   markers: [],
 
+  loadPreGeocoded(transactions, lat, lng, resolvedData) {
+    // For private projects: transactions all at same lat/lng, skip geocoding
+    const markerData = transactions.map(tx => ({ ...tx, lat, lng }));
+    const mapCount = document.getElementById('map-count');
+    if (mapCount) mapCount.textContent = `— ${markerData.length} transactions mapped`;
+    this.render(markerData, resolvedData);
+  },
+
+  async addNearbyHDB(transactions) {
+    // Add nearby HDB transactions to an existing map (after private project render)
+    if (!this.map || !transactions || transactions.length === 0) return;
+
+    // Geocode HDB addresses
+    const seen = new Set();
+    const uniqueAddresses = [];
+    for (const tx of transactions) {
+      const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueAddresses.push({ block: tx.block, street_name: tx.street_name });
+        if (uniqueAddresses.length >= 200) break;
+      }
+    }
+
+    try {
+      const geoResult = await API.geocodeAddresses(uniqueAddresses);
+      const geoMap = {};
+      for (const r of geoResult.results) {
+        if (r.lat && r.lng) geoMap[r.query] = { lat: r.lat, lng: r.lng };
+      }
+
+      const markerData = [];
+      for (const tx of transactions) {
+        const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
+        if (geoMap[key]) {
+          markerData.push({ ...tx, lat: geoMap[key].lat, lng: geoMap[key].lng });
+        }
+        if (markerData.length >= 200) break;
+      }
+
+      // Group by address
+      const addressGroups = {};
+      for (const tx of markerData) {
+        const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
+        if (!addressGroups[key]) addressGroups[key] = [];
+        addressGroups[key].push(tx);
+      }
+
+      // Add markers for each HDB address
+      const bounds = [];
+      for (const [addrKey, txList] of Object.entries(addressGroups)) {
+        const first = txList[0];
+        txList.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+        const recent = txList[0];
+        const psm = recent.price_per_sqm || 0;
+
+        const marker = L.circleMarker([first.lat, first.lng], {
+          radius: Math.min(10, 6 + txList.length * 0.3),
+          fillColor: '#60a5fa',
+          color: '#fff',
+          weight: 1,
+          opacity: 0.5,
+          fillOpacity: 0.75,
+        }).addTo(this.map);
+
+        const txRows = txList.slice(0, 10).map((tx, i) => `
+          <div style="padding:3px 0; ${i > 0 ? 'border-top:1px solid #334155;' : ''}">
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#94a3b8; font-size:10px;">${App.formatMonth(tx.month)}</span>
+              <span style="font-weight:600; color:#60a5fa; font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
+            </div>
+            <div style="font-size:10px; color:#94a3b8;">${tx.flat_type} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
+          </div>`).join('');
+
+        marker.bindPopup(`
+          <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:180px; max-height:250px; overflow-y:auto;">
+            <div style="font-weight:700; font-size:12px; margin-bottom:2px;">🏠 ${addrKey}</div>
+            <div style="color:#94a3b8; font-size:10px; margin-bottom:4px;">HDB · ${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
+            ${txRows}
+          </div>
+        `, { className: 'dark-popup', maxHeight: 250 });
+
+        this.markers.push(marker);
+        bounds.push([first.lat, first.lng]);
+      }
+
+      // Expand map bounds to include HDB markers
+      if (bounds.length > 0 && this.map) {
+        const existingBounds = this.map.getBounds();
+        for (const b of bounds) existingBounds.extend(b);
+        this.map.fitBounds(existingBounds, { padding: [30, 30], maxZoom: 16 });
+      }
+
+      // Update count
+      const mapCount = document.getElementById('map-count');
+      if (mapCount) {
+        const currentText = mapCount.textContent || '';
+        mapCount.textContent = `${currentText} (+${markerData.length} HDB nearby)`;
+      }
+
+    } catch (err) {
+      console.warn('Failed to add nearby HDB markers:', err.message);
+    }
+  },
+
+  addNearbyProjects(projects, currentProject) {
+    // Add nearby private project markers (coordinates already known)
+    if (!this.map || !projects || projects.length === 0) return;
+
+    const bounds = [];
+    for (const proj of projects) {
+      // Skip the currently-viewed project
+      if (currentProject && proj.project === currentProject) continue;
+      if (!proj.latitude || !proj.longitude) continue;
+
+      const marker = L.circleMarker([proj.latitude, proj.longitude], {
+        radius: Math.min(10, 5 + Math.sqrt(proj.tx_count || 1)),
+        fillColor: '#a855f7',
+        color: '#c084fc',
+        weight: 1.5,
+        opacity: 0.7,
+        fillOpacity: 0.7,
+      }).addTo(this.map);
+
+      // Build popup with recent transactions
+      let popupHtml = `
+        <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:200px; max-height:280px; overflow-y:auto;">
+          <div style="font-weight:700; font-size:12px; margin-bottom:2px; color:#a855f7;">🏢 ${proj.project}</div>
+          <div style="color:#94a3b8; font-size:10px; margin-bottom:4px;">${proj.street_name} · D${proj.district} · ${proj.market_segment}</div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-size:11px;">${proj.tx_count} transactions</span>
+            <span style="font-weight:600; font-size:11px; color:#a855f7;">$${App.formatNumber(proj.avg_psm)}/sqm</span>
+          </div>
+          <div style="font-size:10px; color:#94a3b8; margin-top:2px;">Avg: $${App.formatNumber(proj.avg_price)}</div>`;
+
+      if (proj.recent_transactions && proj.recent_transactions.length > 0) {
+        popupHtml += `<div style="margin-top:6px; border-top:1px solid #334155; padding-top:6px;">`;
+        proj.recent_transactions.forEach((tx, i) => {
+          popupHtml += `
+            <div style="padding:3px 0; ${i > 0 ? 'border-top:1px solid #1e293b;' : ''}">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:#94a3b8; font-size:10px;">${App.formatMonth(tx.month)}</span>
+                <span style="font-weight:600; color:#a855f7; font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
+              </div>
+              <div style="font-size:10px; color:#94a3b8;">${tx.property_type || ''} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
+            </div>`;
+        });
+        popupHtml += `</div>`;
+      }
+
+      popupHtml += `</div>`;
+      marker.bindPopup(popupHtml, { className: 'dark-popup', maxHeight: 280 });
+
+      this.markers.push(marker);
+      bounds.push([proj.latitude, proj.longitude]);
+    }
+
+    // Expand bounds
+    if (bounds.length > 0 && this.map) {
+      const existingBounds = this.map.getBounds();
+      for (const b of bounds) existingBounds.extend(b);
+      this.map.fitBounds(existingBounds, { padding: [30, 30], maxZoom: 16 });
+    }
+  },
+
   async load(transactions, resolvedData) {
     const mapLoading = document.getElementById('map-loading');
     const mapCount = document.getElementById('map-count');
@@ -119,8 +284,20 @@ const TransactionMap = {
     }
 
     // Add one marker per unique address with all transactions in popup
+    // For private projects, skip circle markers at the same location as the search pin
+    const isPrivatePinned = resolvedData && resolvedData.isPrivate && resolvedData.lat && resolvedData.lng;
+    let privateProjectTxs = null;
     for (const [addrKey, txList] of Object.entries(addressGroups)) {
       const first = txList[0];
+      // Skip if this is a private project marker at the pin location — save txs for pin popup
+      if (isPrivatePinned &&
+          Math.abs(first.lat - resolvedData.lat) < 0.0001 &&
+          Math.abs(first.lng - resolvedData.lng) < 0.0001) {
+        txList.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+        privateProjectTxs = txList;
+        continue;
+      }
+
       // Sort by date descending (newest first)
       txList.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
 
@@ -175,18 +352,23 @@ const TransactionMap = {
       bounds.push([first.lat, first.lng]);
     }
 
-    // Add postal code pin if available
+    // Add pin for search location or private project
     if (resolvedData && resolvedData.lat && resolvedData.lng) {
+      const isPrivate = resolvedData.isPrivate;
+      const pinColor = isPrivate ? '#a855f7' : '#ef4444';
+      const pinShadow = isPrivate ? 'rgba(168,85,247,0.5)' : 'rgba(239,68,68,0.5)';
+      const pinLabel = isPrivate ? '🏢 Project Location' : '📍 Your Search Location';
+
       const postalMarker = L.marker([resolvedData.lat, resolvedData.lng], {
         icon: L.divIcon({
           className: '',
           html: `<div style="
-            background: #ef4444;
+            background: ${pinColor};
             border: 3px solid #fff;
             border-radius: 50%;
             width: 20px;
             height: 20px;
-            box-shadow: 0 2px 8px rgba(239,68,68,0.5);
+            box-shadow: 0 2px 8px ${pinShadow};
             position: relative;
             top: -10px;
             left: -10px;
@@ -196,12 +378,34 @@ const TransactionMap = {
         }),
       }).addTo(this.map);
 
-      postalMarker.bindPopup(`
-        <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5;">
-          <div style="font-weight:700; font-size:13px; margin-bottom:4px; color:#ef4444;">📍 Your Search Location</div>
-          <div>${resolvedData.address || resolvedData.input}</div>
-        </div>
-      `, { className: 'dark-popup' });
+      const locationName = resolvedData.projectName || resolvedData.address || resolvedData.input || '';
+      let pinPopupHtml = `
+        <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:220px; max-height:300px; overflow-y:auto;">
+          <div style="font-weight:700; font-size:13px; margin-bottom:4px; color:${pinColor};">${pinLabel}</div>
+          <div>${locationName}</div>`;
+
+      // If we saved private project transactions, show them in the pin popup
+      if (privateProjectTxs && privateProjectTxs.length > 0) {
+        pinPopupHtml += `
+          <div style="color:#94a3b8; font-size:11px; margin-top:4px; margin-bottom:6px;">${privateProjectTxs.length} transaction${privateProjectTxs.length > 1 ? 's' : ''}</div>`;
+        privateProjectTxs.slice(0, 10).forEach((tx, i) => {
+          const priceColor = i === 0 ? '#a855f7' : '#cbd5e1';
+          pinPopupHtml += `
+            <div style="padding:4px 0; ${i > 0 ? 'border-top:1px solid #334155;' : ''}">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#94a3b8; font-size:11px;">${App.formatMonth(tx.month)}</span>
+                <span style="font-weight:700; color:${priceColor}; font-size:13px;">$${App.formatNumber(tx.resale_price)}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
+                <span>${tx.flat_type} · ${tx.floor_area_sqm}sqm</span>
+                <span>$${App.formatNumber(tx.price_per_sqm)}/sqm</span>
+              </div>
+            </div>`;
+        });
+      }
+
+      pinPopupHtml += `</div>`;
+      postalMarker.bindPopup(pinPopupHtml, { className: 'dark-popup', maxHeight: 300 });
 
       bounds.push([resolvedData.lat, resolvedData.lng]);
     }

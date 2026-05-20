@@ -73,7 +73,7 @@ WorthOrNot/
 ├── server/
 │   ├── index.js               # Express server
 │   └── db/
-│       └── hdb_resale.db      # SQLite database (generated)
+│       └── resale.db           # SQLite database (generated)
 ├── public/
 │   ├── index.html             # Main SPA
 │   ├── css/

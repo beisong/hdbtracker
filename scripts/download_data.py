@@ -25,7 +25,7 @@ BATCH_SIZE = 10000
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 DB_DIR = os.path.join(PROJECT_DIR, 'server', 'db')
-DB_PATH = os.path.join(DB_DIR, 'hdb_resale.db')
+DB_PATH = os.path.join(DB_DIR, 'resale.db')
 
 
 def ensure_db_dir():

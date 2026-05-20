@@ -17,8 +17,13 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(cors());
 app.use(express.json());
 
+// URA API config
+const URA_ACCESS_KEY = process.env.URA_API_ACCESS_KEY || '';
+let uraToken = null;
+let uraTokenExpiry = 0;
+
 // Open database
-const DB_PATH = path.join(__dirname, 'db', 'hdb_resale.db');
+const DB_PATH = path.join(__dirname, 'db', 'resale.db');
 let db;
 
 try {
@@ -335,16 +340,24 @@ function compressStreetName(name) {
 function findDbStreets(roadName, town) {
   if (!roadName) return [];
   const road = roadName.toUpperCase().trim();
-  const townUpper = town.toUpperCase();
+  const townUpper = town ? town.toUpperCase() : null;
 
-  // Helper: try a pattern against the DB
+  // Helper: try a pattern against the DB (with or without town filter)
   const tryMatch = (pattern) => {
     if (!pattern) return [];
     const likePattern = '%' + pattern.replace(/\s+/g, '%') + '%';
-    return db.prepare(`
-      SELECT DISTINCT street_name FROM transactions
-      WHERE town = ? AND UPPER(street_name) LIKE ?
-    `).all(townUpper, likePattern).map(r => r.street_name);
+    if (townUpper) {
+      return db.prepare(`
+        SELECT DISTINCT street_name FROM transactions
+        WHERE town = ? AND UPPER(street_name) LIKE ?
+      `).all(townUpper, likePattern).map(r => r.street_name);
+    } else {
+      return db.prepare(`
+        SELECT DISTINCT street_name FROM transactions
+        WHERE UPPER(street_name) LIKE ? AND dataset_source != 'URA_PRIVATE'
+        LIMIT 5
+      `).all(likePattern).map(r => r.street_name);
+    }
   };
 
   // 1. Try the road name as-is
@@ -611,7 +624,7 @@ async function findNearbyStreets(lat, lng, town) {
     return cached.streets;
   }
 
-  const townUpper = town.toUpperCase();
+  const townUpper = town ? town.toUpperCase() : null;
   // 200m in degrees: ~0.0018 lat, ~0.00184 lng at Singapore's latitude
   const offset = 0.0018;
   const offsetLng = 0.00184;
@@ -799,8 +812,335 @@ app.post('/api/geocode', async (req, res) => {
 });
 
 /**
+ * GET /api/private/projects — Search private property projects by name
+ */
+app.get('/api/private/projects', (req, res) => {
+  try {
+    const { q, limit } = req.query;
+    const limitVal = Math.min(parseInt(limit) || 20, 50);
+
+    if (!q || q.trim().length < 2) {
+      return res.json({ projects: [] });
+    }
+
+    const searchPattern = `%${q.toUpperCase().trim()}%`;
+
+    const projects = db.prepare(`
+      SELECT
+        project,
+        street_name,
+        district,
+        market_segment,
+        flat_type as property_type,
+        COUNT(*) as transaction_count,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm)) as avg_psm,
+        ROUND(AVG(floor_area_sqm), 1) as avg_area,
+        MIN(month) as earliest_transaction,
+        MAX(month) as latest_transaction
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE'
+        AND UPPER(project) LIKE ?
+      GROUP BY project, district
+      ORDER BY transaction_count DESC
+      LIMIT ?
+    `).all(searchPattern, limitVal);
+
+    res.json({ projects });
+  } catch (err) {
+    console.error('Error in /api/private/projects:', err);
+    res.status(500).json({ error: 'Failed to search projects: ' + err.message });
+  }
+});
+
+/**
+ * GET /api/private/project-overview — Detailed stats for a private property project
+ */
+app.get('/api/private/project-overview', (req, res) => {
+  try {
+    const { project, property_type } = req.query;
+    if (!project) return res.status(400).json({ error: 'Missing project parameter' });
+
+    const monthsAgo12 = monthsAgoStr(12);
+    const monthsAgo60 = monthsAgoStr(60);
+
+    // Build property type filter
+    const propTypeFilter = property_type ? ` AND flat_type = '${property_type.toUpperCase()}'` : '';
+
+    // Project info
+    const projectInfo = db.prepare(`
+      SELECT
+        project,
+        street_name,
+        district,
+        market_segment,
+        flat_model as tenure,
+        COUNT(*) as total_transactions,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm)) as avg_psm,
+        ROUND(AVG(floor_area_sqm), 1) as avg_area,
+        MIN(month) as earliest,
+        MAX(month) as latest
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND project = ? ${propTypeFilter}
+      GROUP BY project
+    `).get(project);
+
+    // Get project coordinates from project_coords table
+    const projectCoords = db.prepare(`
+      SELECT latitude, longitude FROM project_coords WHERE project = ?
+    `).get(project);
+
+    if (!projectInfo) {
+      return res.json({ found: false, project });
+    }
+
+    // Prices by property type (last 12 months)
+    const pricesByType = db.prepare(`
+      SELECT
+        flat_type as property_type,
+        COUNT(*) as count,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm)) as avg_psm,
+        ROUND(AVG(floor_area_sqm), 1) as avg_area
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND project = ? AND month >= ? ${propTypeFilter}
+      GROUP BY flat_type
+      ORDER BY avg_price
+    `).all(project, monthsAgo12);
+
+    // Price trend (last 60 months)
+    const trendData = db.prepare(`
+      SELECT
+        month,
+        COUNT(*) as count,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm), 0) as avg_psm
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND project = ? AND month >= ? ${propTypeFilter}
+      GROUP BY month ORDER BY month ASC
+    `).all(project, monthsAgo60);
+
+    // Calculate trend
+    let priceTrend = { '6m_change': 0, '1y_change': 0, '3y_change': 0, direction: 'stable' };
+    if (trendData.length >= 2) {
+      const monthsAgo6 = monthsAgoStr(6);
+      const monthsAgo12m = monthsAgoStr(12);
+      const monthsAgo36 = monthsAgoStr(36);
+
+      const recent6m = trendData.filter(m => m.month >= monthsAgo6);
+      const recent12m = trendData.filter(m => m.month >= monthsAgo12m);
+      const recent36m = trendData.filter(m => m.month >= monthsAgo36);
+
+      if (recent6m.length >= 2) {
+        const first = recent6m[0].avg_price;
+        const last = recent6m[recent6m.length - 1].avg_price;
+        priceTrend['6m_change'] = Math.round((last - first) / first * 1000) / 10;
+      }
+      if (recent12m.length >= 2) {
+        const first = recent12m[0].avg_price;
+        const last = recent12m[recent12m.length - 1].avg_price;
+        priceTrend['1y_change'] = Math.round((last - first) / first * 1000) / 10;
+      }
+      if (recent36m.length >= 2) {
+        const first = recent36m[0].avg_price;
+        const last = recent36m[recent36m.length - 1].avg_price;
+        priceTrend['3y_change'] = Math.round((last - first) / first * 1000) / 10;
+      }
+
+      if (priceTrend['1y_change'] > 2) priceTrend.direction = 'rising';
+      else if (priceTrend['1y_change'] < -2) priceTrend.direction = 'falling';
+    }
+
+    // Recent transactions
+    const recentTransactions = db.prepare(`
+      SELECT
+        month, flat_type as property_type, floor_area_sqm, resale_price,
+        price_per_sqm, flat_model as tenure, remaining_lease_years, storey_range, type_of_sale, type_of_area
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND project = ? ${propTypeFilter}
+      ORDER BY month DESC, resale_price DESC LIMIT 50
+    `).all(project);
+
+    // Price distribution (last 12 months)
+    const allPrices = db.prepare(`
+      SELECT resale_price FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND project = ? AND month >= ? ${propTypeFilter}
+      ORDER BY resale_price ASC LIMIT 5000
+    `).all(project, monthsAgo12).map(r => r.resale_price);
+
+    const pricePercentiles = {
+      p10: percentile(allPrices, 10),
+      p25: percentile(allPrices, 25),
+      p50: percentile(allPrices, 50),
+      p75: percentile(allPrices, 75),
+      p90: percentile(allPrices, 90),
+    };
+
+    const minPrice = allPrices.length > 0 ? allPrices[0] : 0;
+    const maxPrice = allPrices.length > 0 ? allPrices[allPrices.length - 1] : 0;
+    const binCount = 20;
+    const binWidth = Math.max(50000, Math.ceil((maxPrice - minPrice) / binCount / 50000) * 50000);
+    const bins = [];
+    const counts = [];
+    for (let i = 0; i <= binCount; i++) {
+      const binStart = Math.floor(minPrice / binWidth) * binWidth + i * binWidth;
+      bins.push(binStart);
+      const count = allPrices.filter(p => p >= binStart && p < binStart + binWidth).length;
+      counts.push(count);
+    }
+
+    // District summary for comparison
+    const districtSummary = db.prepare(`
+      SELECT
+        COUNT(*) as total_transactions,
+        ROUND(AVG(price_per_sqm)) as avg_district_psm
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND district = ? AND month >= ?
+    `).get(projectInfo.district, monthsAgo12);
+
+    const is_private = true;
+
+    res.json({
+      found: true,
+      is_private,
+      project: projectInfo,
+      coordinates: projectCoords ? { lat: projectCoords.latitude, lng: projectCoords.longitude } : null,
+      prices_by_type: pricesByType,
+      price_trend: priceTrend,
+      trend_data: trendData,
+      recent_transactions: recentTransactions,
+      price_percentiles: pricePercentiles,
+      distribution: { bins, counts },
+      district_summary: districtSummary,
+    });
+  } catch (err) {
+    console.error('Error in /api/private/project-overview:', err);
+    res.status(500).json({ error: 'Failed to get project overview: ' + err.message });
+  }
+});
+
+/**
+ * GET /api/private/property-types — List all private property types
+ */
+app.get('/api/private/property-types', (req, res) => {
+  try {
+    const types = db.prepare(`
+      SELECT flat_type, COUNT(*) as count
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND flat_type != ''
+      GROUP BY flat_type ORDER BY count DESC
+    `).all();
+    res.json({ property_types: types });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch property types' });
+  }
+});
+
+/**
  * GET /api/status — Check if database is ready
  */
+/**
+ * GET /api/nearby-hdb — Get nearby HDB transactions given lat/lng coordinates
+ * Used by private property searches to also show nearby HDB transactions on the map
+ */
+app.get('/api/nearby-hdb', async (req, res) => {
+  try {
+    const { lat, lng } = req.query;
+    if (!lat || !lng) return res.status(400).json({ error: 'Missing lat or lng' });
+
+    const latF = parseFloat(lat);
+    const lngF = parseFloat(lng);
+
+    // 1. Reverse geocode to get road names via Nominatim
+    const nearbyStreets = await findNearbyStreets(latF, lngF, null);
+
+    if (!nearbyStreets || nearbyStreets.length === 0) {
+      return res.json({ transactions: [], streets: [] });
+    }
+
+    // 2. Find which town(s) these streets belong to
+    const streetClause = nearbyStreets.map(() => '?').join(',');
+    const townRow = db.prepare(`
+      SELECT DISTINCT town FROM transactions
+      WHERE dataset_source != 'URA_PRIVATE'
+        AND street_name IN (${streetClause})
+      LIMIT 1
+    `).get(...nearbyStreets);
+
+    if (!townRow) {
+      return res.json({ transactions: [], streets: nearbyStreets });
+    }
+
+    const town = townRow.town;
+    const monthsAgo12 = monthsAgoStr(12);
+
+    // 3. Get HDB transactions for those streets, last 12 months
+    const transactions = db.prepare(`
+      SELECT month, town, flat_type, block, street_name, storey_range,
+             floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
+      FROM transactions
+      WHERE dataset_source != 'URA_PRIVATE'
+        AND town = ?
+        AND street_name IN (${streetClause})
+        AND resale_price IS NOT NULL
+        AND month >= ?
+      ORDER BY month DESC, resale_price DESC
+      LIMIT 200
+    `).all(town, ...nearbyStreets, monthsAgo12);
+
+    // 4. Also get nearby private projects from project_coords
+    const nearbyProjects = db.prepare(`
+      SELECT pc.project, pc.street_name, pc.district, pc.market_segment, pc.latitude, pc.longitude,
+             COUNT(t.rowid) as tx_count,
+             ROUND(AVG(t.resale_price)) as avg_price,
+             ROUND(AVG(t.price_per_sqm)) as avg_psm
+      FROM project_coords pc
+      JOIN transactions t ON t.project = pc.project AND t.dataset_source = 'URA_PRIVATE'
+      WHERE pc.latitude BETWEEN ? AND ?
+        AND pc.longitude BETWEEN ? AND ?
+      GROUP BY pc.project
+      ORDER BY tx_count DESC
+      LIMIT 20
+    `).all(
+      latF - 0.005, latF + 0.005,
+      lngF - 0.0055, lngF + 0.0055
+    );
+
+    // Get top 10 recent transactions for each nearby project
+    const projectNames = nearbyProjects.map(p => p.project);
+    let nearbyProjectTxs = [];
+    if (projectNames.length > 0) {
+      const placeholders = projectNames.map(() => '?').join(',');
+      nearbyProjectTxs = db.prepare(`
+        SELECT project, month, flat_type as property_type, floor_area_sqm, resale_price, price_per_sqm,
+               remaining_lease_years, flat_model as tenure, storey_range
+        FROM transactions
+        WHERE project IN (${placeholders}) AND dataset_source = 'URA_PRIVATE'
+        ORDER BY month DESC, resale_price DESC
+      `).all(...projectNames);
+
+      // Group by project
+      const txByProject = {};
+      for (const tx of nearbyProjectTxs) {
+        if (!txByProject[tx.project]) txByProject[tx.project] = [];
+        if (txByProject[tx.project].length < 10) {
+          txByProject[tx.project].push(tx);
+        }
+      }
+      // Attach to each project
+      for (const proj of nearbyProjects) {
+        proj.recent_transactions = txByProject[proj.project] || [];
+      }
+    }
+
+    res.json({ transactions, streets: nearbyStreets, town, nearby_projects: nearbyProjects });
+  } catch (err) {
+    console.error('Error in /api/nearby-hdb:', err);
+    res.status(500).json({ error: 'Failed to get nearby HDB: ' + err.message });
+  }
+});
+
 app.get('/api/status', (req, res) => {
   try {
     const count = db.prepare('SELECT COUNT(*) as count FROM transactions').get().count;

@@ -82,7 +82,7 @@ const App = {
 
   async search() {
     const input = document.getElementById('search-input').value.trim();
-    if (!input) { this.showAlert('Please enter a town name or 6-digit postal code.'); return; }
+    if (!input) { this.showAlert('Please enter a town name, postal code, or project name.'); return; }
 
     const btn = document.getElementById('search-btn');
     const btnText = document.getElementById('search-btn-text');
@@ -92,10 +92,55 @@ const App = {
     btnLoading.classList.remove('hidden');
 
     try {
-      // Resolve input to town
+      const isPostalCode = /^\d{6}$/.test(input);
+
+      // First, try to match against private property projects
+      let privateProject = null;
+      if (!isPostalCode) {
+        // Search by project name
+        const projectResults = await API.searchPrivateProjects(input, 5);
+        if (projectResults.projects && projectResults.projects.length > 0) {
+          // Check for exact or close match
+          const exact = projectResults.projects.find(p =>
+            p.project.toUpperCase() === input.toUpperCase()
+          );
+          privateProject = exact || projectResults.projects[0];
+        }
+      }
+
+      // If we found a private project, show its overview
+      if (privateProject) {
+        const data = await API.getPrivateProjectOverview(privateProject.project);
+        if (data.found) {
+          this.currentTown = null;
+          this.lastResolvedData = {
+            lat: data.coordinates?.lat || null,
+            lng: data.coordinates?.lng || null,
+            town: null,
+            projectName: data.project?.project,
+            isPrivate: true,
+          };
+          this.renderPrivateResults(data, '');
+          return;
+        }
+      }
+
+      // Otherwise, resolve as HDB town/postal code
       const resolved = await API.resolve(input);
       if (!resolved.resolved) {
-        this.showAlert(resolved.message || 'Could not find a matching HDB town.');
+        // If postal code didn't resolve as HDB, try private project match from building name
+        if (isPostalCode && resolved.building) {
+          const buildingResults = await API.searchPrivateProjects(resolved.building, 3);
+          if (buildingResults.projects && buildingResults.projects.length > 0) {
+            const data = await API.getPrivateProjectOverview(buildingResults.projects[0].project);
+            if (data.found) {
+              this.lastResolvedData = { lat: resolved.lat, lng: resolved.lng, town: null };
+              this.renderPrivateResults(data, ` (${resolved.address})`);
+              return;
+            }
+          }
+        }
+        this.showAlert(resolved.message || 'Could not find a matching location.');
         return;
       }
 
@@ -103,7 +148,6 @@ const App = {
       this.lastResolvedData = resolved;
 
       // If postal code search, find nearby streets via Nominatim reverse geocoding
-      const isPostalCode = /^\d{6}$/.test(input);
       let nearbyStreets = null;
       if (isPostalCode && resolved.lat && resolved.lng) {
         try {
@@ -113,6 +157,19 @@ const App = {
           }
         } catch (err) {
           console.warn("Nearby streets lookup failed, falling back to single street:", err.message);
+        }
+
+        // Also try to match building name to private projects
+        if (resolved.building && resolved.building !== 'NIL') {
+          try {
+            const buildingResults = await API.searchPrivateProjects(resolved.building, 3);
+            if (buildingResults.projects && buildingResults.projects.length > 0) {
+              // Load HDB data as primary, but note private data is available
+              this.nearbyPrivateProject = buildingResults.projects[0];
+            }
+          } catch (err) {
+            // Ignore private project search errors
+          }
         }
       }
       this.currentStreet = (isPostalCode && resolved.road) ? resolved.road : null;
@@ -225,6 +282,18 @@ const App = {
 
     // Load map
     TransactionMap.load(this.allTransactions, this.lastResolvedData);
+
+    // Also fetch nearby private projects and add them to the map
+    const resolved = this.lastResolvedData;
+    if (resolved && resolved.lat && resolved.lng) {
+      API.getNearbyHDB(resolved.lat, resolved.lng).then(hdbData => {
+        if (hdbData.nearby_projects && hdbData.nearby_projects.length > 0) {
+          TransactionMap.addNearbyProjects(hdbData.nearby_projects, null);
+        }
+      }).catch(err => {
+        console.warn('Failed to load nearby private projects:', err.message);
+      });
+    }
   },
 
   setupTransactionFilters() {
@@ -335,7 +404,7 @@ const App = {
 
       const address = `${tx.block} ${tx.street_name || ''} Singapore`.trim();
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-      const leaseDisplay = tx.remaining_lease_years ? `${Math.round(tx.remaining_lease_years)}y` : '--';
+      const leaseDisplay = tx.is_freehold ? '∞' : (tx.remaining_lease_years ? `${Math.round(tx.remaining_lease_years)}y` : '--');
 
       tr.innerHTML = `
         <td class="py-2.5 pr-3 text-gray-400 whitespace-nowrap text-xs">${this.formatMonth(tx.month)}</td>
@@ -349,6 +418,7 @@ const App = {
         </td>
         <td class="py-2.5 pr-3 whitespace-nowrap text-xs">
           <span class="px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-300">${tx.flat_type}</span>
+          ${tx.is_freehold !== undefined ? `<span class="ml-1 text-purple-300 text-[10px]">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
         </td>
         <td class="py-2.5 pr-3 text-right text-gray-400 whitespace-nowrap text-xs">${tx.storey_range || '--'}</td>
         <td class="py-2.5 pr-3 text-right whitespace-nowrap text-xs">${tx.floor_area_sqm} sqm</td>
@@ -359,6 +429,154 @@ const App = {
 
       tbody.appendChild(tr);
     });
+  },
+
+  renderPrivateResults(data, addressInfo) {
+    const section = document.getElementById('results-section');
+    section.classList.remove('hidden');
+    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
+    const proj = data.project;
+    const segmentLabels = { CCR: 'Core Central', RCR: 'Rest of Central', OCR: 'Outside Central' };
+    const segmentColors = { CCR: 'text-amber-400', RCR: 'text-blue-400', OCR: 'text-green-400' };
+
+    // Title with private badge
+    document.getElementById('town-title').innerHTML =
+      `<span class="inline-flex items-center gap-2">` +
+      `<span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-xs font-semibold uppercase tracking-wider">Private</span>` +
+      `${proj.project}${addressInfo}</span>`;
+
+    // Subtitle
+    const subtitleParts = [];
+    subtitleParts.push(`${proj.street_name}`);
+    subtitleParts.push(`District ${proj.district}`);
+    if (proj.market_segment) {
+      subtitleParts.push(`${segmentLabels[proj.market_segment] || proj.market_segment} (${proj.market_segment})`);
+    }
+    subtitleParts.push(`${proj.total_transactions.toLocaleString()} transactions`);
+    subtitleParts.push(`Data as of ${this.formatMonth(proj.latest)}`);
+    document.getElementById('town-subtitle').textContent = subtitleParts.join(' • ');
+
+    // Trend badge
+    const trend = data.price_trend;
+    const trendBadge = document.getElementById('badge-trend');
+    const trendIcon = trend.direction === 'rising' ? '📈' : trend.direction === 'falling' ? '📉' : '➡️';
+    const trendClass = trend.direction === 'rising' ? 'text-green-400' : trend.direction === 'falling' ? 'text-red-400' : 'text-amber-400';
+    trendBadge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-dark-700 ${trendClass}`;
+    trendBadge.innerHTML = `${trendIcon} ${trend.direction.charAt(0).toUpperCase() + trend.direction.slice(1)} ${trend['1y_change'] >= 0 ? '+' : ''}${trend['1y_change']}% YoY`;
+
+    // Volume badge
+    document.getElementById('badge-volume').innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-400"></span> ${proj.total_transactions.toLocaleString()} total transactions`;
+
+    // Stats cards
+    document.getElementById('stat-median').textContent = `$${this.formatNumber(proj.avg_price)}`;
+    document.getElementById('stat-psm').textContent = `$${this.formatNumber(proj.avg_psm)}/sqm`;
+    document.getElementById('stat-range').textContent = proj.tenure || '--';
+    document.getElementById('stat-popular').textContent = `D${proj.district} • ${segmentLabels[proj.market_segment] || proj.market_segment || ''}`;
+
+    // Price by property type cards
+    const container = document.getElementById('price-type-cards');
+    container.innerHTML = '';
+    data.prices_by_type.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'bg-dark-700 rounded-xl border border-purple-500/10 p-3 hover:border-purple-500/30 transition-colors cursor-default';
+      const bedEst = this.estimateBedrooms(item.avg_area, item.property_type);
+      card.innerHTML = `
+        <div class="text-xs text-purple-300 mb-1">${item.property_type} <span class="text-purple-300/60">~${bedEst}</span></div>
+        <div class="text-base font-bold">$${this.formatNumber(item.avg_price)}</div>
+        <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(item.avg_psm)}/sqm • ${item.avg_area} sqm</div>
+        <div class="text-xs text-gray-600 mt-1">${item.count} sales</div>
+      `;
+      container.appendChild(card);
+    });
+
+    // Percentiles
+    const pp = data.price_percentiles;
+    document.getElementById('p10').textContent = pp.p10 ? `$${this.formatNumber(pp.p10)}` : '--';
+    document.getElementById('p25').textContent = pp.p25 ? `$${this.formatNumber(pp.p25)}` : '--';
+    document.getElementById('p50').textContent = pp.p50 ? `$${this.formatNumber(pp.p50)}` : '--';
+    document.getElementById('p75').textContent = pp.p75 ? `$${this.formatNumber(pp.p75)}` : '--';
+    document.getElementById('p90').textContent = pp.p90 ? `$${this.formatNumber(pp.p90)}` : '--';
+
+    // Trend values
+    const fmtPct = (v) => {
+      if (v === 0 || v === null || v === undefined) return '--';
+      const cls = v > 0 ? 'text-green-400' : v < 0 ? 'text-red-400' : 'text-gray-400';
+      return `<span class="${cls}">${v >= 0 ? '+' : ''}${v}%</span>`;
+    };
+    document.getElementById('trend-6m').innerHTML = fmtPct(trend['6m_change']);
+    document.getElementById('trend-1y').innerHTML = fmtPct(trend['1y_change']);
+    document.getElementById('trend-3y').innerHTML = fmtPct(trend['3y_change']);
+    document.getElementById('trend-5y').innerHTML = '--';
+
+    // Charts
+    Charts.renderTrendChart(data.trend_data || []);
+    if (data.distribution && data.distribution.bins.length > 0) {
+      Charts.renderDistributionChart(data.distribution.bins, data.distribution.counts);
+    }
+
+    // Transactions table — private format
+    this.allTransactions = (data.recent_transactions || []).map(tx => ({
+      ...tx,
+      flat_type: tx.property_type || tx.flat_type,
+      block: proj.project,
+      street_name: proj.street_name,
+      remaining_lease_years: tx.remaining_lease_years,
+      is_freehold: tx.tenure === 'FREEHOLD',
+    }));
+    this.populateTypeFilter(this.allTransactions);
+    this.applyTransactionFilters();
+
+    // Reset filter inputs
+    document.getElementById('tx-search').value = '';
+    document.getElementById('tx-filter-type').value = '';
+    document.getElementById('tx-filter-storey').value = '';
+    document.getElementById('tx-filter-lease').value = '';
+    document.getElementById('tx-sort').value = 'date-desc';
+
+    // Show transactions on map: private project + nearby HDB
+    const coords = this.lastResolvedData;
+    if (coords && coords.lat && coords.lng) {
+      // Start with private project transactions
+      TransactionMap.loadPreGeocoded(this.allTransactions, coords.lat, coords.lng, coords);
+
+      // Also fetch nearby HDB transactions + private projects and add them to the map
+      API.getNearbyHDB(coords.lat, coords.lng).then(hdbData => {
+        if (hdbData.transactions && hdbData.transactions.length > 0) {
+          TransactionMap.addNearbyHDB(hdbData.transactions);
+        }
+        if (hdbData.nearby_projects && hdbData.nearby_projects.length > 0) {
+          TransactionMap.addNearbyProjects(hdbData.nearby_projects, coords.projectName);
+        }
+      }).catch(err => {
+        console.warn('Failed to load nearby transactions:', err.message);
+      });
+    } else {
+      TransactionMap.load([], this.lastResolvedData);
+    }
+  },
+
+  estimateBedrooms(areaSqm, propertyType) {
+    if (!areaSqm) return '--';
+    const a = parseFloat(areaSqm);
+    if (isNaN(a)) return '--';
+    // Landed properties have different space usage
+    const isLanded = ['TERRACE', 'SEMI-DETACHED', 'DETACHED', 'STRATA TERRACE', 'STRATA SEMI-DETACHED', 'STRATA DETACHED'].includes(propertyType);
+    if (isLanded) {
+      if (a < 100) return '2-bed';
+      if (a < 150) return '3-bed';
+      if (a < 200) return '4-bed';
+      if (a < 300) return '5-bed';
+      return '6+ bed';
+    }
+    // Condo/Apartment
+    if (a < 45) return 'Studio';
+    if (a < 65) return '1-bed';
+    if (a < 85) return '2-bed';
+    if (a < 110) return '3-bed';
+    if (a < 140) return '4-bed';
+    if (a < 180) return '5-bed';
+    return 'Penthouse';
   },
 
   formatMonth(monthStr) {

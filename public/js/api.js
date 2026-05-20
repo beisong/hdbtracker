@@ -48,4 +48,33 @@ const API = {
     if (!resp.ok) throw new Error('Failed to geocode addresses');
     return resp.json();
   },
+
+  // Private property endpoints
+  async searchPrivateProjects(query, limit = 10) {
+    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    const resp = await fetch(`${this.baseUrl}/api/private/projects?${params}`);
+    if (!resp.ok) throw new Error('Failed to search projects');
+    return resp.json();
+  },
+
+  async getNearbyHDB(lat, lng) {
+    const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+    const resp = await fetch(`${this.baseUrl}/api/nearby-hdb?${params}`);
+    if (!resp.ok) throw new Error('Failed to fetch nearby HDB');
+    return resp.json();
+  },
+
+  async getPrivateProjectOverview(project, propertyType = null) {
+    const params = new URLSearchParams({ project });
+    if (propertyType) params.set('property_type', propertyType);
+    const resp = await fetch(`${this.baseUrl}/api/private/project-overview?${params}`);
+    if (!resp.ok) throw new Error('Failed to get project overview');
+    return resp.json();
+  },
+
+  async getPrivatePropertyTypes() {
+    const resp = await fetch(`${this.baseUrl}/api/private/property-types`);
+    if (!resp.ok) throw new Error('Failed to fetch property types');
+    return resp.json();
+  },
 };

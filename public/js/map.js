@@ -263,7 +263,7 @@ const MrtOverlay = {
     'NS': '#D42E12', 'EW': '#009645', 'NE': '#9016B2',
     'CC': '#FA9E0D', 'DT': '#005EC4', 'TE': '#9D5B25',
     'CG': '#009645', 'CE': '#FA9E0D',
-    'BP': '#7B7B7B', 'SE': '#7B7B7B', 'PE': '#7B7B7B', 'PW': '#7B7B7B',
+    'BP': '#7B7B7B', 'SE': '#9C8B7A', 'PE': '#7BA09C', 'PW': '#7B9C8B',
   },
 
   lineNames: {
@@ -277,9 +277,10 @@ const MrtOverlay = {
     'NS': [[1, 28]], 'EW': [[1, 33]], 'CG': [[0, 2]],
     'NE': [[1, 17]], 'CC': [[1, 30]], 'CE': [[1, 2]],
     'DT': [[1, 35]], 'TE': [[1, 29]],
+    'BP': [[1, 14]], 'SE': [[1, 5]], 'PE': [[1, 7]], 'PW': [[1, 7]],
   },
 
-  loopLines: new Set(['CC']),
+  loopLines: new Set(['CC', 'BP', 'SE', 'PE', 'PW']),
 
   async toggle(map) {
     if (!map) return;
@@ -339,9 +340,11 @@ const MrtOverlay = {
           let latlngs = lineStations.map(s => [s.lat, s.lng]);
           if (isLoop) latlngs.push(latlngs[0]);
           const smooth = this.catmullRomSpline(latlngs, 12);
+          const isLrt = ['BP', 'SE', 'PE', 'PW'].includes(lineCode);
           this.layer.addLayer(L.polyline(smooth, {
-            color: lineColor, weight: 4, opacity: 0.7,
+            color: lineColor, weight: isLrt ? 2.5 : 4, opacity: isLrt ? 0.6 : 0.7,
             lineJoin: 'round', lineCap: 'round', smoothFactor: 1,
+            dashArray: isLrt ? '6 4' : null,
           }));
         }
       }

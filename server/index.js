@@ -383,22 +383,42 @@ function findDbStreets(roadName, town) {
 }
 
 /**
+ * GET /api/nearby-streets — Find nearby DB streets using Nominatim reverse geocoding
+ */
+app.get('/api/nearby-streets', async (req, res) => {
+  try {
+    const { lat, lng, town } = req.query;
+    if (!lat || !lng || !town) {
+      return res.status(400).json({ error: 'Missing lat, lng, or town parameter' });
+    }
+    const streets = await findNearbyStreets(parseFloat(lat), parseFloat(lng), town);
+    res.json({ streets, town, lat: parseFloat(lat), lng: parseFloat(lng) });
+  } catch (err) {
+    console.error('Error in /api/nearby-streets:', err);
+    res.status(500).json({ error: 'Failed to find nearby streets: ' + err.message });
+  }
+});
+
+/**
  * GET /api/area-overview — Main endpoint for area market overview
  */
 app.get('/api/area-overview', (req, res) => {
   try {
-    const { town, flat_type, street } = req.query;
+    const { town, flat_type, street, streets } = req.query;
     if (!town) return res.status(400).json({ error: 'Missing town parameter' });
 
     const townUpper = town.toUpperCase();
     const flatTypeFilter = flat_type && flat_type !== 'ALL' ? flat_type.toUpperCase() : null;
-    const streetFilter = street || null;
 
-    // Build street filter clause
+    // Build street filter — support both single street name or pre-resolved list
     let streetNames = [];
-    if (streetFilter) {
-      streetNames = findDbStreets(streetFilter, townUpper);
-      console.log(`[area-overview] street filter: "${streetFilter}" → matched ${streetNames.length} streets: ${streetNames.slice(0, 5).join(', ')}`);
+    if (streets) {
+      // Comma-separated list of DB street names (from nearby-streets)
+      streetNames = streets.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      console.log(`[area-overview] pre-resolved streets: ${streetNames.length} streets: ${streetNames.slice(0, 5).join(', ')}`);
+    } else if (street) {
+      streetNames = findDbStreets(street, townUpper);
+      console.log(`[area-overview] street filter: "${street}" → matched ${streetNames.length} streets: ${streetNames.slice(0, 5).join(', ')}`);
     }
 
     const streetClause = streetNames.length > 0
@@ -579,8 +599,75 @@ app.get('/api/area-overview', (req, res) => {
   }
 });
 
-// In-memory geocode cache: "BLOCK STREET_NAME" → { lat, lng }
+// In-memory caches
 const geocodeCache = new Map();
+const nearbyStreetsCache = new Map(); // "lat,lng" → { streets: [...], timestamp }
+
+// Find nearby streets by reverse-geocoding 8 compass points at ~200m radius via Nominatim
+async function findNearbyStreets(lat, lng, town) {
+  const cacheKey = `${lat},${lng}`;
+  const cached = nearbyStreetsCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 86400000) { // 24 hour cache
+    return cached.streets;
+  }
+
+  const townUpper = town.toUpperCase();
+  // 200m in degrees: ~0.0018 lat, ~0.00184 lng at Singapore's latitude
+  const offset = 0.0018;
+  const offsetLng = 0.00184;
+  const diagLat = offset / Math.SQRT2;
+  const diagLng = offsetLng / Math.SQRT2;
+
+  const directions = [
+    { label: 'N',  dlat: offset,   dlng: 0 },
+    { label: 'NE', dlat: diagLat,  dlng: diagLng },
+    { label: 'E',  dlat: 0,        dlng: offsetLng },
+    { label: 'SE', dlat: -diagLat, dlng: diagLng },
+    { label: 'S',  dlat: -offset,  dlng: 0 },
+    { label: 'SW', dlat: -diagLat, dlng: -diagLng },
+    { label: 'W',  dlat: 0,        dlng: -offsetLng },
+    { label: 'NW', dlat: diagLat,  dlng: -diagLng },
+  ];
+
+  // Run all 9 reverse geocodes in parallel (8 directions + center)
+  const allPoints = [
+    { label: 'center', dlat: 0, dlng: 0 },
+    ...directions,
+  ];
+  const results = await Promise.all(
+    allPoints.map(async (pt) => {
+      try {
+        const rlat = (lat + pt.dlat).toFixed(6);
+        const rlng = (lng + pt.dlng).toFixed(6);
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${rlat}&lon=${rlng}&format=json&zoom=18`;
+        const resp = await fetch(url, {
+          timeout: 8000,
+          headers: { 'User-Agent': 'WorthOrNot/1.0 (HDB resale app)' },
+        });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        return data.address?.road || null;
+      } catch (err) {
+        return null;
+      }
+    })
+  );
+  const roadNames = new Set(results.filter(Boolean));
+
+  // Match each road name to DB street names
+  const matchedStreets = new Set();
+  for (const road of roadNames) {
+    const dbMatches = findDbStreets(road, townUpper);
+    for (const s of dbMatches) {
+      matchedStreets.add(s);
+    }
+  }
+
+  const result = [...matchedStreets].slice(0, 5);
+  nearbyStreetsCache.set(cacheKey, { streets: result, timestamp: Date.now() });
+  console.log(`[nearby-streets] lat=${lat} lng=${lng} town=${town} → ${roadNames.size} Nominatim roads → ${result.length} DB matches: ${result.join(', ')}`);
+  return result;
+}
 
 // Expand HDB street abbreviations for better OneMap matching
 const streetAbbrevs = {

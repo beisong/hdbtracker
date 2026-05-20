@@ -102,12 +102,23 @@ const App = {
       this.currentTown = resolved.town;
       this.lastResolvedData = resolved;
 
-      // If postal code search, filter by nearby street
+      // If postal code search, find nearby streets via Nominatim reverse geocoding
       const isPostalCode = /^\d{6}$/.test(input);
+      let nearbyStreets = null;
+      if (isPostalCode && resolved.lat && resolved.lng) {
+        try {
+          const nearby = await API.getNearbyStreets(resolved.lat, resolved.lng, resolved.town);
+          if (nearby.streets && nearby.streets.length > 0) {
+            nearbyStreets = nearby.streets.join(",");
+          }
+        } catch (err) {
+          console.warn("Nearby streets lookup failed, falling back to single street:", err.message);
+        }
+      }
       this.currentStreet = (isPostalCode && resolved.road) ? resolved.road : null;
 
-      // Fetch area overview (with street filter for postal codes)
-      const data = await API.getAreaOverview(resolved.town, this.selectedFlatType, this.currentStreet);
+      // Fetch area overview (with nearby streets for postal codes)
+      const data = await API.getAreaOverview(resolved.town, this.selectedFlatType, this.currentStreet, nearbyStreets);
       const addressInfo = resolved.address ? ` (${resolved.address})` : '';
       this.renderResults(data, addressInfo);
 
@@ -284,7 +295,6 @@ const App = {
       });
     }
 
-    // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date-desc': return b.month.localeCompare(a.month) || b.resale_price - a.resale_price;

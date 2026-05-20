@@ -174,6 +174,54 @@ function matchRoadToTown(roadName) {
   return null;
 }
 
+// Fallback: match road name to town via database street names
+// Handles abbreviation mismatches (e.g. "JALAN TENAGA" vs DB's "JLN TENAGA")
+function matchRoadToTownViaDB(roadName) {
+  if (!roadName) return null;
+  const road = roadName.toUpperCase();
+
+  // Common Singapore road type words to strip — keep only the meaningful part
+  const stopWords = [
+    'JALAN', 'LORONG', 'STREET', 'ROAD', 'AVENUE', 'DRIVE', 'CRESCENT',
+    'COURT', 'PLACE', 'TERRACE', 'BUKIT', 'UPPER', 'LOWER', 'CENTRAL',
+    'PARK', 'SQUARE', 'GARDENS', 'HEIGHTS', 'CLOSE', 'WALK', 'LINK',
+    'RISE', 'VIEW', 'WAY', 'LANE', 'LOOP', 'NORTH', 'SOUTH', 'EAST', 'WEST',
+  ];
+
+  // Split road name into words, remove stop words and common connectors
+  const words = road.split(/\s+/).filter(w =>
+    w.length > 1 &&
+    !stopWords.includes(w) &&
+    !['THE', 'OF', 'AND', 'BLK', 'BLOCK'].includes(w)
+  );
+
+  if (words.length === 0) return null;
+
+  // Try each meaningful word as a LIKE query against street_name
+  for (const word of words) {
+    if (word.length < 3) continue; // Skip very short words
+    const result = db.prepare(`
+      SELECT DISTINCT town FROM transactions
+      WHERE UPPER(street_name) LIKE ?
+      LIMIT 1
+    `).get(`%${word}%`);
+    if (result) return result.town;
+  }
+
+  // Try pairs of words for better accuracy
+  for (let i = 0; i < words.length - 1; i++) {
+    const pair = `${words[i]}%${words[i + 1]}`;
+    const result = db.prepare(`
+      SELECT DISTINCT town FROM transactions
+      WHERE UPPER(street_name) LIKE ?
+      LIMIT 1
+    `).get(`%${pair}%`);
+    if (result) return result.town;
+  }
+
+  return null;
+}
+
 // ============================================================
 // API ROUTES
 // ============================================================
@@ -225,7 +273,9 @@ app.get('/api/resolve', async (req, res) => {
         return res.json({ resolved: false, input, message: 'Postal code not found' });
       }
 
-      const town = matchRoadToTown(result.road);
+      let town = matchRoadToTown(result.road);
+      if (!town) town = matchRoadToTownViaDB(result.road);
+      console.log(`[resolve] postal=${input} road="${result.road}" town=${town || 'NOT FOUND'}`);
       return res.json({
         resolved: !!town,
         input,

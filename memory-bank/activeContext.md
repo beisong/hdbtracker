@@ -12,6 +12,14 @@ The project is functional with core features working:
 - MRT station data available (`public/data/mrt_stations.json`)
 
 ## Recent Changes (based on codebase)
+- Added district code search (e.g., "D22", "District 16") with private property overview
+- Added `/api/private/district-summary` endpoint for showing private data on HDB town pages
+- Added `/api/private/district-overview` endpoint for full district search results
+- Added `TOWN_TO_DISTRICTS` / `DISTRICT_TO_TOWNS` mappings (26 towns, 28 districts)
+- Added district labels in autocomplete (`DISTRICT_LABELS` object, e.g., "D10 — Bukit Timah, Holland")
+- Private property summary card on HDB town pages (avg price, $/sqm, top projects)
+- Private property project markers on map when viewing HDB towns
+- Fixed `/api/towns` to properly filter out URA_PRIVATE records (uses `dataset_source != 'URA_PRIVATE'`)
 - Added URA private property support (`scripts/download_ura_data.py`, `/api/private/*` endpoints)
 - Added map feature (`public/js/map.js`)
 - Added nearby streets feature via Nominatim reverse geocoding

@@ -17,6 +17,11 @@
 - ✅ SPA frontend with Tailwind CSS + Chart.js
 - ✅ Cross-platform npm scripts (works on both Windows and macOS/Linux)
 - ✅ Mobile-responsive design (card layout, scrollable filters, responsive map/charts)
+- ✅ District code search (e.g., "D22", "District 16") showing private property overview
+- ✅ Town ↔ district mapping (TOWN_TO_DISTRICTS, DISTRICT_TO_TOWNS)
+- ✅ Private property summary on HDB town pages (avg price, $/sqm, top projects)
+- ✅ District labels in autocomplete (e.g., "D10 — Bukit Timah, Holland")
+- ✅ Private property markers on map when viewing HDB towns
 
 ## What's Left to Build / Improve
 - 🔲 Automated tests (no test framework configured)

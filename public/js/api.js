@@ -77,4 +77,20 @@ const API = {
     if (!resp.ok) throw new Error('Failed to fetch property types');
     return resp.json();
   },
+
+  // District summary for HDB town pages
+  async getDistrictSummary(districts) {
+    const params = new URLSearchParams({ districts: districts.join(',') });
+    const resp = await fetch(`${this.baseUrl}/api/private/district-summary?${params}`);
+    if (!resp.ok) throw new Error('Failed to get district summary');
+    return resp.json();
+  },
+
+  // Full district overview for district search
+  async getDistrictOverview(district) {
+    const params = new URLSearchParams({ district });
+    const resp = await fetch(`${this.baseUrl}/api/private/district-overview?${params}`);
+    if (!resp.ok) throw new Error('Failed to get district overview');
+    return resp.json();
+  },
 };

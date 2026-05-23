@@ -231,15 +231,92 @@ function matchRoadToTownViaDB(roadName) {
 // API ROUTES
 // ============================================================
 
+// ============================================================
+// DISTRICT ↔ TOWN MAPPINGS
+// ============================================================
+
+const TOWN_TO_DISTRICTS = {
+  'ANG MO KIO': ['20'],
+  'BEDOK': ['16'],
+  'BISHAN': ['11', '20'],
+  'BUKIT BATOK': ['23'],
+  'BUKIT MERAH': ['04'],
+  'BUKIT PANJANG': ['23'],
+  'BUKIT TIMAH': ['10', '21'],
+  'CENTRAL AREA': ['01', '02', '06', '07'],
+  'CHOA CHU KANG': ['23', '24'],
+  'CLEMENTI': ['05', '21'],
+  'GEYLANG': ['14'],
+  'HOUGANG': ['19', '28'],
+  'JURONG EAST': ['22'],
+  'JURONG WEST': ['22', '24'],
+  'KALLANG/WHAMPOA': ['08', '12', '13'],
+  'MARINE PARADE': ['15'],
+  'PASIR RIS': ['17', '18'],
+  'PUNGGOL': ['19', '28'],
+  'QUEENSTOWN': ['03', '05'],
+  'SEMBAWANG': ['27'],
+  'SENGKANG': ['19', '28'],
+  'SERANGOON': ['19'],
+  'TAMPINES': ['18'],
+  'TOA PAYOH': ['11', '12'],
+  'WOODLANDS': ['25', '26'],
+  'YISHUN': ['27'],
+};
+
+// Reverse mapping: district number → HDB towns
+const DISTRICT_TO_TOWNS = {};
+for (const [town, districts] of Object.entries(TOWN_TO_DISTRICTS)) {
+  for (const d of districts) {
+    if (!DISTRICT_TO_TOWNS[d]) DISTRICT_TO_TOWNS[d] = [];
+    if (!DISTRICT_TO_TOWNS[d].includes(town)) DISTRICT_TO_TOWNS[d].push(town);
+  }
+}
+
+// District descriptions for autocomplete
+const DISTRICT_LABELS = {
+  '01': 'D01 — Raffles Place, Marina',
+  '02': 'D02 — Tanjong Pagar, Shenton',
+  '03': 'D03 — Queenstown, Tiong Bahru',
+  '04': 'D04 — Telok Blangah, Harbourfront',
+  '05': 'D05 — Clementi, Dover',
+  '06': 'D06 — City Hall, Clarke Quay',
+  '07': 'D07 — Beach Road, Bugis',
+  '08': 'D08 — Farrer Park, Little India',
+  '09': 'D09 — Orchard, Cairnhill',
+  '10': 'D10 — Bukit Timah, Holland',
+  '11': 'D11 — Newton, Novena, Thomson',
+  '12': 'D12 — Balestier, Toa Payoh',
+  '13': 'D13 — Kallang, Macpherson',
+  '14': 'D14 — Geylang, Sims',
+  '15': 'D15 — Katong, Marine Parade, Joo Chiat',
+  '16': 'D16 — Bedok, Upper East Coast',
+  '17': 'D17 — Changi, Loyang',
+  '18': 'D18 — Tampines, Pasir Ris',
+  '19': 'D19 — Serangoon, Hougang, Punggol',
+  '20': 'D20 — Ang Mo Kio, Bishan',
+  '21': 'D21 — Upper Bukit Timah, Clementi Park',
+  '22': 'D22 — Jurong, Boon Lay, Tuas',
+  '23': 'D23 — Bukit Batok, Bukit Panjang, Choa Chu Kang',
+  '24': 'D24 — Lim Chu Kang, Tengah',
+  '25': 'D25 — Woodlands, Admiralty',
+  '26': 'D26 — Mandai, Upper Thomson',
+  '27': 'D27 — Yishun, Sembawang',
+  '28': 'D28 — Seletar, Sengkang',
+};
+
 /**
- * GET /api/towns — List all towns
+ * GET /api/towns — List all HDB towns + district labels for autocomplete
  */
 app.get('/api/towns', (req, res) => {
   try {
     const towns = db.prepare(`
-      SELECT DISTINCT town FROM transactions ORDER BY town
+      SELECT DISTINCT town FROM transactions
+      WHERE dataset_source != 'URA_PRIVATE'
+      ORDER BY town
     `).all().map(r => r.town);
-    res.json({ towns });
+    const districts = Object.values(DISTRICT_LABELS);
+    res.json({ towns, districts });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch towns' });
   }
@@ -1017,6 +1094,308 @@ app.get('/api/private/project-overview', (req, res) => {
   } catch (err) {
     console.error('Error in /api/private/project-overview:', err);
     res.status(500).json({ error: 'Failed to get project overview: ' + err.message });
+  }
+});
+
+/**
+ * GET /api/private/district-summary — Aggregate private property stats for districts
+ * Used by HDB town pages to show "Private Properties in This Area"
+ * Query: ?districts=16,17 (comma-separated district codes)
+ */
+app.get('/api/private/district-summary', (req, res) => {
+  try {
+    const { districts } = req.query;
+    if (!districts) return res.json({ found: false });
+
+    const districtList = districts.split(',').map(d => d.trim()).filter(d => d.length > 0);
+    if (districtList.length === 0) return res.json({ found: false });
+
+    const placeholders = districtList.map(() => '?').join(',');
+    const monthsAgo12 = monthsAgoStr(12);
+
+    // Aggregate stats for last 12 months
+    const summary = db.prepare(`
+      SELECT
+        COUNT(*) as total_transactions,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm), 0) as avg_psm,
+        MIN(resale_price) as min_price,
+        MAX(resale_price) as max_price
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE'
+        AND district IN (${placeholders})
+        AND resale_price IS NOT NULL
+        AND month >= ?
+    `).get(...districtList, monthsAgo12);
+
+    if (!summary || summary.total_transactions === 0) {
+      return res.json({ found: false });
+    }
+
+    // Top projects by transaction count (last 12 months)
+    const topProjects = db.prepare(`
+      SELECT
+        project,
+        street_name,
+        district,
+        market_segment,
+        COUNT(*) as tx_count,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm)) as avg_psm
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE'
+        AND district IN (${placeholders})
+        AND resale_price IS NOT NULL
+        AND month >= ?
+      GROUP BY project
+      ORDER BY tx_count DESC
+      LIMIT 10
+    `).all(...districtList, monthsAgo12);
+
+    // Prices by property type
+    const pricesByType = db.prepare(`
+      SELECT
+        flat_type as property_type,
+        COUNT(*) as count,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm)) as avg_psm,
+        ROUND(AVG(floor_area_sqm), 1) as avg_area
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE'
+        AND district IN (${placeholders})
+        AND resale_price IS NOT NULL
+        AND month >= ?
+      GROUP BY flat_type
+      ORDER BY avg_price
+    `).all(...districtList, monthsAgo12);
+
+    // Recent private transactions (last 12 months, limited)
+    const recentPrivateTx = db.prepare(`
+      SELECT
+        month, project, flat_type as property_type, floor_area_sqm,
+        resale_price, price_per_sqm, flat_model as tenure,
+        remaining_lease_years, storey_range, district, market_segment
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE'
+        AND district IN (${placeholders})
+        AND resale_price IS NOT NULL
+        AND month >= ?
+      ORDER BY month DESC, resale_price DESC
+      LIMIT 50
+    `).all(...districtList, monthsAgo12);
+
+    // Get project coordinates for map
+    const projectCoords = db.prepare(`
+      SELECT project, latitude, longitude
+      FROM project_coords
+      WHERE district IN (${placeholders})
+    `).all(...districtList);
+
+    res.json({
+      found: true,
+      districts: districtList,
+      summary: {
+        total_transactions: summary.total_transactions,
+        avg_price: summary.avg_price,
+        avg_psm: summary.avg_psm,
+        min_price: summary.min_price,
+        max_price: summary.max_price,
+      },
+      top_projects: topProjects,
+      prices_by_type: pricesByType,
+      recent_transactions: recentPrivateTx,
+      project_coords: projectCoords.filter(p => p.latitude && p.longitude),
+    });
+  } catch (err) {
+    console.error('Error in /api/private/district-summary:', err);
+    res.status(500).json({ error: 'Failed to get district summary: ' + err.message });
+  }
+});
+
+/**
+ * GET /api/private/district-overview — Full overview for a district search
+ * Returns private property data + HDB town data for the district
+ * Query: ?district=16
+ */
+app.get('/api/private/district-overview', (req, res) => {
+  try {
+    const { district } = req.query;
+    if (!district) return res.status(400).json({ error: 'Missing district parameter' });
+
+    const districtCode = district.padStart(2, '0');
+    const monthsAgo12 = monthsAgoStr(12);
+    const monthsAgo60 = monthsAgoStr(60);
+
+    // Private property aggregate stats
+    const privateSummary = db.prepare(`
+      SELECT
+        COUNT(*) as total_transactions,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm), 0) as avg_psm,
+        MIN(resale_price) as min_price,
+        MAX(resale_price) as max_price
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE'
+        AND district = ?
+        AND resale_price IS NOT NULL
+        AND month >= ?
+    `).get(districtCode, monthsAgo12);
+
+    if (!privateSummary || privateSummary.total_transactions === 0) {
+      return res.json({ found: false, district: districtCode });
+    }
+
+    // Top projects
+    const topProjects = db.prepare(`
+      SELECT
+        project, street_name, district, market_segment,
+        COUNT(*) as tx_count,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm)) as avg_psm,
+        ROUND(AVG(floor_area_sqm), 1) as avg_area,
+        MIN(month) as earliest,
+        MAX(month) as latest
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND district = ?
+        AND resale_price IS NOT NULL AND month >= ?
+      GROUP BY project
+      ORDER BY tx_count DESC
+      LIMIT 20
+    `).all(districtCode, monthsAgo12);
+
+    // Prices by property type
+    const pricesByType = db.prepare(`
+      SELECT
+        flat_type as property_type,
+        COUNT(*) as count,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm)) as avg_psm,
+        ROUND(AVG(floor_area_sqm), 1) as avg_area
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND district = ?
+        AND resale_price IS NOT NULL AND month >= ?
+      GROUP BY flat_type ORDER BY avg_price
+    `).all(districtCode, monthsAgo12);
+
+    // Price trend (last 60 months)
+    const trendData = db.prepare(`
+      SELECT
+        month, COUNT(*) as count,
+        ROUND(AVG(resale_price)) as avg_price,
+        ROUND(AVG(price_per_sqm), 0) as avg_psm
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND district = ?
+        AND resale_price IS NOT NULL AND month >= ?
+      GROUP BY month ORDER BY month ASC
+    `).all(districtCode, monthsAgo60);
+
+    // Calculate trend
+    let priceTrend = { '6m_change': 0, '1y_change': 0, '3y_change': 0, '5y_change': 0, direction: 'stable' };
+    if (trendData.length >= 2) {
+      const monthsAgo6 = monthsAgoStr(6);
+      const monthsAgo12m = monthsAgoStr(12);
+      const monthsAgo36 = monthsAgoStr(36);
+
+      const recent6m = trendData.filter(m => m.month >= monthsAgo6);
+      const recent12m = trendData.filter(m => m.month >= monthsAgo12m);
+      const recent36m = trendData.filter(m => m.month >= monthsAgo36);
+
+      if (recent6m.length >= 2) {
+        const first = recent6m[0].avg_price;
+        const last = recent6m[recent6m.length - 1].avg_price;
+        priceTrend['6m_change'] = Math.round((last - first) / first * 1000) / 10;
+      }
+      if (recent12m.length >= 2) {
+        const first = recent12m[0].avg_price;
+        const last = recent12m[recent12m.length - 1].avg_price;
+        priceTrend['1y_change'] = Math.round((last - first) / first * 1000) / 10;
+      }
+      if (recent36m.length >= 2) {
+        const first = recent36m[0].avg_price;
+        const last = recent36m[recent36m.length - 1].avg_price;
+        priceTrend['3y_change'] = Math.round((last - first) / first * 1000) / 10;
+      }
+      if (trendData.length >= 2) {
+        const first = trendData[0].avg_price;
+        const last = trendData[trendData.length - 1].avg_price;
+        priceTrend['5y_change'] = Math.round((last - first) / first * 1000) / 10;
+      }
+
+      if (priceTrend['1y_change'] > 2) priceTrend.direction = 'rising';
+      else if (priceTrend['1y_change'] < -2) priceTrend.direction = 'falling';
+    }
+
+    // Price distribution
+    const allPrices = db.prepare(`
+      SELECT resale_price FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND district = ?
+        AND resale_price IS NOT NULL AND month >= ?
+      ORDER BY resale_price ASC LIMIT 10000
+    `).all(districtCode, monthsAgo12).map(r => r.resale_price);
+
+    const pricePercentiles = {
+      p10: percentile(allPrices, 10),
+      p25: percentile(allPrices, 25),
+      p50: percentile(allPrices, 50),
+      p75: percentile(allPrices, 75),
+      p90: percentile(allPrices, 90),
+    };
+
+    const minPrice = allPrices.length > 0 ? allPrices[0] : 0;
+    const maxPrice = allPrices.length > 0 ? allPrices[allPrices.length - 1] : 0;
+    const binCount = 20;
+    const binWidth = Math.max(50000, Math.ceil((maxPrice - minPrice) / binCount / 50000) * 50000);
+    const bins = [];
+    const counts = [];
+    for (let i = 0; i <= binCount; i++) {
+      const binStart = Math.floor(minPrice / binWidth) * binWidth + i * binWidth;
+      bins.push(binStart);
+      const count = allPrices.filter(p => p >= binStart && p < binStart + binWidth).length;
+      counts.push(count);
+    }
+
+    // Recent transactions
+    const recentTransactions = db.prepare(`
+      SELECT
+        month, project, flat_type as property_type, floor_area_sqm,
+        resale_price, price_per_sqm, flat_model as tenure,
+        remaining_lease_years, storey_range
+      FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE' AND district = ?
+        AND resale_price IS NOT NULL
+      ORDER BY month DESC, resale_price DESC LIMIT 200
+    `).all(districtCode);
+
+    // Project coordinates for map
+    const projectCoords = db.prepare(`
+      SELECT project, street_name, latitude, longitude
+      FROM project_coords WHERE district = ?
+    `).all(districtCode);
+
+    // Related HDB towns
+    const relatedTowns = DISTRICT_TO_TOWNS[districtCode] || [];
+
+    // District label
+    const districtLabel = DISTRICT_LABELS[districtCode] || `D${districtCode}`;
+
+    res.json({
+      found: true,
+      district: districtCode,
+      district_label: districtLabel,
+      related_hdb_towns: relatedTowns,
+      summary: privateSummary,
+      top_projects: topProjects,
+      prices_by_type: pricesByType,
+      price_trend: priceTrend,
+      trend_data: trendData,
+      price_percentiles: pricePercentiles,
+      distribution: { bins, counts },
+      recent_transactions: recentTransactions,
+      project_coords: projectCoords.filter(p => p.latitude && p.longitude),
+    });
+  } catch (err) {
+    console.error('Error in /api/private/district-overview:', err);
+    res.status(500).json({ error: 'Failed to get district overview: ' + err.message });
   }
 });
 

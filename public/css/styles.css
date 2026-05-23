@@ -1,5 +1,14 @@
 /* WorthOrNot — Custom Styles */
 
+/* Hide scrollbar utility (for horizontal scroll areas) */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* Loading fade out */
 .loading-fade-out {
   opacity: 0;
@@ -35,9 +44,41 @@
 .scrollable-table-container {
   max-height: 700px;
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: rgba(59, 130, 246, 0.3) transparent;
 }
+
+/* Fixed-layout transaction table — prevents horizontal overflow */
+.scrollable-table-container table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.scrollable-table-container th,
+.scrollable-table-container td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Location column (2nd) — allow wrapping since it has the link */
+.scrollable-table-container td:nth-child(2),
+.scrollable-table-container th:nth-child(2) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Column widths: Date 9%, Location 26%, Type 13%, Floor 10%, Area 11%, Lease 8%, Price 12%, $/sqm 11% */
+.scrollable-table-container th:nth-child(1), .scrollable-table-container td:nth-child(1) { width: 9%; }
+.scrollable-table-container th:nth-child(2), .scrollable-table-container td:nth-child(2) { width: 26%; }
+.scrollable-table-container th:nth-child(3), .scrollable-table-container td:nth-child(3) { width: 13%; }
+.scrollable-table-container th:nth-child(4), .scrollable-table-container td:nth-child(4) { width: 10%; }
+.scrollable-table-container th:nth-child(5), .scrollable-table-container td:nth-child(5) { width: 11%; }
+.scrollable-table-container th:nth-child(6), .scrollable-table-container td:nth-child(6) { width: 8%; }
+.scrollable-table-container th:nth-child(7), .scrollable-table-container td:nth-child(7) { width: 12%; }
+.scrollable-table-container th:nth-child(8), .scrollable-table-container td:nth-child(8) { width: 11%; }
 
 .scrollable-table-container::-webkit-scrollbar {
   width: 6px;
@@ -54,6 +95,33 @@
 
 .scrollable-table-container::-webkit-scrollbar-thumb:hover {
   background: rgba(59, 130, 246, 0.5);
+}
+
+/* Mobile transaction cards */
+.tx-card {
+  background: rgba(51, 65, 85, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px;
+}
+.tx-card:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Scrollable cards container */
+.scrollable-cards-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.3) transparent;
+}
+.scrollable-cards-container::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollable-cards-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollable-cards-container::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 2px;
 }
 
 /* Smooth section reveal */
@@ -105,6 +173,7 @@ input[type="number"] {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 260px;
 }
 .dark-popup .leaflet-popup-tip {
   background: #1e293b;
@@ -117,6 +186,16 @@ input[type="number"] {
 }
 .dark-popup .leaflet-popup-close-button:hover {
   color: #f1f5f9 !important;
+}
+
+/* Mobile: smaller Leaflet popups */
+@media (max-width: 640px) {
+  .dark-popup .leaflet-popup-content-wrapper {
+    max-width: 200px;
+  }
+  .leaflet-popup-content {
+    min-width: unset !important;
+  }
 }
 
 /* Leaflet map controls dark theme */

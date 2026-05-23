@@ -16,6 +16,7 @@
 - ✅ Map visualization with transaction markers
 - ✅ SPA frontend with Tailwind CSS + Chart.js
 - ✅ Cross-platform npm scripts (works on both Windows and macOS/Linux)
+- ✅ Mobile-responsive design (card layout, scrollable filters, responsive map/charts)
 
 ## What's Left to Build / Improve
 - 🔲 Automated tests (no test framework configured)
@@ -28,6 +29,9 @@
 - 🔲 Rate limiting on API endpoints
 - 🔲 HTTPS support
 - 🔲 Deployment configuration
+
+## Recent Changes
+- Mobile responsiveness overhaul: transaction cards on mobile (replacing table), horizontally scrollable filter bar, responsive map height (280px mobile / 420px desktop), smaller chart tick limits on mobile, touch-friendly button sizes, safe-area-inset padding for footer, compact nav on mobile
 
 ## Known Issues
 1. **SQL injection**: `/api/private/project-overview` builds SQL with string interpolation for `property_type` filter

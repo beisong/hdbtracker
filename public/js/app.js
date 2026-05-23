@@ -390,15 +390,22 @@ const App = {
   },
 
   renderTransactionsTable(transactions) {
+    // Desktop table
     const tbody = document.getElementById('transactions-table');
     tbody.innerHTML = '';
 
+    // Mobile cards
+    const cardsContainer = document.getElementById('transactions-cards');
+    cardsContainer.innerHTML = '';
+
     if (!transactions || transactions.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-gray-500">No transactions match your filters</td></tr>`;
+      cardsContainer.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm">No transactions match your filters</div>`;
       return;
     }
 
     transactions.forEach(tx => {
+      // Desktop row
       const tr = document.createElement('tr');
       tr.className = 'border-b border-white/5 hover:bg-white/[0.02] transition-colors';
 
@@ -407,27 +414,55 @@ const App = {
       const leaseDisplay = tx.is_freehold ? '∞' : (tx.remaining_lease_years ? `${Math.round(tx.remaining_lease_years)}y` : '--');
 
       tr.innerHTML = `
-        <td class="py-2.5 pr-3 text-gray-400 whitespace-nowrap text-xs">${this.formatMonth(tx.month)}</td>
-        <td class="py-2.5 pr-3 whitespace-nowrap">
+        <td class="py-2.5 pr-2 text-gray-400 text-xs">${this.formatMonth(tx.month)}</td>
+        <td class="py-2.5 pr-2">
           <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"
-             class="text-brand-400 hover:text-brand-300 text-xs underline decoration-brand-400/30 hover:decoration-brand-300 transition-colors"
-             title="View on Google Maps">
+             class="block text-brand-400 hover:text-brand-300 text-xs underline decoration-brand-400/30 hover:decoration-brand-300 transition-colors"
+             title="${tx.block} ${tx.street_name || ''} — View on Google Maps">
             ${tx.block} ${tx.street_name || ''}
-            <svg class="w-3 h-3 inline -mt-0.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            <svg class="w-3 h-3 inline -mt-0.5 ml-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
         </td>
-        <td class="py-2.5 pr-3 whitespace-nowrap text-xs">
+        <td class="py-2.5 pr-2 text-xs">
           <span class="px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-300">${tx.flat_type}</span>
           ${tx.is_freehold !== undefined ? `<span class="ml-1 text-purple-300 text-[10px]">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
         </td>
-        <td class="py-2.5 pr-3 text-right text-gray-400 whitespace-nowrap text-xs">${tx.storey_range || '--'}</td>
-        <td class="py-2.5 pr-3 text-right whitespace-nowrap text-xs">${tx.floor_area_sqm} sqm</td>
-        <td class="py-2.5 pr-3 text-right text-gray-400 whitespace-nowrap text-xs">${leaseDisplay}</td>
-        <td class="py-2.5 pr-3 text-right font-semibold text-xs">$${this.formatNumber(tx.resale_price)}</td>
+        <td class="py-2.5 pr-2 text-right text-gray-400 text-xs">${tx.storey_range || '--'}</td>
+        <td class="py-2.5 pr-2 text-right text-xs">${tx.floor_area_sqm} sqm</td>
+        <td class="py-2.5 pr-2 text-right text-gray-400 text-xs">${leaseDisplay}</td>
+        <td class="py-2.5 pr-2 text-right font-semibold text-xs">$${this.formatNumber(tx.resale_price)}</td>
         <td class="py-2.5 text-right text-gray-400 text-xs">$${this.formatNumber(tx.price_per_sqm)}</td>
       `;
-
       tbody.appendChild(tr);
+
+      // Mobile card
+      const card = document.createElement('div');
+      card.className = 'tx-card';
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-2">
+          <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"
+             class="text-brand-400 hover:text-brand-300 text-sm font-medium underline decoration-brand-400/30 hover:decoration-brand-300 transition-colors leading-tight">
+            ${tx.block} ${tx.street_name || ''}
+            <svg class="w-3 h-3 inline -mt-0.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+          <span class="text-xs text-gray-500 whitespace-nowrap">${this.formatMonth(tx.month)}</span>
+        </div>
+        <div class="flex items-baseline justify-between mt-2">
+          <span class="text-lg font-bold">$${this.formatNumber(tx.resale_price)}</span>
+          <span class="text-xs text-gray-400">$${this.formatNumber(tx.price_per_sqm)}/sqm</span>
+        </div>
+        <div class="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
+          <span class="px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-300">${tx.flat_type}</span>
+          ${tx.is_freehold !== undefined ? `<span class="text-purple-300">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
+          <span>·</span>
+          <span>${tx.floor_area_sqm}sqm</span>
+          <span>·</span>
+          <span>Floor ${tx.storey_range || '--'}</span>
+          <span>·</span>
+          <span>Lease ${leaseDisplay}</span>
+        </div>
+      `;
+      cardsContainer.appendChild(card);
     });
   },
 

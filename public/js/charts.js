@@ -17,10 +17,15 @@ const Charts = {
     gray: '#64748b',
   },
 
+  isMobile() {
+    return window.innerWidth < 640;
+  },
+
   initDefaults() {
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
     Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+    Chart.defaults.font.size = this.isMobile() ? 10 : 11;
   },
 
   renderTrendChart(data) {
@@ -41,6 +46,8 @@ const Charts = {
     const trendColor = lastPrice >= firstPrice ? this.colors.green : this.colors.red;
     const trendBg = lastPrice >= firstPrice ? this.colors.greenLight : this.colors.redLight;
 
+    const mobile = this.isMobile();
+
     this.trendChart = new Chart(canvas, {
       type: 'line',
       data: {
@@ -52,7 +59,7 @@ const Charts = {
           backgroundColor: trendBg,
           fill: true,
           tension: 0.4,
-          pointRadius: 1.5,
+          pointRadius: mobile ? 0 : 1.5,
           pointHoverRadius: 5,
           pointBackgroundColor: trendColor,
           borderWidth: 2,
@@ -83,8 +90,8 @@ const Charts = {
           },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 11 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { callback: (val) => '$' + (val / 1000) + 'k', font: { size: 11 } } },
+          x: { grid: { display: false }, ticks: { maxTicksLimit: mobile ? 5 : 8 } },
+          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { callback: (val) => '$' + (val / 1000) + 'k', maxTicksLimit: mobile ? 4 : 8 } },
         },
       },
     });
@@ -105,6 +112,8 @@ const Charts = {
     const barColors = counts.map(c =>
       c === maxCount ? this.colors.brand : 'rgba(255, 255, 255, 0.08)'
     );
+
+    const mobile = this.isMobile();
 
     this.distributionChart = new Chart(canvas, {
       type: 'bar',
@@ -145,8 +154,8 @@ const Charts = {
           },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 10 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { font: { size: 11 } } },
+          x: { grid: { display: false }, ticks: { maxTicksLimit: mobile ? 5 : 10, font: { size: mobile ? 9 : 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { maxTicksLimit: mobile ? 4 : 8 } },
         },
       },
     });

@@ -687,6 +687,13 @@ const App = {
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
       const leaseDisplay = tx.is_freehold ? '∞' : (tx.remaining_lease_years ? `${Math.round(tx.remaining_lease_years)}y` : '--');
 
+      // Hover: highlight map marker
+      const addrKey = tx.is_private
+        ? (tx.block || '').toUpperCase()
+        : `${tx.block} ${tx.street_name || ''}`.trim().toUpperCase();
+      tr.addEventListener('mouseenter', () => TransactionMap.highlightAddress(addrKey));
+      tr.addEventListener('mouseleave', () => TransactionMap.unhighlight());
+
       tr.innerHTML = `
         <td class="py-2.5 pr-2 text-gray-400 text-xs">${this.formatMonth(tx.month)}</td>
         <td class="py-2.5 pr-2">
@@ -713,6 +720,8 @@ const App = {
       // Mobile card
       const card = document.createElement('div');
       card.className = 'tx-card';
+      card.addEventListener('mouseenter', () => TransactionMap.highlightAddress(addrKey));
+      card.addEventListener('mouseleave', () => TransactionMap.unhighlight());
       card.innerHTML = `
         <div class="flex items-start justify-between gap-2">
           <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"

@@ -11,6 +11,8 @@
 const TransactionMap = {
   map: null,
   markers: [],
+  addressMarkers: {},  // address key → { marker, originalStyle }
+  _highlightedMarker: null,
 
   loadPreGeocoded(transactions, lat, lng, resolvedData) {
     // For private projects: transactions all at same lat/lng, skip geocoding
@@ -166,6 +168,17 @@ const TransactionMap = {
       marker.bindPopup(popupHtml, { className: 'dark-popup', maxHeight: 280 });
 
       this.markers.push(marker);
+      this.addressMarkers[proj.project.toUpperCase()] = {
+        marker,
+        originalStyle: {
+          radius: Math.min(10, 5 + Math.sqrt(proj.tx_count || 1)),
+          fillColor: '#a855f7',
+          color: '#c084fc',
+          weight: 1.5,
+          opacity: 0.7,
+          fillOpacity: 0.7,
+        }
+      };
       bounds.push([proj.latitude, proj.longitude]);
     }
 
@@ -233,6 +246,8 @@ const TransactionMap = {
       this.map = null;
     }
     this.markers = [];
+    this.addressMarkers = {};
+    this._highlightedMarker = null;
 
     // Initialize Leaflet map with dark tiles
     this.map = L.map(container, {
@@ -349,6 +364,7 @@ const TransactionMap = {
       `;
       marker.bindPopup(popupContent, { className: 'dark-popup', maxHeight: 300 });
       this.markers.push(marker);
+      this.addressMarkers[addrKey] = { marker, originalStyle: { radius, fillColor: style.color, color: '#fff', weight: 1, opacity: 0.6, fillOpacity: 0.85 } };
       bounds.push([first.lat, first.lng]);
     }
 
@@ -419,6 +435,53 @@ const TransactionMap = {
 
     // Restore MRT layer if it was visible
     MrtOverlay.restoreIfNeeded(this.map);
+  },
+
+  highlightAddress(addressKey) {
+    this.unhighlight();
+    const entry = this.addressMarkers[addressKey];
+    if (!entry || !this.map) return;
+    const { marker, originalStyle } = entry;
+    // Enlarge and brighten
+    marker.setStyle({
+      radius: originalStyle.radius + 6,
+      fillColor: '#fbbf24',
+      color: '#fef08a',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 1,
+    });
+    marker.bringToFront();
+    marker.openPopup();
+    this._highlightedMarker = entry;
+  },
+
+  highlightProject(projectName) {
+    // For private projects stored by project name (block field)
+    this.unhighlight();
+    const key = projectName.toUpperCase();
+    const entry = this.addressMarkers[key];
+    if (!entry || !this.map) return;
+    const { marker, originalStyle } = entry;
+    marker.setStyle({
+      radius: originalStyle.radius + 6,
+      fillColor: '#fbbf24',
+      color: '#fef08a',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 1,
+    });
+    marker.bringToFront();
+    marker.openPopup();
+    this._highlightedMarker = entry;
+  },
+
+  unhighlight() {
+    if (!this._highlightedMarker) return;
+    const { marker, originalStyle } = this._highlightedMarker;
+    marker.setStyle(originalStyle);
+    marker.closePopup();
+    this._highlightedMarker = null;
   },
 
   getLeaseTier(remainingLeaseYears) {

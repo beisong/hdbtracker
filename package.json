@@ -6,8 +6,9 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "download": "venv\\Scripts\\python scripts/download_data.py",
-    "download-ura": "venv\\Scripts\\python scripts/download_ura_data.py"
+    "setup": "node scripts/run-python.js --setup",
+    "download": "node scripts/run-python.js scripts/download_data.py",
+    "download-ura": "node scripts/run-python.js scripts/download_ura_data.py"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",

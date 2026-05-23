@@ -15,6 +15,7 @@
 - ✅ Price percentiles (p10, p25, p50, p75, p90)
 - ✅ Map visualization with transaction markers
 - ✅ SPA frontend with Tailwind CSS + Chart.js
+- ✅ Cross-platform npm scripts (works on both Windows and macOS/Linux)
 
 ## What's Left to Build / Improve
 - 🔲 Automated tests (no test framework configured)
@@ -32,10 +33,10 @@
 1. **SQL injection**: `/api/private/project-overview` builds SQL with string interpolation for `property_type` filter
 2. **Memory leak potential**: Geocode cache (`Map`) has no size limit or eviction policy
 3. **No DB indexes**: Large queries may be slow without proper indexing
-4. **Windows-only scripts**: npm scripts use `venv\Scripts\python` (backslash)
 
 ## Evolution of Project Decisions
 - Started as HDB-only tool, later expanded to include URA private property data
 - Street matching evolved from simple prefix matching to multi-strategy system (exact → compressed → expanded → keyword)
 - Geocoding started with OneMap only, added Nominatim as fallback for better coverage
 - Added nearby streets feature using compass-point reverse geocoding for location-based filtering
+- npm scripts converted from Windows-only paths to cross-platform via `scripts/run-python.js` wrapper

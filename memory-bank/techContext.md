@@ -42,7 +42,7 @@
 ### Commands
 ```bash
 npm install          # Install Node.js dependencies
-pip install requests # Install Python dependency
+npm run setup        # Create Python venv + install deps (cross-platform)
 npm run download     # Download HDB data (~5-10 min, uses venv)
 npm run download-ura # Download URA private property data
 npm start            # Start server on port 3000
@@ -85,7 +85,7 @@ npm run dev          # Start with --watch for auto-reload
 | longitude | Longitude |
 
 ## Technical Constraints
-- **Windows-only npm scripts**: `venv\Scripts\python` (backslash paths)
+- **Cross-platform npm scripts**: `scripts/run-python.js` detects OS and uses correct venv path
 - **No build step**: Vanilla JS served directly
 - **No tests**: No test framework configured
 - **Single server file**: All ~1164 lines in `server/index.js`

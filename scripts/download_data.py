@@ -14,8 +14,6 @@ from datetime import datetime
 # Dataset IDs
 DATASETS = {
     'primary': 'd_8b84c4ee58e3cfc0ece0d773c8ca6abc',       # Jan 2017 - May 2026 (PRIMARY)
-    '2015_2016': 'd_ebc5ab87086db484f88045b47411ebc5',      # Jan 2015 - Dec 2016
-    '2012_2014': 'd_2d5ff9ea31397b66239f245f57751537',      # Mar 2012 - Dec 2014
 }
 
 API_BASE = 'https://data.gov.sg/api/action/datastore_search'
@@ -337,12 +335,6 @@ def main():
     primary_records = download_dataset(DATASETS['primary'], 'Primary (2017-2026)')
     if primary_records:
         records_by_dataset['primary_2017_2026'] = primary_records
-
-    # Download supplementary datasets
-    for key, name in [('2015_2016', '2015-2016'), ('2012_2014', '2012-2014')]:
-        records = download_dataset(DATASETS[key], name)
-        if records:
-            records_by_dataset[f'supplementary_{name}'] = records
 
     if not records_by_dataset:
         print("\n❌ No data downloaded. Exiting.")

@@ -43,6 +43,18 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Light/Dark Theme Toggle** (May 2026):
+  - Added CSS custom properties for popup styles (leaflet popups now theme-aware)
+  - Created `:root` (light mode) and `.dark` (dark mode) CSS variable overrides
+  - Anti-FOUC inline script in `<head>` reads `localStorage('theme')` before first paint
+  - Theme toggle button (sun/moon icons) in header, persisted to localStorage
+  - `App.initTheme()` / `App.toggleTheme()` in `app.js` — toggles `dark` class, re-renders charts and swaps map tiles
+  - Dynamic HTML in `app.js` uses `dark:` variants (e.g., `bg-gray-100 dark:bg-dark-700`)
+  - `Charts.rerender()` re-draws trend and distribution charts with theme-appropriate colors
+  - `TransactionMap.updateTheme()` swaps between CARTO light/dark tile layers
+  - Map popups use CSS variables (`--popup-price`, `--popup-muted`, `--popup-border`) for theme-aware styling
+  - All popup inline styles updated to use `var(--popup-*)` instead of hardcoded colors
+  - Autocomplete dropdown, error alerts, table rows all support both themes
 - **SEO Implementation** (May 2026):
   - Added SEO meta tags to `index.html`: description, keywords, canonical, Open Graph, Twitter cards, JSON-LD
   - Created `functions/[[path]].js` Cloudflare Pages Function for bot detection + edge-side meta injection

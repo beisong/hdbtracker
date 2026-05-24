@@ -13,6 +13,35 @@ const TransactionMap = {
   markers: [],
   addressMarkers: {},  // address key → { marker, originalStyle }
   _highlightedMarker: null,
+  _tileLayer: null,
+
+  isDark() {
+    return document.documentElement.classList.contains('dark');
+  },
+
+  /** Get CSS variable value for use in inline styles */
+  cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  },
+
+  /** Swap map tiles when theme changes */
+  updateTheme() {
+    if (!this.map) return;
+    if (this._tileLayer) {
+      this.map.removeLayer(this._tileLayer);
+    }
+    const dark = this.isDark();
+    const tileUrl = dark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    this._tileLayer = L.tileLayer(tileUrl, {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(this.map);
+    // Move tile layer to bottom
+    this._tileLayer.bringToBack();
+  },
 
   loadPreGeocoded(transactions, lat, lng, resolvedData) {
     // For private projects: transactions all at same lat/lng, skip geocoding
@@ -62,13 +91,14 @@ const TransactionMap = {
         addressGroups[key].push(tx);
       }
 
+      const popupBg = this.cssVar('--popup-border');
+
       // Add markers for each HDB address
       const bounds = [];
       for (const [addrKey, txList] of Object.entries(addressGroups)) {
         const first = txList[0];
         txList.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
         const recent = txList[0];
-        const psm = recent.price_per_sqm || 0;
 
         const marker = L.circleMarker([first.lat, first.lng], {
           radius: Math.min(10, 6 + txList.length * 0.3),
@@ -80,21 +110,21 @@ const TransactionMap = {
         }).addTo(this.map);
 
         const txRows = txList.slice(0, 10).map((tx, i) => `
-          <div style="padding:3px 0; ${i > 0 ? 'border-top:1px solid #334155;' : ''}">
+          <div style="padding:3px 0; ${i > 0 ? 'border-top:1px solid var(--popup-border);' : ''}">
             <div style="display:flex; justify-content:space-between;">
-              <span style="color:#94a3b8; font-size:10px;">${App.formatMonth(tx.month)}</span>
-              <span style="font-weight:600; color:#60a5fa; font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
+              <span style="color:var(--popup-muted); font-size:10px;">${App.formatMonth(tx.month)}</span>
+              <span style="font-weight:600; color:var(--popup-price); font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
             </div>
-            <div style="font-size:10px; color:#94a3b8;">${tx.flat_type} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
+            <div style="font-size:10px; color:var(--popup-muted);">${tx.flat_type} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
           </div>`).join('');
 
         marker.bindPopup(`
           <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:180px; max-height:250px; overflow-y:auto;">
             <div style="font-weight:700; font-size:12px; margin-bottom:2px;">🏠 ${addrKey}</div>
-            <div style="color:#94a3b8; font-size:10px; margin-bottom:4px;">HDB · ${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
+            <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">HDB · ${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
             ${txRows}
           </div>
-        `, { className: 'dark-popup', maxHeight: 250 });
+        `, { maxHeight: 250 });
 
         this.markers.push(marker);
         bounds.push([first.lat, first.lng]);
@@ -142,30 +172,30 @@ const TransactionMap = {
       let popupHtml = `
         <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:200px; max-height:280px; overflow-y:auto;">
           <div style="font-weight:700; font-size:12px; margin-bottom:2px; color:#a855f7;">🏢 ${proj.project}</div>
-          <div style="color:#94a3b8; font-size:10px; margin-bottom:4px;">${proj.street_name} · D${proj.district} · ${proj.market_segment}</div>
+          <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">${proj.street_name} · D${proj.district} · ${proj.market_segment}</div>
           <div style="display:flex; justify-content:space-between;">
             <span style="font-size:11px;">${proj.tx_count} transactions</span>
             <span style="font-weight:600; font-size:11px; color:#a855f7;">$${App.formatNumber(proj.avg_psm)}/sqm</span>
           </div>
-          <div style="font-size:10px; color:#94a3b8; margin-top:2px;">Avg: $${App.formatNumber(proj.avg_price)}</div>`;
+          <div style="font-size:10px; color:var(--popup-muted); margin-top:2px;">Avg: $${App.formatNumber(proj.avg_price)}</div>`;
 
       if (proj.recent_transactions && proj.recent_transactions.length > 0) {
-        popupHtml += `<div style="margin-top:6px; border-top:1px solid #334155; padding-top:6px;">`;
+        popupHtml += `<div style="margin-top:6px; border-top:1px solid var(--popup-border); padding-top:6px;">`;
         proj.recent_transactions.forEach((tx, i) => {
           popupHtml += `
-            <div style="padding:3px 0; ${i > 0 ? 'border-top:1px solid #1e293b;' : ''}">
+            <div style="padding:3px 0; ${i > 0 ? 'border-top:1px solid var(--popup-border);' : ''}">
               <div style="display:flex; justify-content:space-between;">
-                <span style="color:#94a3b8; font-size:10px;">${App.formatMonth(tx.month)}</span>
+                <span style="color:var(--popup-muted); font-size:10px;">${App.formatMonth(tx.month)}</span>
                 <span style="font-weight:600; color:#a855f7; font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
               </div>
-              <div style="font-size:10px; color:#94a3b8;">${tx.property_type || ''} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
+              <div style="font-size:10px; color:var(--popup-muted);">${tx.property_type || ''} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
             </div>`;
         });
         popupHtml += `</div>`;
       }
 
       popupHtml += `</div>`;
-      marker.bindPopup(popupHtml, { className: 'dark-popup', maxHeight: 280 });
+      marker.bindPopup(popupHtml, { maxHeight: 280 });
 
       this.markers.push(marker);
       this.addressMarkers[proj.project.toUpperCase()] = {
@@ -248,18 +278,16 @@ const TransactionMap = {
     this.markers = [];
     this.addressMarkers = {};
     this._highlightedMarker = null;
+    this._tileLayer = null;
 
-    // Initialize Leaflet map with dark tiles
+    // Initialize Leaflet map
     this.map = L.map(container, {
       zoomControl: true,
       scrollWheelZoom: true,
     }).setView([1.3521, 103.8198], 13);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(this.map);
+    // Add themed tiles
+    this.updateTheme();
 
     const bounds = [];
 
@@ -335,20 +363,20 @@ const TransactionMap = {
         fillOpacity: 0.85,
       }).addTo(this.map);
 
-      // Build popup with all transactions
+      // Build popup with all transactions using CSS variables
       const txRows = txList.map((tx, i) => {
-        const priceColor = i === 0 ? '#60a5fa' : '#cbd5e1';
+        const priceColor = i === 0 ? 'var(--popup-price)' : 'var(--popup-price-secondary)';
         return `
-          <div style="padding:4px 0; ${i > 0 ? 'border-top:1px solid #334155;' : ''}">
+          <div style="padding:4px 0; ${i > 0 ? 'border-top:1px solid var(--popup-border);' : ''}">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="color:#94a3b8; font-size:11px;">${App.formatMonth(tx.month)}</span>
+              <span style="color:var(--popup-muted); font-size:11px;">${App.formatMonth(tx.month)}</span>
               <span style="font-weight:700; color:${priceColor}; font-size:13px;">$${App.formatNumber(tx.resale_price)}</span>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
               <span>${tx.flat_type} · ${tx.floor_area_sqm}sqm</span>
               <span>$${App.formatNumber(tx.price_per_sqm)}/sqm</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:11px; color:#64748b;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--popup-muted);">
               <span>Floor: ${tx.storey_range || '--'}</span>
               <span>Lease: ${tx.remaining_lease_years ? Math.round(tx.remaining_lease_years) + 'y' : '--'}</span>
             </div>
@@ -358,11 +386,11 @@ const TransactionMap = {
       const popupContent = `
         <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:220px; max-height:300px; overflow-y:auto;">
           <div style="font-weight:700; font-size:13px; margin-bottom:2px;">${addrKey}</div>
-          <div style="color:#94a3b8; font-size:11px; margin-bottom:6px;">${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
+          <div style="color:var(--popup-muted); font-size:11px; margin-bottom:6px;">${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
           ${txRows}
         </div>
       `;
-      marker.bindPopup(popupContent, { className: 'dark-popup', maxHeight: 300 });
+      marker.bindPopup(popupContent, { maxHeight: 300 });
       this.markers.push(marker);
       this.addressMarkers[addrKey] = { marker, originalStyle: { radius, fillColor: style.color, color: '#fff', weight: 1, opacity: 0.6, fillOpacity: 0.85 } };
       bounds.push([first.lat, first.lng]);
@@ -403,13 +431,13 @@ const TransactionMap = {
       // If we saved private project transactions, show them in the pin popup
       if (privateProjectTxs && privateProjectTxs.length > 0) {
         pinPopupHtml += `
-          <div style="color:#94a3b8; font-size:11px; margin-top:4px; margin-bottom:6px;">${privateProjectTxs.length} transaction${privateProjectTxs.length > 1 ? 's' : ''}</div>`;
+          <div style="color:var(--popup-muted); font-size:11px; margin-top:4px; margin-bottom:6px;">${privateProjectTxs.length} transaction${privateProjectTxs.length > 1 ? 's' : ''}</div>`;
         privateProjectTxs.slice(0, 10).forEach((tx, i) => {
-          const priceColor = i === 0 ? '#a855f7' : '#cbd5e1';
+          const priceColor = i === 0 ? '#a855f7' : 'var(--popup-price-secondary)';
           pinPopupHtml += `
-            <div style="padding:4px 0; ${i > 0 ? 'border-top:1px solid #334155;' : ''}">
+            <div style="padding:4px 0; ${i > 0 ? 'border-top:1px solid var(--popup-border);' : ''}">
               <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:#94a3b8; font-size:11px;">${App.formatMonth(tx.month)}</span>
+                <span style="color:var(--popup-muted); font-size:11px;">${App.formatMonth(tx.month)}</span>
                 <span style="font-weight:700; color:${priceColor}; font-size:13px;">$${App.formatNumber(tx.resale_price)}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
@@ -421,7 +449,7 @@ const TransactionMap = {
       }
 
       pinPopupHtml += `</div>`;
-      postalMarker.bindPopup(pinPopupHtml, { className: 'dark-popup', maxHeight: 300 });
+      postalMarker.bindPopup(pinPopupHtml, { maxHeight: 300 });
 
       bounds.push([resolvedData.lat, resolvedData.lng]);
     }
@@ -649,9 +677,9 @@ const MrtOverlay = {
         <div style="font-family:Inter,system-ui,sans-serif;font-size:12px;line-height:1.5;min-width:160px;">
           <div style="font-weight:700;font-size:13px;margin-bottom:4px;">🚇 ${station.name}</div>
           <div style="margin-bottom:6px;">${badges}</div>
-          <div style="color:#94a3b8;font-size:11px;">Station codes: ${station.codes.join(' / ')}</div>
+          <div style="color:var(--popup-muted);font-size:11px;">Station codes: ${station.codes.join(' / ')}</div>
         </div>
-      `, { className: 'dark-popup' });
+      `);
 
       marker.bindTooltip(station.name, {
         permanent: false, direction: 'top', offset: [0, -6], className: 'mrt-tooltip',

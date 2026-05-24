@@ -5,6 +5,9 @@
 const Charts = {
   trendChart: null,
   distributionChart: null,
+  _lastTrendData: null,
+  _lastDistBins: null,
+  _lastDistCounts: null,
 
   colors: {
     brand: '#3b82f6',
@@ -21,19 +24,51 @@ const Charts = {
     return window.innerWidth < 640;
   },
 
+  isDark() {
+    return document.documentElement.classList.contains('dark');
+  },
+
+  getThemeColors() {
+    const dark = this.isDark();
+    return {
+      tooltipBg: dark ? '#1e293b' : '#ffffff',
+      tooltipTitle: dark ? '#94a3b8' : '#6b7280',
+      tooltipBody: dark ? '#ffffff' : '#111827',
+      tooltipBorder: dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+      gridColor: dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.06)',
+      textColor: dark ? '#94a3b8' : '#6b7280',
+      borderColor: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+      inactiveBar: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+    };
+  },
+
   initDefaults() {
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+    const tc = this.getThemeColors();
+    Chart.defaults.color = tc.textColor;
+    Chart.defaults.borderColor = tc.borderColor;
     Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
     Chart.defaults.font.size = this.isMobile() ? 10 : 11;
+  },
+
+  /** Re-render charts after theme change */
+  rerender() {
+    this.initDefaults();
+    if (this._lastTrendData) {
+      this.renderTrendChart(this._lastTrendData);
+    }
+    if (this._lastDistBins && this._lastDistCounts) {
+      this.renderDistributionChart(this._lastDistBins, this._lastDistCounts);
+    }
   },
 
   renderTrendChart(data) {
     const canvas = document.getElementById('trend-chart');
     if (!canvas) return;
 
+    this._lastTrendData = data;
     if (this.trendChart) this.trendChart.destroy();
 
+    const tc = this.getThemeColors();
     const labels = data.map(d => {
       const [y, m] = d.month.split('-');
       const date = new Date(parseInt(y), parseInt(m) - 1);
@@ -72,10 +107,10 @@ const Charts = {
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#1e293b',
-            titleColor: '#94a3b8',
-            bodyColor: '#ffffff',
-            borderColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: tc.tooltipBg,
+            titleColor: tc.tooltipTitle,
+            bodyColor: tc.tooltipBody,
+            borderColor: tc.tooltipBorder,
             borderWidth: 1,
             padding: 12,
             displayColors: false,
@@ -91,7 +126,7 @@ const Charts = {
         },
         scales: {
           x: { grid: { display: false }, ticks: { maxTicksLimit: mobile ? 5 : 8 } },
-          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { callback: (val) => '$' + (val / 1000) + 'k', maxTicksLimit: mobile ? 4 : 8 } },
+          y: { grid: { color: tc.gridColor }, ticks: { callback: (val) => '$' + (val / 1000) + 'k', maxTicksLimit: mobile ? 4 : 8 } },
         },
       },
     });
@@ -101,8 +136,11 @@ const Charts = {
     const canvas = document.getElementById('distribution-chart');
     if (!canvas) return;
 
+    this._lastDistBins = bins;
+    this._lastDistCounts = counts;
     if (this.distributionChart) this.distributionChart.destroy();
 
+    const tc = this.getThemeColors();
     const labels = bins.slice(0, counts.length).map((b, i) => {
       if (i < bins.length - 1) return `$${this.formatNumber(b / 1000)}k`;
       return '';
@@ -110,7 +148,7 @@ const Charts = {
 
     const maxCount = Math.max(...counts);
     const barColors = counts.map(c =>
-      c === maxCount ? this.colors.brand : 'rgba(255, 255, 255, 0.08)'
+      c === maxCount ? this.colors.brand : tc.inactiveBar
     );
 
     const mobile = this.isMobile();
@@ -134,10 +172,10 @@ const Charts = {
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#1e293b',
-            titleColor: '#94a3b8',
-            bodyColor: '#ffffff',
-            borderColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: tc.tooltipBg,
+            titleColor: tc.tooltipTitle,
+            bodyColor: tc.tooltipBody,
+            borderColor: tc.tooltipBorder,
             borderWidth: 1,
             padding: 12,
             displayColors: false,
@@ -155,7 +193,7 @@ const Charts = {
         },
         scales: {
           x: { grid: { display: false }, ticks: { maxTicksLimit: mobile ? 5 : 10, font: { size: mobile ? 9 : 10 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { maxTicksLimit: mobile ? 4 : 8 } },
+          y: { grid: { color: tc.gridColor }, ticks: { maxTicksLimit: mobile ? 4 : 8 } },
         },
       },
     });

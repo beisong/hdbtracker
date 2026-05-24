@@ -28,16 +28,19 @@
   <meta name="twitter:image" content="https://worthit.canlah.app/og-image.png">
   <!-- JSON-LD (replaced by edge function for bots, fallback for direct visits) -->
   <script type="application/ld+json" id="seo-jsonld">{"@context":"https://schema.org","@type":"WebSite","name":"WorthIt","url":"https://worthit.canlah.app/","description":"Singapore HDB & Property Resale Price Tracker"}</script>
+  <!-- Anti-FOUC: apply dark class before render -->
+  <script>
+    (function() {
+      var theme = localStorage.getItem('theme');
+      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
@@ -49,35 +52,47 @@
       }
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-dark-900 text-white font-sans min-h-screen">
+<body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white font-sans min-h-screen transition-colors duration-300">
 
   <!-- Loading Overlay -->
-  <div id="loading-overlay" class="fixed inset-0 bg-dark-900 z-50 flex items-center justify-center">
+  <div id="loading-overlay" class="fixed inset-0 bg-gray-50 dark:bg-dark-900 z-50 flex items-center justify-center">
     <div class="text-center">
       <div class="mb-4">
         <img src="/logo.png" alt="WorthIt" class="w-20 h-20 rounded-2xl mx-auto">
       </div>
-      <p class="text-gray-400">Loading data...</p>
-      <div class="mt-4 w-48 h-1 bg-dark-700 rounded-full mx-auto overflow-hidden">
+      <p class="text-gray-500 dark:text-gray-400">Loading data...</p>
+      <div class="mt-4 w-48 h-1 bg-gray-200 dark:bg-dark-700 rounded-full mx-auto overflow-hidden">
         <div id="loading-bar" class="h-full bg-brand-500 rounded-full transition-all duration-300" style="width: 0%"></div>
       </div>
     </div>
   </div>
 
   <!-- Navigation -->
-  <nav class="fixed top-0 w-full z-40 bg-dark-900/80 backdrop-blur-lg border-b border-white/5">
+  <nav class="fixed top-0 w-full z-40 bg-white/80 dark:bg-dark-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-white/5">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-14 sm:h-16">
         <div class="flex items-center gap-3">
           <div class="flex items-center" style="gap:0;">
             <img src="/logo.png" alt="W" class="w-9 h-9 rounded-lg">
-            <span class="text-lg font-bold" style="margin-left:-2px;">orthIt</span>
+            <span class="text-lg font-bold text-gray-900 dark:text-white" style="margin-left:-2px;">orthIt</span>
           </div>
-          <span class="text-xs text-gray-500 hidden sm:inline">HDB Market Overview</span>
+          <span class="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">HDB Market Overview</span>
         </div>
-        <div class="flex items-center gap-4">
-          <span id="data-status" class="text-xs text-gray-500"></span>
+        <div class="flex items-center gap-3">
+          <span id="data-status" class="text-xs text-gray-400 dark:text-gray-500"></span>
+          <!-- Theme Toggle -->
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+            <svg id="theme-icon-sun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -86,10 +101,10 @@
   <!-- Hero Section -->
   <section class="pt-20 sm:pt-24 pb-6 sm:pb-8 px-4">
     <div class="max-w-4xl mx-auto text-center">
-      <h1 class="text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-4 bg-gradient-to-r from-white via-brand-200 to-brand-400 bg-clip-text text-transparent">
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-4 bg-gradient-to-r from-gray-900 via-brand-500 to-brand-600 dark:from-white dark:via-brand-200 dark:to-brand-400 bg-clip-text text-transparent">
         HDB Area Market Overview
       </h1>
-      <p class="text-base sm:text-lg text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto">
+      <p class="text-base sm:text-lg text-gray-500 dark:text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto">
         Explore resale prices, trends, and recent transactions for any HDB town
       </p>
     </div>
@@ -98,23 +113,23 @@
   <!-- Search Section -->
   <section class="px-4 pb-6 sm:pb-8">
     <div class="max-w-3xl mx-auto">
-      <div class="bg-dark-800 rounded-2xl border border-white/5 p-4 sm:p-6 shadow-2xl">
+      <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-2xl shadow-gray-200/50 dark:shadow-black/50">
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <!-- Search Input -->
           <div class="flex-1 relative">
-            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input type="text" id="search-input" autocomplete="off" placeholder="Town, postal code, or project..."
-              class="w-full bg-dark-700 border border-white/10 rounded-xl pl-12 pr-4 py-3 sm:py-3.5 text-white text-base sm:text-lg placeholder-gray-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all">
-            <div id="autocomplete-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-dark-800 border border-white/10 rounded-xl shadow-2xl shadow-black/50 z-50 max-h-[320px] overflow-y-auto hidden"></div>
+              class="w-full bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 rounded-xl pl-12 pr-4 py-3 sm:py-3.5 text-gray-900 dark:text-white text-base sm:text-lg placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all">
+            <div id="autocomplete-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl shadow-gray-200/50 dark:shadow-black/50 z-50 max-h-[320px] overflow-y-auto hidden"></div>
           </div>
           <!-- Flat Type Toggle -->
           <div class="flex gap-2 items-center overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none sm:mx-0 sm:px-0 sm:flex-wrap">
-            <button type="button" data-value="ALL" class="flat-type-btn active shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-dark-700 border border-white/10 hover:border-brand-500/50 transition-all">All</button>
-            <button type="button" data-value="2 ROOM" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-dark-700 border border-white/10 hover:border-brand-500/50 transition-all">2 RM</button>
-            <button type="button" data-value="3 ROOM" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-dark-700 border border-white/10 hover:border-brand-500/50 transition-all">3 RM</button>
-            <button type="button" data-value="4 ROOM" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-dark-700 border border-white/10 hover:border-brand-500/50 transition-all">4 RM</button>
-            <button type="button" data-value="5 ROOM" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-dark-700 border border-white/10 hover:border-brand-500/50 transition-all">5 RM</button>
-            <button type="button" data-value="EXECUTIVE" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-dark-700 border border-white/10 hover:border-brand-500/50 transition-all">EXEC</button>
+            <button type="button" data-value="ALL" class="flat-type-btn active shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 transition-all">All</button>
+            <button type="button" data-value="2 ROOM" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 transition-all">2 RM</button>
+            <button type="button" data-value="3 ROOM" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 transition-all">3 RM</button>
+            <button type="button" data-value="4 ROOM" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 transition-all">4 RM</button>
+            <button type="button" data-value="5 ROOM" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 transition-all">5 RM</button>
+            <button type="button" data-value="EXECUTIVE" class="flat-type-btn shrink-0 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 transition-all">EXEC</button>
           </div>
         </div>
         <!-- Search button -->
@@ -137,17 +152,17 @@
     <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
       <!-- Town Header -->
-      <div class="bg-dark-800 rounded-2xl border border-white/5 p-4 sm:p-6 md:p-8 shadow-2xl">
+      <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 md:p-8 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h2 id="town-title" class="text-2xl sm:text-3xl md:text-4xl font-black">--</h2>
-            <p id="town-subtitle" class="text-sm sm:text-base text-gray-400 mt-1">--</p>
+            <p id="town-subtitle" class="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">--</p>
           </div>
           <div class="flex flex-wrap gap-2 sm:gap-3">
-            <div id="badge-trend" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-dark-700">
+            <div id="badge-trend" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-100 dark:bg-dark-700">
               <span class="w-2 h-2 rounded-full bg-gray-400"></span> --
             </div>
-            <div id="badge-volume" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-dark-700">
+            <div id="badge-volume" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-100 dark:bg-dark-700">
               <span class="w-2 h-2 rounded-full bg-brand-400"></span> --
             </div>
           </div>
@@ -156,20 +171,20 @@
 
       <!-- Stats Cards Row -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div class="bg-dark-800 rounded-xl border border-white/5 p-3 sm:p-4">
-          <div class="text-xs text-gray-500 mb-1">Median Price</div>
+        <div class="bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-white/5 p-3 sm:p-4">
+          <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Median Price</div>
           <div id="stat-median" class="text-lg sm:text-xl font-bold">--</div>
         </div>
-        <div class="bg-dark-800 rounded-xl border border-white/5 p-3 sm:p-4">
-          <div class="text-xs text-gray-500 mb-1">Median $/sqm</div>
+        <div class="bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-white/5 p-3 sm:p-4">
+          <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Median $/sqm</div>
           <div id="stat-psm" class="text-lg sm:text-xl font-bold">--</div>
         </div>
-        <div class="bg-dark-800 rounded-xl border border-white/5 p-3 sm:p-4">
-          <div class="text-xs text-gray-500 mb-1">Price Range</div>
+        <div class="bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-white/5 p-3 sm:p-4">
+          <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Price Range</div>
           <div id="stat-range" class="text-lg sm:text-xl font-bold">--</div>
         </div>
-        <div class="bg-dark-800 rounded-xl border border-white/5 p-3 sm:p-4">
-          <div class="text-xs text-gray-500 mb-1">Most Popular</div>
+        <div class="bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-white/5 p-3 sm:p-4">
+          <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Most Popular</div>
           <div id="stat-popular" class="text-lg sm:text-xl font-bold">--</div>
         </div>
       </div>
@@ -179,9 +194,9 @@
       </div>
 
       <!-- Private Property Summary (shown when viewing HDB towns) -->
-      <div id="private-summary-section" class="hidden mt-4 bg-dark-800/50 rounded-2xl border border-purple-500/20 p-4 sm:p-6">
+      <div id="private-summary-section" class="hidden mt-4 bg-purple-50 dark:bg-dark-800/50 rounded-2xl border border-purple-200 dark:border-purple-500/20 p-4 sm:p-6">
         <div class="flex items-center gap-2 mb-3">
-          <span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-xs font-semibold uppercase tracking-wider">🏢 Private Properties in This Area</span>
+          <span class="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-semibold uppercase tracking-wider">🏢 Private Properties in This Area</span>
         </div>
         <div id="private-summary-stats"></div>
         <div id="private-summary-projects" class="mt-3"></div>
@@ -189,16 +204,16 @@
 
       <!-- Charts Row -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div class="bg-dark-800 rounded-2xl border border-white/5 p-4 sm:p-6 shadow-xl">
+        <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
           <h3 class="text-base sm:text-lg font-semibold mb-1">Price Trend</h3>
-          <p class="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">Monthly average prices</p>
+          <p class="text-xs sm:text-sm text-gray-400 dark:text-gray-500 mb-3 sm:mb-4">Monthly average prices</p>
           <div class="relative h-48 sm:h-64">
             <canvas id="trend-chart"></canvas>
           </div>
         </div>
-        <div class="bg-dark-800 rounded-2xl border border-white/5 p-4 sm:p-6 shadow-xl">
+        <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
           <h3 class="text-base sm:text-lg font-semibold mb-1">Price Distribution</h3>
-          <p class="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">Transaction price histogram</p>
+          <p class="text-xs sm:text-sm text-gray-400 dark:text-gray-500 mb-3 sm:mb-4">Transaction price histogram</p>
           <div class="relative h-48 sm:h-64">
             <canvas id="distribution-chart"></canvas>
           </div>
@@ -206,19 +221,19 @@
       </div>
 
       <!-- Map Section -->
-      <div class="bg-dark-800 rounded-2xl border border-white/5 p-4 sm:p-6 shadow-xl">
+      <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
         <div class="flex items-center justify-between gap-2">
           <h3 class="text-base sm:text-lg font-semibold flex items-center gap-2">
             <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             Transaction Map
-            <span id="map-count" class="text-xs sm:text-sm font-normal text-gray-500"></span>
+            <span id="map-count" class="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-500"></span>
           </h3>
-          <button id="mrt-toggle-btn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-dark-700 border border-white/10 hover:border-brand-500/50 transition-all shrink-0">
+          <button id="mrt-toggle-btn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 transition-all shrink-0">
             <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
             <span id="mrt-toggle-label">Show MRT</span>
           </button>
         </div>
-        <div class="mb-3 sm:mb-4 text-xs text-gray-400">
+        <div class="mb-3 sm:mb-4 text-xs text-gray-500 dark:text-gray-400">
           <span>$/sqm compared to similar flats (same type & lease):</span>
           <div class="flex items-center gap-2 mt-2">
             <span class="shrink-0 flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#22c55e"></span> Good Value</span>
@@ -226,12 +241,12 @@
             <span class="shrink-0 flex items-center gap-1">Premium <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#ef4444"></span></span>
           </div>
         </div>
-        <div class="relative rounded-xl overflow-hidden border border-white/10 h-[280px] sm:h-[420px]">
+        <div class="relative rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 h-[280px] sm:h-[420px]">
           <div id="map-container" class="w-full h-full"></div>
-          <div id="map-loading" class="absolute inset-0 bg-dark-800/80 flex items-center justify-center z-[1000]">
+          <div id="map-loading" class="absolute inset-0 bg-white/80 dark:bg-dark-800/80 flex items-center justify-center z-[1000]">
             <div class="text-center">
               <svg class="animate-spin w-8 h-8 text-brand-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <p class="text-sm text-gray-400">Loading map...</p>
+              <p class="text-sm text-gray-400 dark:text-gray-400">Loading map...</p>
             </div>
           </div>
         </div>
@@ -239,85 +254,85 @@
 
       <!-- Percentiles + Town Summary -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div class="bg-dark-800 rounded-2xl border border-white/5 p-4 sm:p-6 shadow-xl">
+        <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
           <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
             <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             Price Percentiles
           </h3>
           <div class="space-y-3 sm:space-y-4">
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">10th Percentile</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">10th Percentile</span>
               <span id="p10" class="font-semibold">--</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">25th Percentile</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">25th Percentile</span>
               <span id="p25" class="font-semibold">--</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">Median (50th)</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">Median (50th)</span>
               <span id="p50" class="font-semibold text-brand-400">--</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">75th Percentile</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">75th Percentile</span>
               <span id="p75" class="font-semibold">--</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">90th Percentile</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">90th Percentile</span>
               <span id="p90" class="font-semibold">--</span>
             </div>
-            <hr class="border-white/5">
+            <hr class="border-gray-200 dark:border-white/5">
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">Trend 6m</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">Trend 6m</span>
               <span id="trend-6m" class="font-semibold">--</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">Trend 1Y</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">Trend 1Y</span>
               <span id="trend-1y" class="font-semibold">--</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">Trend 3Y</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">Trend 3Y</span>
               <span id="trend-3y" class="font-semibold">--</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-400">Trend 5Y</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">Trend 5Y</span>
               <span id="trend-5y" class="font-semibold">--</span>
             </div>
           </div>
         </div>
 
         <!-- Recent Transactions -->
-        <div class="lg:col-span-2 bg-dark-800 rounded-2xl border border-white/5 p-4 sm:p-6 shadow-xl overflow-hidden">
+        <div class="lg:col-span-2 bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50 overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 sm:mb-4">
             <h3 class="text-base sm:text-lg font-semibold flex items-center gap-2">
               <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
               Recent Transactions
-              <span id="tx-count" class="text-xs sm:text-sm font-normal text-gray-500"></span>
+              <span id="tx-count" class="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-500"></span>
             </h3>
           </div>
           <!-- Filter bar: horizontally scrollable on mobile, wrapping on desktop -->
           <div class="flex gap-2 mb-3 items-center overflow-x-auto pb-1 scrollbar-none -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap">
             <div class="relative shrink-0 w-[150px] sm:w-auto sm:flex-1 sm:min-w-[180px]">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               <input type="text" id="tx-search" placeholder="Search street, block..."
-                class="w-full bg-dark-700 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 sm:py-2 text-sm text-white placeholder-gray-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all">
+                class="w-full bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2.5 sm:py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all">
             </div>
-            <select id="tx-filter-type" class="shrink-0 bg-dark-700 border border-white/10 rounded-lg px-3 py-2.5 sm:py-2 text-sm text-gray-300 focus:border-brand-500 outline-none cursor-pointer">
+            <select id="tx-filter-type" class="shrink-0 bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-brand-500 outline-none cursor-pointer">
               <option value="">All Types</option>
             </select>
-            <select id="tx-filter-storey" class="shrink-0 bg-dark-700 border border-white/10 rounded-lg px-3 py-2.5 sm:py-2 text-sm text-gray-300 focus:border-brand-500 outline-none cursor-pointer">
+            <select id="tx-filter-storey" class="shrink-0 bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-brand-500 outline-none cursor-pointer">
               <option value="">All Floors</option>
               <option value="low">Low (01-06)</option>
               <option value="mid">Mid (07-18)</option>
               <option value="high">High (19+)</option>
             </select>
-            <select id="tx-filter-lease" class="shrink-0 bg-dark-700 border border-white/10 rounded-lg px-3 py-2.5 sm:py-2 text-sm text-gray-300 focus:border-brand-500 outline-none cursor-pointer">
+            <select id="tx-filter-lease" class="shrink-0 bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-brand-500 outline-none cursor-pointer">
               <option value="">All Lease</option>
               <option value="short">Short (< 60y)</option>
               <option value="med">Medium (60-80y)</option>
               <option value="long">Long (80-95y)</option>
               <option value="fresh">Fresh (95y+)</option>
             </select>
-            <select id="tx-sort" class="shrink-0 bg-dark-700 border border-white/10 rounded-lg px-3 py-2.5 sm:py-2 text-sm text-gray-300 focus:border-brand-500 outline-none cursor-pointer">
+            <select id="tx-sort" class="shrink-0 bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-brand-500 outline-none cursor-pointer">
               <option value="date-desc">Newest First</option>
               <option value="date-asc">Oldest First</option>
               <option value="price-desc">Price: High → Low</option>
@@ -333,8 +348,8 @@
           <!-- Desktop table (hidden on mobile) -->
           <div class="hidden sm:block -mx-4 sm:-mx-6 px-4 sm:px-6 scrollable-table-container">
             <table class="w-full text-sm">
-              <thead class="sticky top-0 bg-dark-800 z-10">
-                <tr class="text-left text-gray-500 border-b border-white/5">
+              <thead class="sticky top-0 bg-white dark:bg-dark-800 z-10">
+                <tr class="text-left text-gray-400 dark:text-gray-500 border-b border-gray-200 dark:border-white/5">
                   <th class="pb-3 pr-3 font-medium whitespace-nowrap">Date</th>
                   <th class="pb-3 pr-3 font-medium">Location</th>
                   <th class="pb-3 pr-3 font-medium whitespace-nowrap">Type</th>
@@ -357,49 +372,49 @@
   </section>
 
   <!-- SEO Content Section (visible, provides keyword-rich content for indexing) -->
-  <section id="seo-content" class="px-4 py-8 sm:py-12 mt-4 border-t border-white/5">
+  <section id="seo-content" class="px-4 py-8 sm:py-12 mt-4 border-t border-gray-200 dark:border-white/5">
     <article class="max-w-4xl mx-auto" itemscope itemtype="https://schema.org/WebPage">
-      <h2 class="text-xl font-bold mb-3 text-white">Check HDB Resale Prices & Property Transaction History in Singapore</h2>
-      <p class="text-sm text-gray-400 leading-relaxed mb-4">
-        WorthIt is a free Singapore property tool that helps you check <strong style="color:#60a5fa;">HDB resale prices</strong>,
+      <h2 class="text-xl font-bold mb-3 seo-heading">Check HDB Resale Prices & Property Transaction History in Singapore</h2>
+      <p class="text-sm seo-text leading-relaxed mb-4">
+        WorthIt is a free Singapore property tool that helps you check <strong class="seo-link">HDB resale prices</strong>,
         condo transaction records, and fair market value for any Housing & Development Board flat or private property.
-        Search by town name, postal code, or project name to instantly view <strong style="color:#60a5fa;">370,000+ resale transactions</strong>
+        Search by town name, postal code, or project name to instantly view <strong class="seo-link">370,000+ resale transactions</strong>
         from data.gov.sg and URA records.
       </p>
-      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;color:#e2e8f0;">How It Works</h3>
-      <ul style="font-size:0.875rem;color:#94a3b8;line-height:1.75;list-style:disc;padding-left:1.5rem;margin-bottom:1rem;">
-        <li><strong style="color:#cbd5e1;">Search</strong> any HDB town (Bedok, Tampines, Jurong, Bishan, etc.), postal code, or private condo project name</li>
-        <li><strong style="color:#cbd5e1;">View</strong> median resale prices, price trends over 5 years, price distributions, and percentiles (10th to 90th)</li>
-        <li><strong style="color:#cbd5e1;">Compare</strong> Deal Scores — color-coded markers showing whether each transaction is good value or premium-priced</li>
-        <li><strong style="color:#cbd5e1;">Explore</strong> an interactive map of recent transactions with MRT station overlays</li>
-        <li><strong style="color:#cbd5e1;">Analyze</strong> private property (condo, apartment) resale data by district with URA transaction records</li>
+      <h3 class="seo-subheading" style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">How It Works</h3>
+      <ul class="seo-text" style="font-size:0.875rem;line-height:1.75;list-style:disc;padding-left:1.5rem;margin-bottom:1rem;">
+        <li><strong class="seo-bold">Search</strong> any HDB town (Bedok, Tampines, Jurong, Bishan, etc.), postal code, or private condo project name</li>
+        <li><strong class="seo-bold">View</strong> median resale prices, price trends over 5 years, price distributions, and percentiles (10th to 90th)</li>
+        <li><strong class="seo-bold">Compare</strong> Deal Scores — color-coded markers showing whether each transaction is good value or premium-priced</li>
+        <li><strong class="seo-bold">Explore</strong> an interactive map of recent transactions with MRT station overlays</li>
+        <li><strong class="seo-bold">Analyze</strong> private property (condo, apartment) resale data by district with URA transaction records</li>
       </ul>
-      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;color:#e2e8f0;">Covered HDB Towns</h3>
-      <p style="font-size:0.875rem;color:#94a3b8;line-height:1.75;margin-bottom:1rem;">
+      <h3 class="seo-subheading" style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">Covered HDB Towns</h3>
+      <p class="seo-text" style="font-size:0.875rem;line-height:1.75;margin-bottom:1rem;">
         Ang Mo Kio, Bedok, Bishan, Bukit Batok, Bukit Merah, Bukit Panjang, Bukit Timah, Central Area,
         Choa Chu Kang, Clementi, Geylang, Hougang, Jurong East, Jurong West, Kallang/Whampoa,
         Marine Parade, Pasir Ris, Punggol, Queenstown, Sembawang, Sengkang, Serangoon, Tampines,
         Toa Payoh, Woodlands, Yishun — plus private properties across all 28 Singapore districts (D01–D28).
       </p>
-      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;color:#e2e8f0;">Data Sources</h3>
-      <p style="font-size:0.875rem;color:#94a3b8;line-height:1.625;">
-        Transaction data from <a href="https://data.gov.sg" style="color:#60a5fa;text-decoration:underline;">Housing & Development Board (HDB)</a>
-        via data.gov.sg and <strong style="color:#cbd5e1;">Urban Redevelopment Authority (URA)</strong> private property records.
-        Postal code geocoding by <a href="https://www.onemap.gov.sg" style="color:#60a5fa;text-decoration:underline;">OneMap Singapore</a>.
+      <h3 class="seo-subheading" style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">Data Sources</h3>
+      <p class="seo-text" style="font-size:0.875rem;line-height:1.625;">
+        Transaction data from <a href="https://data.gov.sg" class="seo-link" style="text-decoration:underline;">Housing & Development Board (HDB)</a>
+        via data.gov.sg and <strong class="seo-bold">Urban Redevelopment Authority (URA)</strong> private property records.
+        Postal code geocoding by <a href="https://www.onemap.gov.sg" class="seo-link" style="text-decoration:underline;">OneMap Singapore</a>.
         Updated monthly with the latest resale transaction records.
       </p>
     </article>
   </section>
 
   <!-- Footer -->
-  <footer class="border-t border-white/5 py-6 sm:py-8 px-4 mt-0 pb-[env(safe-area-inset-bottom,16px)]">
+  <footer class="border-t border-gray-200 dark:border-white/5 py-6 sm:py-8 px-4 mt-0 pb-[env(safe-area-inset-bottom,16px)]">
     <div class="max-w-7xl mx-auto text-center">
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
-        <span>Data from <a href="https://data.gov.sg" target="_blank" class="text-brand-400 hover:underline">Housing & Development Board</a>, data.gov.sg</span>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
+        <span>Data from <a href="https://data.gov.sg" target="_blank" class="text-brand-500 dark:text-brand-400 hover:underline">Housing & Development Board</a>, data.gov.sg</span>
         <span class="hidden sm:inline">•</span>
         <span id="last-updated">--</span>
         <span class="hidden sm:inline">•</span>
-        <span>Postal code lookup by <a href="https://www.onemap.gov.sg" target="_blank" class="text-brand-400 hover:underline">OneMap</a></span>
+        <span>Postal code lookup by <a href="https://www.onemap.gov.sg" target="_blank" class="text-brand-500 dark:text-brand-400 hover:underline">OneMap</a></span>
       </div>
     </div>
   </footer>

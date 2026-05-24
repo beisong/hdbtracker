@@ -16,6 +16,7 @@ const App = {
 
   async init() {
     Charts.initDefaults();
+    this.initTheme();
 
     try {
       this.setLoadingProgress(20);
@@ -192,6 +193,36 @@ const App = {
 
     // MRT toggle
     document.getElementById('mrt-toggle-btn').addEventListener('click', () => MrtOverlay.toggle(TransactionMap.map));
+
+    // Theme toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
+  },
+
+  initTheme() {
+    const isDark = document.documentElement.classList.contains('dark');
+    this.updateThemeIcons(isDark);
+  },
+
+  toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    this.updateThemeIcons(isDark);
+    // Re-render charts and map tiles
+    Charts.rerender();
+    TransactionMap.updateTheme();
+  },
+
+  updateThemeIcons(isDark) {
+    const sun = document.getElementById('theme-icon-sun');
+    const moon = document.getElementById('theme-icon-moon');
+    if (isDark) {
+      sun.classList.remove('hidden');
+      moon.classList.add('hidden');
+    } else {
+      sun.classList.add('hidden');
+      moon.classList.remove('hidden');
+    }
   },
 
   async search() {
@@ -360,7 +391,7 @@ const App = {
     const trendBadge = document.getElementById('badge-trend');
     const trendIcon = trend.direction === 'rising' ? '📈' : trend.direction === 'falling' ? '📉' : '➡️';
     const trendClass = trend.direction === 'rising' ? 'text-green-400' : trend.direction === 'falling' ? 'text-red-400' : 'text-amber-400';
-    trendBadge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-dark-700 ${trendClass}`;
+    trendBadge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-dark-700 ${trendClass}`;
     trendBadge.innerHTML = `${trendIcon} ${trend.direction.charAt(0).toUpperCase() + trend.direction.slice(1)} ${trend['1y_change'] >= 0 ? '+' : ''}${trend['1y_change']}% YoY`;
 
     // Volume badge
@@ -377,12 +408,12 @@ const App = {
     container.innerHTML = '';
     data.prices_by_type.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'bg-dark-700 rounded-xl border border-white/5 p-3 hover:border-brand-500/30 transition-colors cursor-default';
+      card.className = 'bg-gray-100 dark:bg-dark-700 rounded-xl border border-gray-200 dark:border-white/5 p-3 hover:border-brand-500/30 transition-colors cursor-default';
       card.innerHTML = `
-        <div class="text-xs text-gray-500 mb-1">${item.flat_type}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">${item.flat_type}</div>
         <div class="text-base font-bold">$${this.formatNumber(item.median_price)}</div>
         <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(item.median_psm)}/sqm</div>
-        <div class="text-xs text-gray-600 mt-1">${item.count} sales</div>
+        <div class="text-xs text-gray-600 dark:text-gray-500 mt-1">${item.count} sales</div>
       `;
       container.appendChild(card);
     });
@@ -489,20 +520,20 @@ const App = {
     document.getElementById('private-summary-stats').innerHTML = `
       <div class="flex items-center gap-4 flex-wrap">
         <div>
-          <div class="text-xs text-purple-300/60 uppercase tracking-wider">Avg Price</div>
-          <div class="text-lg font-bold text-purple-200">$${this.formatNumber(s.avg_price)}</div>
+          <div class="text-xs text-purple-500 dark:text-purple-300/60 uppercase tracking-wider">Avg Price</div>
+          <div class="text-lg font-bold text-purple-700 dark:text-purple-200">$${this.formatNumber(s.avg_price)}</div>
         </div>
         <div>
-          <div class="text-xs text-purple-300/60 uppercase tracking-wider">Avg $/sqm</div>
-          <div class="text-lg font-bold text-purple-200">$${this.formatNumber(s.avg_psm)}</div>
+          <div class="text-xs text-purple-500 dark:text-purple-300/60 uppercase tracking-wider">Avg $/sqm</div>
+          <div class="text-lg font-bold text-purple-700 dark:text-purple-200">$${this.formatNumber(s.avg_psm)}</div>
         </div>
         <div>
-          <div class="text-xs text-purple-300/60 uppercase tracking-wider">Transactions (12m)</div>
-          <div class="text-lg font-bold text-purple-200">${s.total_transactions.toLocaleString()}</div>
+          <div class="text-xs text-purple-500 dark:text-purple-300/60 uppercase tracking-wider">Transactions (12m)</div>
+          <div class="text-lg font-bold text-purple-700 dark:text-purple-200">${s.total_transactions.toLocaleString()}</div>
         </div>
         <div>
-          <div class="text-xs text-purple-300/60 uppercase tracking-wider">Price Range</div>
-          <div class="text-sm font-medium text-purple-200">$${this.formatNumber(s.min_price / 1000)}k – $${this.formatNumber(s.max_price / 1000)}k</div>
+          <div class="text-xs text-purple-500 dark:text-purple-300/60 uppercase tracking-wider">Price Range</div>
+          <div class="text-sm font-medium text-purple-700 dark:text-purple-200">$${this.formatNumber(s.min_price / 1000)}k – $${this.formatNumber(s.max_price / 1000)}k</div>
         </div>
       </div>
     `;
@@ -515,8 +546,8 @@ const App = {
         <div class="flex flex-wrap gap-2">
           ${data.top_projects.slice(0, 8).map(p => `
             <button onclick="document.getElementById('search-input').value='${p.project.replace(/'/g, "\\'")}';App.search();"
-              class="px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs hover:bg-purple-500/20 hover:border-purple-500/40 transition-colors cursor-pointer">
-              ${p.project} <span class="text-purple-300/50">${p.tx_count}</span>
+              class="px-2.5 py-1 rounded-lg bg-purple-100 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-700 dark:text-purple-300 text-xs hover:bg-purple-200 dark:hover:bg-purple-500/20 hover:border-purple-300 dark:hover:border-purple-500/40 transition-colors cursor-pointer">
+              ${p.project} <span class="text-purple-500 dark:text-purple-300/50">${p.tx_count}</span>
             </button>
           `).join('')}
         </div>
@@ -579,7 +610,7 @@ const App = {
     // District header with label
     document.getElementById('town-title').innerHTML =
       `<span class="inline-flex items-center gap-2">` +
-      `<span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-xs font-semibold uppercase tracking-wider">District</span>` +
+      `<span class="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-semibold uppercase tracking-wider">District</span>` +
       `${data.district_label}</span>`;
 
     const s = data.summary;
@@ -595,7 +626,7 @@ const App = {
     const trendBadge = document.getElementById('badge-trend');
     const trendIcon = trend.direction === 'rising' ? '📈' : trend.direction === 'falling' ? '📉' : '➡️';
     const trendClass = trend.direction === 'rising' ? 'text-green-400' : trend.direction === 'falling' ? 'text-red-400' : 'text-amber-400';
-    trendBadge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-dark-700 ${trendClass}`;
+    trendBadge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-dark-700 ${trendClass}`;
     trendBadge.innerHTML = `${trendIcon} ${trend.direction.charAt(0).toUpperCase() + trend.direction.slice(1)} ${trend['1y_change'] >= 0 ? '+' : ''}${trend['1y_change']}% YoY`;
 
     // Volume badge
@@ -612,13 +643,13 @@ const App = {
     container.innerHTML = '';
     data.prices_by_type.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'bg-dark-700 rounded-xl border border-purple-500/10 p-3 hover:border-purple-500/30 transition-colors cursor-default';
+      card.className = 'bg-gray-100 dark:bg-dark-700 rounded-xl border border-purple-500/10 p-3 hover:border-purple-500/30 transition-colors cursor-default';
       const bedEst = this.estimateBedrooms(item.avg_area, item.property_type);
       card.innerHTML = `
-        <div class="text-xs text-purple-300 mb-1">${item.property_type} <span class="text-purple-300/60">~${bedEst}</span></div>
+        <div class="text-xs text-purple-500 dark:text-purple-300 mb-1">${item.property_type} <span class="text-purple-400/60 dark:text-purple-300/60">~${bedEst}</span></div>
         <div class="text-base font-bold">$${this.formatNumber(item.avg_price)}</div>
         <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(item.avg_psm)}/sqm • ${item.avg_area} sqm</div>
-        <div class="text-xs text-gray-600 mt-1">${item.count} sales</div>
+        <div class="text-xs text-gray-600 dark:text-gray-500 mt-1">${item.count} sales</div>
       `;
       container.appendChild(card);
     });
@@ -798,7 +829,7 @@ const App = {
     transactions.forEach(tx => {
       // Desktop row
       const tr = document.createElement('tr');
-      tr.className = 'border-b border-white/5 hover:bg-white/[0.02] transition-colors';
+      tr.className = 'border-b border-gray-200 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors';
 
       const address = `${tx.block} ${tx.street_name || ''} Singapore`.trim();
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
@@ -822,9 +853,9 @@ const App = {
           </a>
         </td>
         <td class="py-2.5 pr-2 text-xs">
-          ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] mr-1">🏢</span>' : ''}
-          <span class="px-1.5 py-0.5 rounded ${tx.is_private ? 'bg-purple-500/10 text-purple-200' : 'bg-dark-600/50 text-gray-300'}">${tx.flat_type}</span>
-          ${tx.is_freehold !== undefined ? `<span class="ml-1 text-purple-300 text-[10px]">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
+          ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] mr-1">🏢</span>' : ''}
+          <span class="px-1.5 py-0.5 rounded ${tx.is_private ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-200' : 'bg-gray-200 dark:bg-dark-600/50 text-gray-600 dark:text-gray-300'}">${tx.flat_type}</span>
+          ${tx.is_freehold !== undefined ? `<span class="ml-1 text-purple-600 dark:text-purple-300 text-[10px]">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
         </td>
         <td class="py-2.5 pr-2 text-right text-gray-400 text-xs">${tx.storey_range || '--'}</td>
         <td class="py-2.5 pr-2 text-right text-xs">${tx.floor_area_sqm} sqm</td>
@@ -853,9 +884,9 @@ const App = {
           <span class="text-xs text-gray-400">$${this.formatNumber(tx.price_per_sqm)}/sqm</span>
         </div>
         <div class="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
-          ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px]">🏢 Private</span>' : ''}
-          <span class="px-1.5 py-0.5 rounded ${tx.is_private ? 'bg-purple-500/10 text-purple-200' : 'bg-dark-600/50 text-gray-300'}">${tx.flat_type}</span>
-          ${tx.is_freehold !== undefined ? `<span class="text-purple-300">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
+          ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px]">🏢 Private</span>' : ''}
+          <span class="px-1.5 py-0.5 rounded ${tx.is_private ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-200' : 'bg-gray-200 dark:bg-dark-600/50 text-gray-600 dark:text-gray-300'}">${tx.flat_type}</span>
+          ${tx.is_freehold !== undefined ? `<span class="text-purple-600 dark:text-purple-300">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
           <span>·</span>
           <span>${tx.floor_area_sqm}sqm</span>
           <span>·</span>
@@ -880,7 +911,7 @@ const App = {
     // Title with private badge
     document.getElementById('town-title').innerHTML =
       `<span class="inline-flex items-center gap-2">` +
-      `<span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-xs font-semibold uppercase tracking-wider">Private</span>` +
+      `<span class="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-semibold uppercase tracking-wider">Private</span>` +
       `${proj.project}${addressInfo}</span>`;
 
     // Subtitle
@@ -899,7 +930,7 @@ const App = {
     const trendBadge = document.getElementById('badge-trend');
     const trendIcon = trend.direction === 'rising' ? '📈' : trend.direction === 'falling' ? '📉' : '➡️';
     const trendClass = trend.direction === 'rising' ? 'text-green-400' : trend.direction === 'falling' ? 'text-red-400' : 'text-amber-400';
-    trendBadge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-dark-700 ${trendClass}`;
+    trendBadge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-dark-700 ${trendClass}`;
     trendBadge.innerHTML = `${trendIcon} ${trend.direction.charAt(0).toUpperCase() + trend.direction.slice(1)} ${trend['1y_change'] >= 0 ? '+' : ''}${trend['1y_change']}% YoY`;
 
     // Volume badge
@@ -916,13 +947,13 @@ const App = {
     container.innerHTML = '';
     data.prices_by_type.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'bg-dark-700 rounded-xl border border-purple-500/10 p-3 hover:border-purple-500/30 transition-colors cursor-default';
+      card.className = 'bg-gray-100 dark:bg-dark-700 rounded-xl border border-purple-500/10 p-3 hover:border-purple-500/30 transition-colors cursor-default';
       const bedEst = this.estimateBedrooms(item.avg_area, item.property_type);
       card.innerHTML = `
-        <div class="text-xs text-purple-300 mb-1">${item.property_type} <span class="text-purple-300/60">~${bedEst}</span></div>
+        <div class="text-xs text-purple-500 dark:text-purple-300 mb-1">${item.property_type} <span class="text-purple-400/60 dark:text-purple-300/60">~${bedEst}</span></div>
         <div class="text-base font-bold">$${this.formatNumber(item.avg_price)}</div>
         <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(item.avg_psm)}/sqm • ${item.avg_area} sqm</div>
-        <div class="text-xs text-gray-600 mt-1">${item.count} sales</div>
+        <div class="text-xs text-gray-600 dark:text-gray-500 mt-1">${item.count} sales</div>
       `;
       container.appendChild(card);
     });
@@ -1087,11 +1118,11 @@ const App = {
 
     dd.classList.remove('hidden');
     dd.innerHTML = this._acItems.map((item, i) => `
-      <div class="ac-item flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-white/5 transition-colors ${i === this._acIndex ? 'bg-white/5' : ''}"
+      <div class="ac-item flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/5 transition-colors ${i === this._acIndex ? 'bg-gray-100 dark:bg-white/5' : ''}"
           data-index="${i}" onmousedown="App.selectAc(${i})">
         <span class="text-sm shrink-0">${item.icon}</span>
         <div class="flex-1 min-w-0">
-          <div class="text-sm text-white truncate">${item.label}</div>
+          <div class="text-sm text-gray-900 dark:text-white truncate">${item.label}</div>
           ${item.sub ? `<div class="text-xs text-gray-500 truncate">${item.sub}</div>` : ''}
         </div>
         <span class="text-[10px] px-1.5 py-0.5 rounded ${item.type === 'town' ? 'bg-brand-500/10 text-brand-400' : item.type === 'district' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400'}">${item.type}</span>
@@ -1159,7 +1190,7 @@ const App = {
   showAlert(message) {
     document.querySelectorAll('.app-alert').forEach(el => el.remove());
     const alert = document.createElement('div');
-    alert.className = 'app-alert fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-dark-800 border border-red-500/30 text-red-300 px-6 py-3 rounded-xl shadow-lg text-sm font-medium';
+    alert.className = 'app-alert fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-dark-800 border border-red-500/30 text-red-600 dark:text-red-300 px-6 py-3 rounded-xl shadow-lg text-sm font-medium';
     alert.textContent = message;
     document.body.appendChild(alert);
     setTimeout(() => {

@@ -9,7 +9,11 @@
     "setup": "node scripts/run-python.js --setup",
     "download": "node scripts/run-python.js scripts/download_data.py && node scripts/run-python.js scripts/download_ura_data.py",
     "download-hdb": "node scripts/run-python.js scripts/download_data.py",
-    "download-ura": "node scripts/run-python.js scripts/download_ura_data.py"
+    "download-ura": "node scripts/run-python.js scripts/download_ura_data.py",
+    "deploy:frontend": "npx wrangler pages deploy public --project-name=worthit",
+    "deploy:api": "fly deploy",
+    "deploy:data": "node scripts/run-python.js scripts/download_data.py && fly ssh sftp put server/db/resale.db /data/resale.db && fly machines restart",
+    "deploy": "fly deploy && npx wrangler pages deploy public --project-name=worthit"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",

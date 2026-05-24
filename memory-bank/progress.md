@@ -25,7 +25,7 @@
 **Architecture:**
 ```
 localhost:3000       → Express serves both frontend + API (local dev)
-hdbtracker.pages.dev → Cloudflare Pages (static) — pending
+worthit.pages.dev    → Cloudflare Pages (static) — ✅ LIVE
 worthit-api.fly.dev  → Fly.io (Express API + SQLite) — ✅ LIVE
 ```
 
@@ -40,14 +40,15 @@ worthit-api.fly.dev  → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Server graceful startup without database
 - ✅ README with full deployment guide and debugging commands
 - ✅ `.gitignore` updated with `fly.ssh*`
+- ✅ Frontend deployed to Cloudflare Pages via `npx wrangler pages deploy public --project-name=worthit`
 
 **Remaining:**
 - 🔲 Push to GitHub
-- 🔲 Deploy frontend to Cloudflare Pages (connect repo, output dir: `public`)
 - 🔲 Configure custom domain (optional)
 
 **Key commands:**
 - Deploy API: `fly deploy`
+- Deploy Frontend: `npx wrangler pages deploy public --project-name=worthit`
 - Seed DB: `python scripts/download_data.py` → `fly ssh sftp put server/db/resale.db /data/resale.db` → `fly machine restart <id>`
 - Update monthly: Re-run download locally → re-upload via SFTP
 

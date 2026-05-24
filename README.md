@@ -149,13 +149,31 @@ fly machine restart <machine-id>
 
 ## Deploy Frontend to Cloudflare Pages
 
+### CLI Deploy (Recommended)
+
+```bash
+npx wrangler pages deploy public --project-name=worthit
+```
+
+First run will prompt browser authentication. This uploads `public/` and gives you a live URL (e.g., `https://worthit.pages.dev`).
+
+### Alternative: GitHub-connected (Auto-deploys on push)
+
 1. Push code to GitHub
 2. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → Workers & Pages → Create
 3. Connect your GitHub repo
 4. Settings:
+   - **Framework preset**: None
    - **Build command**: leave empty
    - **Build output directory**: `public`
 5. Deploy
+
+### Update Frontend
+
+```bash
+# Re-deploy after changes
+npx wrangler pages deploy public --project-name=worthit
+```
 
 The frontend auto-connects to the Fly.io API via `config.js`.
 

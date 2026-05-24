@@ -3,12 +3,12 @@
 ## Current State
 The project is fully deployed and functional:
 - **Backend API**: Running on Fly.io at `worthit-api.fly.dev` — 370K transactions, data through May 2026
-- **Frontend**: Ready for Cloudflare Pages deployment (static files in `public/`)
+- **Frontend**: ✅ Deployed to Cloudflare Pages via `npx wrangler pages deploy public --project-name=worthit`
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
 ## Deployment Architecture
-- **Frontend**: Cloudflare Pages (static HTML/JS/CSS from `public/`) — pending
+- **Frontend**: Cloudflare Pages (`npx wrangler pages deploy public --project-name=worthit`) — ✅ LIVE
 - **Backend API**: Fly.io (`worthit-api`) with 1GB persistent volume
 - **Database**: SQLite on Fly.io volume, seeded locally and uploaded via `fly ssh sftp put`
 - **Config**: `public/config.js` auto-detects localhost → same-origin, else → `https://worthit-api.fly.dev`
@@ -27,16 +27,18 @@ The project is fully deployed and functional:
 
 ## Remaining Steps
 - 🔲 Push to GitHub
-- 🔲 Deploy frontend to Cloudflare Pages (connect repo, output dir: `public`)
 - 🔲 Configure custom domain (optional)
 
 ## Key Commands
 - **Deploy API**: `fly deploy`
+- **Deploy Frontend**: `npx wrangler pages deploy public --project-name=worthit`
 - **Seed DB**: Build locally → `fly ssh sftp put server/db/resale.db /data/resale.db` → `fly machine restart <id>`
 - **Update data monthly**: Re-run `python scripts/download_data.py` locally → re-upload via SFTP
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- Frontend deployed to Cloudflare Pages via wrangler CLI
+- README updated with Cloudflare Pages CLI deployment instructions
 - Fixed server crash on missing database (graceful startup)
 - Removed duplicate `/api/status` route
 - `/api/status` now shows transaction count and latest month

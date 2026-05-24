@@ -15,71 +15,50 @@
 - ✅ Price percentiles (p10, p25, p50, p75, p90)
 - ✅ Map visualization with transaction markers
 - ✅ SPA frontend with Tailwind CSS + Chart.js
-- ✅ Cross-platform npm scripts (works on both Windows and macOS/Linux)
-- ✅ Mobile-responsive design (card layout, scrollable filters, responsive map/charts)
-- ✅ District code search (e.g., "D22", "District 16") showing private property overview
-- ✅ Town ↔ district mapping (TOWN_TO_DISTRICTS, DISTRICT_TO_TOWNS)
-- ✅ Private property summary on HDB town pages (avg price, $/sqm, top projects)
-- ✅ District labels in autocomplete (e.g., "D10 — Bukit Timah, Holland")
-- ✅ Private property markers on map when viewing HDB towns
+- ✅ Mobile-responsive design
+- ✅ District code search with private property overview
+- ✅ Town ↔ district mapping
+- ✅ Server graceful startup without database
 
-## Deployment — Split Architecture (Frontend / Backend)
+## Deployment Status
 
 **Architecture:**
 ```
-yourdomain.com       → Cloudflare Pages (static HTML/JS/CSS)
-api.yourdomain.com   → Fly.io (Express API + SQLite)
+localhost:3000       → Express serves both frontend + API (local dev)
+hdbtracker.pages.dev → Cloudflare Pages (static) — pending
+worthit-api.fly.dev  → Fly.io (Express API + SQLite) — ✅ LIVE
 ```
 
-**Infrastructure Setup (done):**
-- ✅ Create `Dockerfile` (Node.js + Python for data scripts)
-- ✅ Create `fly.toml` (Fly.io config with persistent volume mount)
-- ✅ Create `.dockerignore`
-- ✅ Make SQLite DB path configurable via env var (`DB_PATH`) in server + Python scripts
-- ✅ URA access key reads from env var (works with `fly secrets`)
+**Completed:**
+- ✅ Dockerfile, fly.toml, .dockerignore
+- ✅ API_BASE config in `public/config.js` (auto-detects environment)
+- ✅ CORS configured for cross-origin requests
+- ✅ Fly.io app deployed (`worthit-api`)
+- ✅ Database seeded (370K transactions, data through May 2026)
+  - Built locally, uploaded via `fly ssh sftp put`
+  - Fly.io free tier (256MB RAM) can't run Python download scripts
+- ✅ Server graceful startup without database
+- ✅ README with full deployment guide and debugging commands
+- ✅ `.gitignore` updated with `fly.ssh*`
 
-**Step 1 — Code Changes (done):**
-- ✅ Add `API_BASE` config to frontend JS (auto-detects localhost vs production)
-- ✅ Create `public/config.js` with environment-aware API URL
-- ✅ Add config script to `index.html` (loads before `api.js`)
-- ✅ Update `server/index.js` CORS for cross-origin requests (Cloudflare Pages, fly.dev, pages.dev)
-- ✅ Update Dockerfile to not copy `public/` folder
-- ✅ Update `.dockerignore` to exclude `public/`
-- ✅ Rename Fly.io app to `worthit-api`
+**Remaining:**
+- 🔲 Push to GitHub
+- 🔲 Deploy frontend to Cloudflare Pages (connect repo, output dir: `public`)
+- 🔲 Configure custom domain (optional)
 
-**Step 2 — Deploy Backend to Fly.io (user runs manually):**
-- 🔲 `fly apps create worthit-api`
-- 🔲 `fly volumes create data --size 1 --region sin`
-- 🔲 `fly secrets set ONEMAP_TOKEN=... URA_API_ACCESS_KEY=...`
-- 🔲 `fly deploy`
-- 🔲 SSH in and run data download scripts
-- 🔲 Verify: `curl https://worthit-api.fly.dev/api/status`
-
-**Step 3 — Deploy Frontend to Cloudflare Pages (user via dashboard):**
-- 🔲 Cloudflare → Pages → Create project → Connect GitHub repo
-- 🔲 Set build output directory to `public`
-- 🔲 No build command needed (static files)
-- 🔲 Verify: `https://hdbtracker.pages.dev` works
-
-**Step 4 — Custom Domain (user):**
-- 🔲 Purchase domain on Porkbun
-- 🔲 Porkbun DNS: `api.yourdomain.com` CNAME → `worthit-api.fly.dev`
-- 🔲 Porkbun DNS: `yourdomain.com` CNAME → `hdbtracker.pages.dev`
-- 🔲 `fly certs add api.yourdomain.com`
-- 🔲 Cloudflare Pages → Custom domain → add `yourdomain.com`
+**Key commands:**
+- Deploy API: `fly deploy`
+- Seed DB: `python scripts/download_data.py` → `fly ssh sftp put server/db/resale.db /data/resale.db` → `fly machine restart <id>`
+- Update monthly: Re-run download locally → re-upload via SFTP
 
 ## What's Left to Build / Improve
-- 🔲 Automated tests (no test framework configured)
-- 🔲 SQL injection fix in `/api/private/project-overview` (string interpolation)
+- 🔲 Automated tests
+- 🔲 SQL injection fix in `/api/private/project-overview`
 - 🔲 Input validation/sanitization across all endpoints
 - 🔲 Geocode cache size limits (prevent memory leak)
 - 🔲 Database indexes for query performance
 - 🔲 Server refactor (split monolithic `server/index.js` into modules)
-- 🔲 Error handling improvements (consistent error responses)
 - 🔲 Rate limiting on API endpoints
-
-## Recent Changes
-- Mobile responsiveness overhaul: transaction cards on mobile (replacing table), horizontally scrollable filter bar, responsive map height (280px mobile / 420px desktop), smaller chart tick limits on mobile, touch-friendly button sizes, safe-area-inset padding for footer, compact nav on mobile
 
 ## Known Issues
 1. **SQL injection**: `/api/private/project-overview` builds SQL with string interpolation for `property_type` filter
@@ -88,7 +67,7 @@ api.yourdomain.com   → Fly.io (Express API + SQLite)
 
 ## Evolution of Project Decisions
 - Started as HDB-only tool, later expanded to include URA private property data
-- Street matching evolved from simple prefix matching to multi-strategy system (exact → compressed → expanded → keyword)
-- Geocoding started with OneMap only, added Nominatim as fallback for better coverage
-- Added nearby streets feature using compass-point reverse geocoding for location-based filtering
-- npm scripts converted from Windows-only paths to cross-platform via `scripts/run-python.js` wrapper
+- Street matching evolved from simple prefix matching to multi-strategy system
+- Geocoding: OneMap primary + Nominatim fallback
+- npm scripts use cross-platform `scripts/run-python.js` wrapper
+- DB seeding: tried SSH + Python on Fly.io → OOM kill → switched to local build + SFTP upload

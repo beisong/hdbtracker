@@ -44,17 +44,43 @@ let uraTokenExpiry = 0;
 
 // Open database
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'db', 'resale.db');
-let db;
+let db = null;
 
 try {
   db = new Database(DB_PATH, { readonly: true });
   db.pragma('journal_mode = WAL');
   console.log(`✅ Connected to database: ${DB_PATH}`);
 } catch (err) {
-  console.error(`❌ Failed to open database: ${err.message}`);
-  console.error(`   Run "npm run download" first to download data.`);
-  process.exit(1);
+  console.warn(`⚠️  Database not found at ${DB_PATH}`);
+  console.warn(`   Run download scripts via SSH to populate it.`);
+  console.warn(`   Server will start but API endpoints will return errors until DB is ready.`);
 }
+
+// Health check (always responds, even without DB — must be before the DB middleware)
+app.get('/api/status', (req, res) => {
+  if (db) {
+    try {
+      const count = db.prepare('SELECT COUNT(*) as count FROM transactions').get().count;
+      const latestMonth = db.prepare('SELECT MAX(month) as m FROM transactions').get().m;
+      res.json({ status: 'ok', total_transactions: count, latest_month: latestMonth, db_path: DB_PATH });
+    } catch (err) {
+      res.json({ status: 'error', db_path: DB_PATH, message: err.message });
+    }
+  } else {
+    res.json({ status: 'no_database', db_path: DB_PATH, message: 'Run download scripts via SSH' });
+  }
+});
+
+// Middleware: reject API requests if database isn't loaded
+app.use('/api/', (req, res, next) => {
+  if (!db) {
+    return res.status(503).json({
+      error: 'Database not ready',
+      message: 'Run download scripts via SSH: python3 /app/scripts/download_data.py',
+    });
+  }
+  next();
+});
 
 // ============================================================
 // HELPERS
@@ -1437,9 +1463,6 @@ app.get('/api/private/property-types', (req, res) => {
 });
 
 /**
- * GET /api/status — Check if database is ready
- */
-/**
  * GET /api/nearby-hdb — Get nearby HDB transactions given lat/lng coordinates
  * Used by private property searches to also show nearby HDB transactions on the map
  */
@@ -1557,7 +1580,12 @@ app.get('*', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  const count = db.prepare('SELECT COUNT(*) as count FROM transactions').get().count;
-  console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
-  console.log(`   Database has ${count.toLocaleString()} transactions\n`);
+  if (db) {
+    const count = db.prepare('SELECT COUNT(*) as count FROM transactions').get().count;
+    console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
+    console.log(`   Database has ${count.toLocaleString()} transactions\n`);
+  } else {
+    console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
+    console.log(`   ⚠️  No database — run download scripts via SSH\n`);
+  }
 });

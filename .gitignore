@@ -6,3 +6,5 @@ server/db/*.db
 server/db/*.db-shm
 server/db/*.db-wal
 .history/
+fly.ssh
+fly.ssh-cert.pub

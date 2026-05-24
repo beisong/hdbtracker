@@ -13,9 +13,10 @@
 ### Data Pipeline
 - **Language**: Python 3
 - **HTTP**: requests library
+- **Geo**: pyproj (coordinate conversion)
 - **Database**: SQLite3 (via Python stdlib)
 - **Data sources**:
-  - HDB resale data: data.gov.sg API (d_8b84c4ee58e3cfc0ece0d773c8ca6abc)
+  - HDB resale data: data.gov.sg API
   - URA private property data: URA API
 
 ### Frontend
@@ -24,7 +25,7 @@
 - **JS**: Vanilla JavaScript (no framework)
 - **Charts**: Chart.js
 - **Fonts**: Inter (Google Fonts)
-- **Map**: Likely Leaflet.js (based on `map.js`)
+- **Map**: Leaflet.js
 
 ### External APIs
 - **OneMap SG API**: Postal code → address/coordinates lookup, geocoding
@@ -32,25 +33,44 @@
 - **data.gov.sg**: HDB resale transaction data download
 - **URA API**: Private property transaction data
 
+## Deployment
+
+### Hosting
+- **API**: Fly.io (`worthit-api.fly.dev`) — Docker container with persistent volume
+- **Frontend**: Cloudflare Pages (pending) — static files from `public/`
+- **Cost**: $0/month on free tiers
+
+### Fly.io Configuration
+- **Dockerfile**: Node.js 20 + Python 3 slim
+- **Volume**: 1GB persistent at `/data` — stores `resale.db`
+- **Env vars**: `DB_PATH=/data/resale.db`, `ONEMAP_TOKEN`, `URA_API_ACCESS_KEY` (via `fly secrets`)
+- **Machine ID**: Set in `fly.toml`
+
+### Database Seeding
+- Fly.io free tier (256MB RAM) too small for Python download scripts (OOM)
+- Build database locally, upload via `fly ssh sftp put`
+- Monthly updates: re-download locally → re-upload
+
 ## Development Setup
 
 ### Prerequisites
 - Node.js (for server)
-- Python 3 with venv (for data download scripts)
+- Python 3 with pip (for data download scripts)
 - Internet connection (for API calls)
 
 ### Commands
 ```bash
-npm install          # Install Node.js dependencies
-npm run setup        # Create Python venv + install deps (cross-platform)
-npm run download     # Download HDB data (~5-10 min, uses venv)
-npm run download-ura # Download URA private property data
-npm start            # Start server on port 3000
-npm run dev          # Start with --watch for auto-reload
+npm install              # Install Node.js dependencies
+pip install requests pyproj  # Python dependencies
+npm run download-hdb     # Download HDB data
+npm run download-ura     # Download URA data (requires URA_API_ACCESS_KEY)
+npm start                # Start server on port 3000
+npm run dev              # Start with --watch for auto-reload
 ```
 
 ### Environment Variables (.env)
 - `PORT` — Server port (default: 3000)
+- `DB_PATH` — SQLite database path (default: `server/db/resale.db`)
 - `ONEMAP_TOKEN` — OneMap API bearer token
 - `URA_API_ACCESS_KEY` — URA API access key
 
@@ -83,10 +103,14 @@ npm run dev          # Start with --watch for auto-reload
 | project | Project name |
 | latitude | Latitude |
 | longitude | Longitude |
+| district | District code |
+| street_name | Street name |
+| market_segment | CCR/RCR/OCR |
 
 ## Technical Constraints
 - **Cross-platform npm scripts**: `scripts/run-python.js` detects OS and uses correct venv path
 - **No build step**: Vanilla JS served directly
 - **No tests**: No test framework configured
-- **Single server file**: All ~1164 lines in `server/index.js`
+- **Single server file**: All routes in `server/index.js` (~900+ lines)
 - **SQLite limitations**: Not suitable for concurrent writes (acceptable since DB is readonly from server)
+- **Fly.io RAM**: 256MB free tier — can't run Python data scripts on the machine

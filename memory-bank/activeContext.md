@@ -1,83 +1,55 @@
 # Active Context: WorthIt
 
 ## Current State
-The project is functional with core features working:
-- HDB resale data download and storage pipeline
-- URA private property data download
-- REST API with full market analysis endpoints
-- Single-page application UI with charts, maps, and tables
-- Postal code resolution via OneMap API
-- Street name matching with abbreviation expansion/compression
-- Map visualization of transactions
-- MRT station data available (`public/data/mrt_stations.json`)
+The project is fully deployed and functional:
+- **Backend API**: Running on Fly.io at `worthit-api.fly.dev` — 370K transactions, data through May 2026
+- **Frontend**: Ready for Cloudflare Pages deployment (static files in `public/`)
+- **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
+- **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
-## Current Focus: Split Architecture Deployment
-Deploying as separate frontend + backend:
-- **Frontend**: Cloudflare Pages (static HTML/JS/CSS from `public/`)
-- **Backend API**: Fly.io (`worthit-api`) with persistent volume (Express API + SQLite)
-- **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`)
-- **Domain**: Custom domain via Porkbun
-  - `yourdomain.com` → Cloudflare Pages
-  - `api.yourdomain.com` → Fly.io (SSL via Let's Encrypt)
-- **Cost**: $0/month (Fly.io free tier + Cloudflare Pages free) + domain registration (~$10-50/year)
+## Deployment Architecture
+- **Frontend**: Cloudflare Pages (static HTML/JS/CSS from `public/`) — pending
+- **Backend API**: Fly.io (`worthit-api`) with 1GB persistent volume
+- **Database**: SQLite on Fly.io volume, seeded locally and uploaded via `fly ssh sftp put`
+- **Config**: `public/config.js` auto-detects localhost → same-origin, else → `https://worthit-api.fly.dev`
+- **Cost**: $0/month (Fly.io free tier + Cloudflare Pages free)
 
-### Infrastructure Setup (done)
-- ✅ `Dockerfile` — Node.js + Python container
-- ✅ `fly.toml` — Fly.io config with volume mount
-- ✅ `.dockerignore`
-- ✅ DB path configurable via `DB_PATH` env var
-- ✅ URA access key reads from env var
+## Completed Infrastructure
+- ✅ `Dockerfile` — Node.js + Python container (public/ excluded)
+- ✅ `fly.toml` — Fly.io config with volume mount at `/data`
+- ✅ `.dockerignore` — excludes `public/`, `node_modules/`, `.history/`
+- ✅ Server graceful startup without database (shows `no_database` status)
+- ✅ `/api/status` health check bypasses DB middleware
+- ✅ CORS configured for Cloudflare Pages + Fly.io origins
+- ✅ DB seeded (local build + SFTP upload — avoids Fly.io 256MB RAM limit)
+- ✅ README updated with deployment guide and debugging commands
+- ✅ `.gitignore` updated with `fly.ssh*` files
 
-### Step 1 — Code Changes (done)
-- ✅ Add `API_BASE` config to frontend JS (auto-detects localhost vs production)
-- ✅ Update `server/index.js` CORS for cross-origin requests
-- ✅ Update Dockerfile to not copy `public/`
-- ✅ Rename app from "WorthOrNot" to "WorthIt"
-- ✅ Rename Fly.io app to `worthit-api`
+## Remaining Steps
+- 🔲 Push to GitHub
+- 🔲 Deploy frontend to Cloudflare Pages (connect repo, output dir: `public`)
+- 🔲 Configure custom domain (optional)
 
-### Step 2 — Deploy Backend to Fly.io (user runs)
-- 🔲 `fly apps create worthit-api`
-- 🔲 `fly volumes create data --size 1 --region sin`
-- 🔲 `fly secrets set ONEMAP_TOKEN=xxx URA_API_ACCESS_KEY=xxx`
-- 🔲 `fly deploy`
-- 🔲 `fly ssh console` → run Python data download scripts
+## Key Commands
+- **Deploy API**: `fly deploy`
+- **Seed DB**: Build locally → `fly ssh sftp put server/db/resale.db /data/resale.db` → `fly machine restart <id>`
+- **Update data monthly**: Re-run `python scripts/download_data.py` locally → re-upload via SFTP
+- **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
-### Step 3 — Deploy Frontend to Cloudflare Pages (user via dashboard)
-- 🔲 Connect GitHub repo, set build output to `public`
-
-### Step 4 — Custom Domain (user)
-- 🔲 Porkbun DNS: CNAME records for `yourdomain.com` and `api.yourdomain.com`
-- 🔲 `fly certs add api.yourdomain.com`
-- 🔲 Cloudflare Pages → Custom domain
-
-## Recent Changes (based on codebase)
-- Added district code search (e.g., "D22", "District 16") with private property overview
-- Added `/api/private/district-summary` endpoint for showing private data on HDB town pages
-- Added `/api/private/district-overview` endpoint for full district search results
-- Added `TOWN_TO_DISTRICTS` / `DISTRICT_TO_TOWNS` mappings (26 towns, 28 districts)
-- Added district labels in autocomplete (`DISTRICT_LABELS` object, e.g., "D10 — Bukit Timah, Holland")
-- Private property summary card on HDB town pages (avg price, $/sqm, top projects)
-- Private property project markers on map when viewing HDB towns
-- Fixed `/api/towns` to properly filter out URA_PRIVATE records (uses `dataset_source != 'URA_PRIVATE'`)
-- Added URA private property support (`scripts/download_ura_data.py`, `/api/private/*` endpoints)
-- Added map feature (`public/js/map.js`)
-- Added nearby streets feature via Nominatim reverse geocoding
-- Added geocoding endpoint with OneMap primary + Nominatim fallback
-- Street-level filtering for area overview queries
-
-## Next Steps / Potential Improvements
-- Performance optimization for large queries (some use LIMIT 10000)
-- SQL injection risk in `/api/private/project-overview` (uses string interpolation for `propTypeFilter`)
-- Add automated tests
-- Add input validation/sanitization across endpoints
-- Consider adding caching headers for static API responses
-- Mobile responsiveness improvements
+## Recent Changes
+- Fixed server crash on missing database (graceful startup)
+- Removed duplicate `/api/status` route
+- `/api/status` now shows transaction count and latest month
+- DB middleware rejects other API calls with 503 when DB is missing
+- Added `fly.ssh*` to `.gitignore`
+- Comprehensive README with deployment and debugging guide
 
 ## Active Decisions & Considerations
 - Database is opened in `readonly: true` mode — data only changes via Python scripts
 - In-memory caches for geocoding and nearby streets (no persistence)
 - Nominatim rate limiting: 1 req/sec with 1.1s delays
-- Street matching uses a multi-strategy approach: exact → compressed → expanded → keyword fallback
+- Street matching uses multi-strategy: exact → compressed → expanded → keyword fallback
+- Fly.io free tier (256MB RAM) can't run Python download scripts — use local build + SFTP upload
 
 ## Important Patterns
 - All town matching is case-insensitive (`.toUpperCase()`)

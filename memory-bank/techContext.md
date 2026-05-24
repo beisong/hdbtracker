@@ -1,4 +1,4 @@
-# Technical Context: WorthOrNot
+# Technical Context: WorthIt
 
 ## Technologies
 

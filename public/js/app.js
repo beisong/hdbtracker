@@ -1,5 +1,5 @@
 /**
- * WorthOrNot — Main App Logic (Area Market Overview)
+ * WorthIt — Main App Logic (Area Market Overview)
  */
 
 const App = {

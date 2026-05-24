@@ -1,6 +1,6 @@
-# WorthOrNot - Fly.io configuration
+# WorthIt - Fly.io configuration
 
-app = "hdbtracker"
+app = "worthit-api"
 primary_region = "sin"
 
 [build]

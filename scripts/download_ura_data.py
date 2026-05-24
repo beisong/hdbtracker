@@ -54,7 +54,7 @@ def get_daily_token(access_key):
     url = f'{URA_API_BASE}/insertNewToken/v1'
     resp = requests.get(url, headers={
         'AccessKey': access_key,
-        'User-Agent': 'WorthOrNot/1.0',
+        'User-Agent': 'WorthIt/1.0',
         'Accept': 'application/json',
     }, timeout=15)
     resp.raise_for_status()
@@ -78,7 +78,7 @@ def download_batch(access_key, token, batch_num):
     headers = {
         'AccessKey': access_key,
         'Token': token,
-        'User-Agent': 'WorthOrNot/1.0',
+        'User-Agent': 'WorthIt/1.0',
         'Accept': 'application/json',
     }
 

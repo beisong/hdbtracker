@@ -1,9 +1,12 @@
 /**
- * WorthOrNot — API Client
+ * WorthIt — API Client
+ * 
+ * API_BASE is set in public/config.js (different values for local dev vs Cloudflare Pages)
+ * Falls back to empty string (same-origin) if not set.
  */
 
 const API = {
-  baseUrl: '',
+  baseUrl: typeof API_BASE !== 'undefined' ? API_BASE : '',
 
   async getStatus() {
     const resp = await fetch(`${this.baseUrl}/api/status`);

@@ -1,5 +1,5 @@
 /**
- * WorthOrNot — Chart.js Configurations
+ * WorthIt — Chart.js Configurations
  */
 
 const Charts = {

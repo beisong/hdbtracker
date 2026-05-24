@@ -1,4 +1,4 @@
-# System Patterns: WorthOrNot
+# System Patterns: WorthIt
 
 ## Architecture
 

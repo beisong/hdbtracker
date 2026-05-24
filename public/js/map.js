@@ -1,5 +1,5 @@
 /**
- * WorthOrNot — Map Module
+ * WorthIt — Map Module
  * Combines TransactionMap (transaction markers, geocoding)
  * and MrtOverlay (MRT/LRT lines and stations).
  */

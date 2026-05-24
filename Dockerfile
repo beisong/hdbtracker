@@ -1,4 +1,4 @@
-# WorthOrNot - Fly.io Dockerfile
+# WorthIt - Fly.io Dockerfile
 # Node.js + Python for data pipeline scripts
 
 FROM node:20-slim
@@ -22,9 +22,8 @@ RUN npm ci --omit=dev
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
-# Copy application code
+# Copy application code (no public/ — frontend served by Cloudflare Pages)
 COPY server/ ./server/
-COPY public/ ./public/
 COPY scripts/ ./scripts/
 
 # Create data directory (Fly.io volume mounts here)

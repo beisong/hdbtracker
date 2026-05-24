@@ -1,4 +1,4 @@
-# 🏠 WorthOrNot — HDB Resale Flat Value Detective
+# 🏠 WorthIt — HDB Resale Flat Value Detective
 
 Instantly check if a Singapore HDB resale flat is fairly priced based on real transaction data from data.gov.sg.
 
@@ -67,7 +67,7 @@ Open http://localhost:3000 in your browser.
 ## Project Structure
 
 ```
-WorthOrNot/
+WorthIt/
 ├── scripts/
 │   └── download_data.py      # Python data download script
 ├── server/

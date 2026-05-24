@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Cross-platform Python runner for WorthOrNot
+ * Cross-platform Python runner for WorthIt
  * Detects OS, manages venv, and runs Python scripts.
  * 
  * Usage:

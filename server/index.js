@@ -12,9 +12,29 @@ const PORT = process.env.PORT || 3000;
 // OneMap API token (from .env file)
 const ONEMAP_TOKEN = process.env.ONEMAP_TOKEN || '';
 
-// Serve static files
+// CORS — allow frontend origins (Cloudflare Pages, localhost, custom domains)
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://hdbtracker.pages.dev',       // Cloudflare Pages default
+  // Add your custom domain when ready, e.g.:
+  // 'https://yourdomain.com',
+  // 'https://www.yourdomain.com',
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    // Also allow any Fly.io or Cloudflare Pages subdomain
+    if (origin.endsWith('.fly.dev') || origin.endsWith('.pages.dev')) return callback(null, true);
+    callback(null, true); // Allow all for now; tighten later
+  },
+  credentials: true,
+}));
+
+// Serve static files (only works in local dev; public/ not included in Docker image)
 app.use(express.static(path.join(__dirname, '..', 'public')));
-app.use(cors());
 app.use(express.json());
 
 // URA API config
@@ -732,7 +752,7 @@ async function findNearbyStreets(lat, lng, town) {
         const url = `https://nominatim.openstreetmap.org/reverse?lat=${rlat}&lon=${rlng}&format=json&zoom=18`;
         const resp = await fetch(url, {
           timeout: 8000,
-          headers: { 'User-Agent': 'WorthOrNot/1.0 (HDB resale app)' },
+          headers: { 'User-Agent': 'WorthIt/1.0 (HDB resale app)' },
         });
         if (!resp.ok) return null;
         const data = await resp.json();
@@ -854,7 +874,7 @@ app.post('/api/geocode', async (req, res) => {
         const url = `https://nominatim.openstreetmap.org/search?q=${searchVal}&format=json&limit=1`;
         const resp = await fetch(url, {
           timeout: 8000,
-          headers: { 'User-Agent': 'WorthOrNot/1.0 (HDB resale app)' },
+          headers: { 'User-Agent': 'WorthIt/1.0 (HDB resale app)' },
         });
         const data = await resp.json();
         if (data && data.length > 0) {
@@ -1538,6 +1558,6 @@ app.get('*', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   const count = db.prepare('SELECT COUNT(*) as count FROM transactions').get().count;
-  console.log(`\n🏠 WorthOrNot Server running at http://localhost:${PORT}`);
+  console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
   console.log(`   Database has ${count.toLocaleString()} transactions\n`);
 });

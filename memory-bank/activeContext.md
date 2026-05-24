@@ -1,4 +1,4 @@
-# Active Context: WorthOrNot
+# Active Context: WorthIt
 
 ## Current State
 The project is functional with core features working:
@@ -14,7 +14,7 @@ The project is functional with core features working:
 ## Current Focus: Split Architecture Deployment
 Deploying as separate frontend + backend:
 - **Frontend**: Cloudflare Pages (static HTML/JS/CSS from `public/`)
-- **Backend API**: Fly.io with persistent volume (Express API + SQLite)
+- **Backend API**: Fly.io (`worthit-api`) with persistent volume (Express API + SQLite)
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`)
 - **Domain**: Custom domain via Porkbun
   - `yourdomain.com` → Cloudflare Pages
@@ -28,13 +28,15 @@ Deploying as separate frontend + backend:
 - ✅ DB path configurable via `DB_PATH` env var
 - ✅ URA access key reads from env var
 
-### Step 1 — Code Changes (next, Cline does)
-- 🔲 Add `API_BASE` config to frontend JS
-- 🔲 Update `server/index.js` to API-only (remove static serving, add CORS)
-- 🔲 Update Dockerfile to not copy `public/`
+### Step 1 — Code Changes (done)
+- ✅ Add `API_BASE` config to frontend JS (auto-detects localhost vs production)
+- ✅ Update `server/index.js` CORS for cross-origin requests
+- ✅ Update Dockerfile to not copy `public/`
+- ✅ Rename app from "WorthOrNot" to "WorthIt"
+- ✅ Rename Fly.io app to `worthit-api`
 
 ### Step 2 — Deploy Backend to Fly.io (user runs)
-- 🔲 `fly apps create hdbtracker-api`
+- 🔲 `fly apps create worthit-api`
 - 🔲 `fly volumes create data --size 1 --region sin`
 - 🔲 `fly secrets set ONEMAP_TOKEN=xxx URA_API_ACCESS_KEY=xxx`
 - 🔲 `fly deploy`

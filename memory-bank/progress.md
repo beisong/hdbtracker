@@ -1,4 +1,4 @@
-# Progress: WorthOrNot
+# Progress: WorthIt
 
 ## What Works
 - ✅ HDB resale data download pipeline (Python → SQLite)
@@ -38,18 +38,22 @@ api.yourdomain.com   → Fly.io (Express API + SQLite)
 - ✅ Make SQLite DB path configurable via env var (`DB_PATH`) in server + Python scripts
 - ✅ URA access key reads from env var (works with `fly secrets`)
 
-**Step 1 — Code Changes (Cline does):**
-- 🔲 Add `API_BASE` config to frontend JS (point to `api.yourdomain.com`)
-- 🔲 Update `server/index.js` to be API-only (remove static file serving, add CORS for frontend domain)
-- 🔲 Update Dockerfile to not copy `public/` folder
+**Step 1 — Code Changes (done):**
+- ✅ Add `API_BASE` config to frontend JS (auto-detects localhost vs production)
+- ✅ Create `public/config.js` with environment-aware API URL
+- ✅ Add config script to `index.html` (loads before `api.js`)
+- ✅ Update `server/index.js` CORS for cross-origin requests (Cloudflare Pages, fly.dev, pages.dev)
+- ✅ Update Dockerfile to not copy `public/` folder
+- ✅ Update `.dockerignore` to exclude `public/`
+- ✅ Rename Fly.io app to `worthit-api`
 
 **Step 2 — Deploy Backend to Fly.io (user runs manually):**
-- 🔲 `fly apps create hdbtracker-api`
+- 🔲 `fly apps create worthit-api`
 - 🔲 `fly volumes create data --size 1 --region sin`
 - 🔲 `fly secrets set ONEMAP_TOKEN=... URA_API_ACCESS_KEY=...`
 - 🔲 `fly deploy`
 - 🔲 SSH in and run data download scripts
-- 🔲 Verify: `curl https://hdbtracker-api.fly.dev/api/status`
+- 🔲 Verify: `curl https://worthit-api.fly.dev/api/status`
 
 **Step 3 — Deploy Frontend to Cloudflare Pages (user via dashboard):**
 - 🔲 Cloudflare → Pages → Create project → Connect GitHub repo
@@ -59,7 +63,7 @@ api.yourdomain.com   → Fly.io (Express API + SQLite)
 
 **Step 4 — Custom Domain (user):**
 - 🔲 Purchase domain on Porkbun
-- 🔲 Porkbun DNS: `api.yourdomain.com` CNAME → `hdbtracker-api.fly.dev`
+- 🔲 Porkbun DNS: `api.yourdomain.com` CNAME → `worthit-api.fly.dev`
 - 🔲 Porkbun DNS: `yourdomain.com` CNAME → `hdbtracker.pages.dev`
 - 🔲 `fly certs add api.yourdomain.com`
 - 🔲 Cloudflare Pages → Custom domain → add `yourdomain.com`

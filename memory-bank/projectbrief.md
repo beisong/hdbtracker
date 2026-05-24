@@ -1,7 +1,7 @@
-# Project Brief: WorthOrNot (HDB Tracker)
+# Project Brief: WorthIt (HDB Tracker)
 
 ## Overview
-WorthOrNot is a Singapore HDB resale flat value assessment tool. It downloads ~230,000 HDB resale transaction records from data.gov.sg's open API, stores them in a local SQLite database, and provides a web-based UI for users to evaluate whether a specific flat is fairly priced.
+WorthIt is a Singapore HDB resale flat value assessment tool. It downloads ~230,000 HDB resale transaction records from data.gov.sg's open API, stores them in a local SQLite database, and provides a web-based UI for users to evaluate whether a specific flat is fairly priced.
 
 ## Core Goals
 1. **Data Pipeline**: Fetch all HDB resale flat price data from data.gov.sg and URA private property data, storing in SQLite with pre-computed aggregations

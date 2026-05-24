@@ -1,4 +1,4 @@
-# Product Context: WorthOrNot
+# Product Context: WorthIt
 
 ## Why This Project Exists
 Singapore's HDB resale market is complex — prices vary by town, flat type, floor area, storey, lease remaining, and street. Buyers need a quick way to assess if an asking price is fair based on actual transaction data, not just agent estimates.

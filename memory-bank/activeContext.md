@@ -65,6 +65,10 @@ The project is fully deployed and functional:
   - `public/robots.txt` with sitemap reference
   - Sitemap auto-generated from DB (26 HDB towns + 28 districts + 200 private projects)
   - JSON-LD: WebSite + SearchAction + FAQPage (5 FAQs) on homepage; BreadcrumbList + ResidentialProperty on town/project pages
+- **Google Analytics 4** (May 2026):
+  - GA4 tag (`G-WGC8D0FRSQ`) added to `index.html` `<head>` (after anti-FOUC script)
+  - SPA pageview tracking: `gtag('event', 'page_view')` fires on `history.pushState()` in `updateSeoForSearch()` and on `popstate` (back/forward)
+  - Tracks all routes: `/hdb/<town>`, `/district/<code>`, `/private/<project>`
 - Custom domain configured: `worthit.canlah.app` (DNS on Cloudflare, domain from Porkbun)
 - README updated with custom domain setup instructions
 - Frontend deployed to Cloudflare Pages via wrangler CLI

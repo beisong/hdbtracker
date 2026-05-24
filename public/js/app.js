@@ -51,7 +51,11 @@ const App = {
       // Handle URL-based routing (e.g. /hdb/bedok, /private/sky-habitat)
       await this.handleUrlRoute();
       // Listen for back/forward navigation
-      window.addEventListener('popstate', () => this.handleUrlRoute());
+      window.addEventListener('popstate', () => {
+        this.handleUrlRoute();
+        // Track SPA pageview for back/forward navigation in Google Analytics
+        if (typeof gtag === 'function') gtag('event', 'page_view', { page_path: window.location.pathname });
+      });
 
     } catch (err) {
       console.error('Init error:', err);
@@ -139,6 +143,8 @@ const App = {
     const currentPath = window.location.pathname + window.location.search;
     if (currentPath !== path) {
       history.pushState({ type, path }, '', path);
+      // Track SPA pageview in Google Analytics
+      if (typeof gtag === 'function') gtag('event', 'page_view', { page_path: path });
     }
 
     // Update document title and meta tags

@@ -65,6 +65,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - 🔲 Open Graph image (og:image) for social sharing
 - 🔲 Cloudflare Cache API for sitemap caching at edge
 - 🔲 Structured data testing & rich results validation
+- ✅ Google Analytics 4 (GA4 tag `G-WGC8D0FRSQ` with SPA pageview tracking)
 
 ## Known Issues
 1. **SQL injection**: `/api/private/project-overview` builds SQL with string interpolation for `property_type` filter

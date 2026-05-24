@@ -8,3 +8,4 @@ server/db/*.db-wal
 .history/
 fly.ssh
 fly.ssh-cert.pub
+.wrangler/

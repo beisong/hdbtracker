@@ -69,9 +69,9 @@ The project is fully deployed and functional:
   - GA4 tag (`G-WGC8D0FRSQ`) added to `index.html` `<head>` (after anti-FOUC script)
   - SPA pageview tracking: `gtag('event', 'page_view')` fires on `history.pushState()` in `updateSeoForSearch()` and on `popstate` (back/forward)
   - Tracks all routes: `/hdb/<town>`, `/district/<code>`, `/private/<project>`
-- Custom domain configured: `worthit.canlah.app` (DNS on Cloudflare, domain from Porkbun)
-- README updated with custom domain setup instructions
-- Frontend deployed to Cloudflare Pages via wrangler CLI
+- **Fixed SPA direct URL loading** (May 2026):
+  - Bug: direct navigation to `/hdb/bedok` stuck at "Loading data..." — all JS/CSS 404'd because relative paths (`js/app.js`) resolved to `/hdb/js/app.js`
+  - Fix: changed all relative asset paths in `index.html` to absolute (`/js/app.js`, `/css/styles.css`, `/config.js`)
 - Fixed server crash on missing database (graceful startup)
 - DB middleware rejects other API calls with 503 when DB is missing
 

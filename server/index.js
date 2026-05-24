@@ -23,7 +23,7 @@ let uraToken = null;
 let uraTokenExpiry = 0;
 
 // Open database
-const DB_PATH = path.join(__dirname, 'db', 'resale.db');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'db', 'resale.db');
 let db;
 
 try {

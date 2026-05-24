@@ -1,0 +1,13 @@
+node_modules/
+venv/
+.env
+.git/
+.gitignore
+.DS_Store
+.history/
+*.db
+*.db-shm
+*.db-wal
+memory-bank/
+.clinerules/
+README.md

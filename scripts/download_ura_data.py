@@ -24,22 +24,27 @@ BATCHES = [1, 2, 3, 4]
 # Paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
-DB_DIR = os.path.join(PROJECT_DIR, 'server', 'db')
-DB_PATH = os.path.join(DB_DIR, 'resale.db')
+DB_PATH = os.environ.get('DB_PATH', os.path.join(PROJECT_DIR, 'server', 'db', 'resale.db'))
+DB_DIR = os.path.dirname(DB_PATH)
 ENV_PATH = os.path.join(PROJECT_DIR, '.env')
 
 
 def get_ura_access_key():
-    """Read URA access key from .env file."""
-    if not os.path.exists(ENV_PATH):
-        print("❌ .env file not found")
-        sys.exit(1)
-    with open(ENV_PATH) as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith('URA_API_ACCESS_KEY='):
-                return line.split('=', 1)[1].strip()
-    print("❌ URA_API_ACCESS_KEY not found in .env")
+    """Read URA access key from environment variable or .env file."""
+    # Check environment variable first (set via fly secrets on production)
+    env_key = os.environ.get('URA_API_ACCESS_KEY')
+    if env_key:
+        return env_key
+
+    # Fallback to .env file for local development
+    if os.path.exists(ENV_PATH):
+        with open(ENV_PATH) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('URA_API_ACCESS_KEY='):
+                    return line.split('=', 1)[1].strip()
+    
+    print("❌ URA_API_ACCESS_KEY not found in environment or .env")
     sys.exit(1)
 
 

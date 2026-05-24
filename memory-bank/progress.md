@@ -23,6 +23,47 @@
 - ✅ District labels in autocomplete (e.g., "D10 — Bukit Timah, Holland")
 - ✅ Private property markers on map when viewing HDB towns
 
+## Deployment — Split Architecture (Frontend / Backend)
+
+**Architecture:**
+```
+yourdomain.com       → Cloudflare Pages (static HTML/JS/CSS)
+api.yourdomain.com   → Fly.io (Express API + SQLite)
+```
+
+**Infrastructure Setup (done):**
+- ✅ Create `Dockerfile` (Node.js + Python for data scripts)
+- ✅ Create `fly.toml` (Fly.io config with persistent volume mount)
+- ✅ Create `.dockerignore`
+- ✅ Make SQLite DB path configurable via env var (`DB_PATH`) in server + Python scripts
+- ✅ URA access key reads from env var (works with `fly secrets`)
+
+**Step 1 — Code Changes (Cline does):**
+- 🔲 Add `API_BASE` config to frontend JS (point to `api.yourdomain.com`)
+- 🔲 Update `server/index.js` to be API-only (remove static file serving, add CORS for frontend domain)
+- 🔲 Update Dockerfile to not copy `public/` folder
+
+**Step 2 — Deploy Backend to Fly.io (user runs manually):**
+- 🔲 `fly apps create hdbtracker-api`
+- 🔲 `fly volumes create data --size 1 --region sin`
+- 🔲 `fly secrets set ONEMAP_TOKEN=... URA_API_ACCESS_KEY=...`
+- 🔲 `fly deploy`
+- 🔲 SSH in and run data download scripts
+- 🔲 Verify: `curl https://hdbtracker-api.fly.dev/api/status`
+
+**Step 3 — Deploy Frontend to Cloudflare Pages (user via dashboard):**
+- 🔲 Cloudflare → Pages → Create project → Connect GitHub repo
+- 🔲 Set build output directory to `public`
+- 🔲 No build command needed (static files)
+- 🔲 Verify: `https://hdbtracker.pages.dev` works
+
+**Step 4 — Custom Domain (user):**
+- 🔲 Purchase domain on Porkbun
+- 🔲 Porkbun DNS: `api.yourdomain.com` CNAME → `hdbtracker-api.fly.dev`
+- 🔲 Porkbun DNS: `yourdomain.com` CNAME → `hdbtracker.pages.dev`
+- 🔲 `fly certs add api.yourdomain.com`
+- 🔲 Cloudflare Pages → Custom domain → add `yourdomain.com`
+
 ## What's Left to Build / Improve
 - 🔲 Automated tests (no test framework configured)
 - 🔲 SQL injection fix in `/api/private/project-overview` (string interpolation)
@@ -32,8 +73,6 @@
 - 🔲 Server refactor (split monolithic `server/index.js` into modules)
 - 🔲 Error handling improvements (consistent error responses)
 - 🔲 Rate limiting on API endpoints
-- 🔲 HTTPS support
-- 🔲 Deployment configuration
 
 ## Recent Changes
 - Mobile responsiveness overhaul: transaction cards on mobile (replacing table), horizontally scrollable filter bar, responsive map height (280px mobile / 420px desktop), smaller chart tick limits on mobile, touch-friendly button sizes, safe-area-inset padding for footer, compact nav on mobile

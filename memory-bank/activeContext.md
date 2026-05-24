@@ -11,6 +11,43 @@ The project is functional with core features working:
 - Map visualization of transactions
 - MRT station data available (`public/data/mrt_stations.json`)
 
+## Current Focus: Split Architecture Deployment
+Deploying as separate frontend + backend:
+- **Frontend**: Cloudflare Pages (static HTML/JS/CSS from `public/`)
+- **Backend API**: Fly.io with persistent volume (Express API + SQLite)
+- **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`)
+- **Domain**: Custom domain via Porkbun
+  - `yourdomain.com` → Cloudflare Pages
+  - `api.yourdomain.com` → Fly.io (SSL via Let's Encrypt)
+- **Cost**: $0/month (Fly.io free tier + Cloudflare Pages free) + domain registration (~$10-50/year)
+
+### Infrastructure Setup (done)
+- ✅ `Dockerfile` — Node.js + Python container
+- ✅ `fly.toml` — Fly.io config with volume mount
+- ✅ `.dockerignore`
+- ✅ DB path configurable via `DB_PATH` env var
+- ✅ URA access key reads from env var
+
+### Step 1 — Code Changes (next, Cline does)
+- 🔲 Add `API_BASE` config to frontend JS
+- 🔲 Update `server/index.js` to API-only (remove static serving, add CORS)
+- 🔲 Update Dockerfile to not copy `public/`
+
+### Step 2 — Deploy Backend to Fly.io (user runs)
+- 🔲 `fly apps create hdbtracker-api`
+- 🔲 `fly volumes create data --size 1 --region sin`
+- 🔲 `fly secrets set ONEMAP_TOKEN=xxx URA_API_ACCESS_KEY=xxx`
+- 🔲 `fly deploy`
+- 🔲 `fly ssh console` → run Python data download scripts
+
+### Step 3 — Deploy Frontend to Cloudflare Pages (user via dashboard)
+- 🔲 Connect GitHub repo, set build output to `public`
+
+### Step 4 — Custom Domain (user)
+- 🔲 Porkbun DNS: CNAME records for `yourdomain.com` and `api.yourdomain.com`
+- 🔲 `fly certs add api.yourdomain.com`
+- 🔲 Cloudflare Pages → Custom domain
+
 ## Recent Changes (based on codebase)
 - Added district code search (e.g., "D22", "District 16") with private property overview
 - Added `/api/private/district-summary` endpoint for showing private data on HDB town pages

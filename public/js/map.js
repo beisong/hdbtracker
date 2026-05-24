@@ -568,7 +568,7 @@ const MrtOverlay = {
 
     if (!this.stations) {
       try {
-        const resp = await fetch('data/mrt_stations.json');
+        const resp = await fetch('/data/mrt_stations.json');
         this.stations = await resp.json();
       } catch (err) {
         console.error('Failed to load MRT data:', err);

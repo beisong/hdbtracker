@@ -177,6 +177,40 @@ npx wrangler pages deploy public --project-name=worthit
 
 The frontend auto-connects to the Fly.io API via `config.js`.
 
+## Custom Domain Setup
+
+The frontend is live at [worthit.canlah.app](https://worthit.canlah.app). Here's how it was configured:
+
+### Step 1: Add domain to Cloudflare
+
+1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → **Add a site**
+2. Enter your root domain (e.g., `canlah.app`) → Continue
+3. Select **Free plan** → Continue
+4. Review DNS records → Continue
+5. Note the two nameservers Cloudflare provides
+
+### Step 2: Update nameservers at domain registrar
+
+1. At Porkbun (or your registrar) → Domain Management → **Authoritative Nameservers**
+2. Replace with Cloudflare's nameservers
+3. Wait for propagation (minutes to a few hours)
+4. Cloudflare emails you when active
+
+### Step 3: Add custom domain in Cloudflare Pages
+
+1. Go to **Cloudflare Dashboard → Pages → worthit → Custom domains**
+2. Click **Set up a custom domain**
+3. Enter `worthit.canlah.app`
+4. Cloudflare automatically creates the CNAME record and provisions SSL
+5. SSL is automatic (Universal SSL) — no extra steps needed
+
+### Verify
+
+```bash
+curl -I https://worthit.canlah.app
+# Should return HTTP 200 with Cloudflare headers
+```
+
 ## API Endpoints
 
 | Endpoint | Description |

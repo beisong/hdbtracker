@@ -24,9 +24,9 @@
 
 **Architecture:**
 ```
-localhost:3000       → Express serves both frontend + API (local dev)
-worthit.pages.dev    → Cloudflare Pages (static) — ✅ LIVE
-worthit-api.fly.dev  → Fly.io (Express API + SQLite) — ✅ LIVE
+localhost:3000         → Express serves both frontend + API (local dev)
+worthit.canlah.app     → Cloudflare Pages (static) — ✅ LIVE
+worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 ```
 
 **Completed:**
@@ -41,10 +41,11 @@ worthit-api.fly.dev  → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ README with full deployment guide and debugging commands
 - ✅ `.gitignore` updated with `fly.ssh*`
 - ✅ Frontend deployed to Cloudflare Pages via `npx wrangler pages deploy public --project-name=worthit`
+- ✅ Custom domain: `worthit.canlah.app` (DNS on Cloudflare, domain from Porkbun, Universal SSL)
+- ✅ Pushed to GitHub (`beisong/hdbtracker`)
 
 **Remaining:**
-- 🔲 Push to GitHub
-- 🔲 Configure custom domain (optional)
+- None — deployment is complete!
 
 **Key commands:**
 - Deploy API: `fly deploy`

@@ -37,7 +37,7 @@
 
 ### Hosting
 - **API**: Fly.io (`worthit-api.fly.dev`) — Docker container with persistent volume
-- **Frontend**: Cloudflare Pages (`worthit.pages.dev`) — static files from `public/`, deployed via `npx wrangler pages deploy public --project-name=worthit`
+- **Frontend**: Cloudflare Pages (`worthit.canlah.app`) — static files from `public/`, deployed via `npx wrangler pages deploy public --project-name=worthit`, DNS on Cloudflare (domain from Porkbun)
 - **Cost**: $0/month on free tiers
 
 ### Fly.io Configuration

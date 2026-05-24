@@ -3,7 +3,7 @@
 ## Current State
 The project is fully deployed and functional:
 - **Backend API**: Running on Fly.io at `worthit-api.fly.dev` — 370K transactions, data through May 2026
-- **Frontend**: ✅ Deployed to Cloudflare Pages via `npx wrangler pages deploy public --project-name=worthit`
+- **Frontend**: ✅ Live at [worthit.canlah.app](https://worthit.canlah.app) via Cloudflare Pages (DNS on Cloudflare, domain from Porkbun)
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
@@ -26,8 +26,14 @@ The project is fully deployed and functional:
 - ✅ `.gitignore` updated with `fly.ssh*` files
 
 ## Remaining Steps
-- 🔲 Push to GitHub
-- 🔲 Configure custom domain (optional)
+- ✅ Push to GitHub
+- ✅ Configure custom domain — `worthit.canlah.app` (DNS on Cloudflare, domain from Porkbun)
+
+## Custom Domain Setup
+- **Domain**: `canlah.app` registered at Porkbun
+- **Subdomain**: `worthit.canlah.app` → Cloudflare Pages
+- **DNS**: Nameservers transferred to Cloudflare (Universal SSL, automatic)
+- **API**: Still at `worthit-api.fly.dev` (CORS allows all origins)
 
 ## Key Commands
 - **Deploy API**: `fly deploy`
@@ -37,6 +43,8 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- Custom domain configured: `worthit.canlah.app` (DNS on Cloudflare, domain from Porkbun)
+- README updated with custom domain setup instructions
 - Frontend deployed to Cloudflare Pages via wrangler CLI
 - README updated with Cloudflare Pages CLI deployment instructions
 - Fixed server crash on missing database (graceful startup)

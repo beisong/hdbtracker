@@ -47,10 +47,121 @@ const App = {
         setTimeout(() => overlay.style.display = 'none', 500);
       }, 300);
 
+      // Handle URL-based routing (e.g. /hdb/bedok, /private/sky-habitat)
+      await this.handleUrlRoute();
+      // Listen for back/forward navigation
+      window.addEventListener('popstate', () => this.handleUrlRoute());
+
     } catch (err) {
       console.error('Init error:', err);
       this.showError(`Failed to load: ${err.message}`);
     }
+  },
+
+  /** Read URL path and trigger appropriate search */
+  async handleUrlRoute() {
+    const path = window.location.pathname;
+
+    // /hdb/<town-slug>
+    const hdbMatch = path.match(/^\/hdb\/(.+)$/);
+    if (hdbMatch) {
+      const slug = hdbMatch[1];
+      // Try to match slug to a known town
+      const townSlug = slug.toUpperCase().replace(/-/g, ' ');
+      const town = this._towns.find(t =>
+        t === townSlug ||
+        t.replace(/[^A-Z0-9]/g, ' ') === townSlug.replace(/[^A-Z0-9]/g, ' ') ||
+        t.toLowerCase().replace(/[^a-z0-9]+/g, '-') === slug
+      );
+      if (town) {
+        document.getElementById('search-input').value = town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+        await this.search();
+        return;
+      }
+    }
+
+    // /district/<code>
+    const distMatch = path.match(/^\/district\/(\d{1,2})$/);
+    if (distMatch) {
+      const code = distMatch[1].padStart(2, '0');
+      document.getElementById('search-input').value = `D${code}`;
+      await this.search();
+      return;
+    }
+
+    // /private/<project-slug>
+    const privMatch = path.match(/^\/private\/(.+)$/);
+    if (privMatch) {
+      const slug = privMatch[1];
+      // Try searching as a project name (replace hyphens with spaces)
+      const projectName = slug.replace(/-/g, ' ');
+      document.getElementById('search-input').value = projectName.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+      await this.search();
+      return;
+    }
+
+    // /?q=<query> — search parameter
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) {
+      document.getElementById('search-input').value = q;
+      await this.search();
+    }
+  },
+
+  /** Update the browser URL and document meta tags after a search */
+  updateSeoForSearch(type, data) {
+    const baseUrl = 'https://worthit.canlah.app';
+    let path = '/';
+    let title = 'WorthIt — Singapore HDB Resale Prices & Property Transaction Checker';
+    let description = 'Check HDB resale prices, property transaction history, and fair value estimates for Singapore flats and condos.';
+
+    if (type === 'hdb' && data?.town) {
+      const slug = data.town.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      path = `/hdb/${slug}`;
+      const townDisplay = data.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+      const ts = data.town_summary;
+      title = `${townDisplay} HDB Resale Prices & Transaction History | WorthIt`;
+      description = `Check ${townDisplay} HDB resale flat prices and transaction history. ${ts?.total_transactions_12m?.toLocaleString() || 0} recent transactions. Compare Deal Scores from data.gov.sg records.`;
+    } else if (type === 'district' && data?.district) {
+      path = `/district/${data.district}`;
+      title = `${data.district_label || 'D' + data.district} — Private Property Prices | WorthIt`;
+      description = `Check private property resale prices in ${data.district_label || 'District ' + data.district}. View top projects, price trends, and URA transaction data.`;
+    } else if (type === 'private' && data?.project) {
+      const slug = data.project.project.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      path = `/private/${slug}`;
+      title = `${data.project.project} Resale Transaction Prices | WorthIt`;
+      description = `View ${data.project.project} resale prices and history. ${data.project.total_transactions?.toLocaleString() || 0} transactions in District ${data.project.district}.`;
+    }
+
+    // Update browser URL (no reload)
+    const currentPath = window.location.pathname + window.location.search;
+    if (currentPath !== path) {
+      history.pushState({ type, path }, '', path);
+    }
+
+    // Update document title and meta tags
+    document.title = title;
+    this._updateMeta('description', description);
+    this._updateLink('canonical', baseUrl + path);
+    this._updateOgMeta('og:title', title);
+    this._updateOgMeta('og:description', description);
+    this._updateOgMeta('og:url', baseUrl + path);
+  },
+
+  _updateMeta(name, content) {
+    let el = document.querySelector(`meta[name="${name}"]`);
+    if (el) el.setAttribute('content', content);
+  },
+
+  _updateOgMeta(property, content) {
+    let el = document.querySelector(`meta[property="${property}"]`);
+    if (el) el.setAttribute('content', content);
+  },
+
+  _updateLink(rel, href) {
+    let el = document.querySelector(`link[rel="${rel}"]`);
+    if (el) el.setAttribute('href', href);
   },
 
   setupEventListeners() {
@@ -320,6 +431,9 @@ const App = {
     // Load map
     TransactionMap.load(this.allTransactions, this.lastResolvedData);
 
+    // Update URL and meta for HDB search
+    this.updateSeoForSearch('hdb', data);
+
     // Fetch private property summary for this town's districts
     this.loadPrivateSummaryForTown(data.town);
 
@@ -556,6 +670,9 @@ const App = {
     // Hide private summary (already showing district data)
     const privateSummaryEl = document.getElementById('private-summary-section');
     if (privateSummaryEl) privateSummaryEl.classList.add('hidden');
+
+    // Update URL and meta for district search
+    this.updateSeoForSearch('district', data);
 
     // Load map with district project coordinates
     TransactionMap.load(this.allTransactions, this.lastResolvedData);
@@ -853,6 +970,9 @@ const App = {
     document.getElementById('tx-filter-storey').value = '';
     document.getElementById('tx-filter-lease').value = '';
     document.getElementById('tx-sort').value = 'date-desc';
+
+    // Update URL and meta for private search
+    this.updateSeoForSearch('private', data);
 
     // Show transactions on map: private project + nearby HDB
     const coords = this.lastResolvedData;

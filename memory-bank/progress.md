@@ -61,6 +61,10 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - 🔲 Database indexes for query performance
 - 🔲 Server refactor (split monolithic `server/index.js` into modules)
 - 🔲 Rate limiting on API endpoints
+- 🔲 Google Search Console verification & submission
+- 🔲 Open Graph image (og:image) for social sharing
+- 🔲 Cloudflare Cache API for sitemap caching at edge
+- 🔲 Structured data testing & rich results validation
 
 ## Known Issues
 1. **SQL injection**: `/api/private/project-overview` builds SQL with string interpolation for `property_type` filter

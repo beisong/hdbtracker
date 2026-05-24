@@ -40,9 +40,28 @@ Singapore street names have many abbreviation variants (e.g., "ST" vs "STREET", 
 2. **Fallback**: Nominatim OpenStreetMap (for addresses OneMap can't find)
 3. **Nearby streets**: Reverse-geocode 9 points (center + 8 compass at ~200m) via Nominatim
 
+### SEO Architecture (Edge-Side Rendering for Bots)
+Since WorthIt is a client-side SPA, search engines can't execute JS. The solution uses Cloudflare Pages Functions for edge-side meta injection:
+
+```
+User Request → Cloudflare Edge
+  ├─ /robots.txt → Serve static text
+  ├─ /sitemap.xml → Fetch from Fly.io API, transform to XML
+  ├─ Bot detected? → Fetch SEO metadata from Fly.io → inject into HTML → serve
+  └─ Normal user → Serve static SPA (index.html)
+```
+
+- **Bot detection**: Regex match on User-Agent (Googlebot, Bingbot, social crawlers, etc.)
+- **Meta injection**: Server-side string replacement of `<title>`, `<meta>`, `<link rel="canonical">`, OG tags, JSON-LD
+- **URL structure**: `/hdb/<town-slug>`, `/district/<code>`, `/private/<project-slug>`
+- **Client-side routing**: `history.pushState()` + `popstate` listener for seamless SPA navigation
+- **Sitemap**: Auto-generated from DB (26 towns + 28 districts + 200 projects), cached 24h
+- **JSON-LD**: WebSite + SearchAction + FAQPage on homepage; BreadcrumbList + ResidentialProperty on detail pages
+
 ### Caching
 - In-memory `Map` for geocode results (no TTL, grows indefinitely)
 - In-memory nearby streets cache with 24-hour TTL
+- Sitemap cache with 24-hour TTL on server
 - No external cache (Redis, etc.)
 
 ## Component Relationships

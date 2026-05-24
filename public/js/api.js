@@ -96,4 +96,17 @@ const API = {
     if (!resp.ok) throw new Error('Failed to get district overview');
     return resp.json();
   },
+
+  // SEO endpoints (used by Cloudflare Pages Function, not typically called from client)
+  async getSeoMetadata(route) {
+    const resp = await fetch(`${this.baseUrl}/api/seo/metadata?route=${encodeURIComponent(route)}`);
+    if (!resp.ok) throw new Error('Failed to get SEO metadata');
+    return resp.json();
+  },
+
+  async getSeoSitemap() {
+    const resp = await fetch(`${this.baseUrl}/api/seo/sitemap`);
+    if (!resp.ok) throw new Error('Failed to get sitemap');
+    return resp.json();
+  },
 };

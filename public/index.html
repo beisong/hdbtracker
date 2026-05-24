@@ -3,7 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>WorthIt — HDB Area Market Overview</title>
+  <title>WorthIt — Singapore HDB Resale Prices & Property Transaction Checker</title>
+  <meta name="description" content="Check HDB resale prices, property transaction history, and fair value estimates for Singapore flats and condos. Analyze 370K+ transactions from data.gov.sg with price trends, distributions, and Deal Scores.">
+  <meta name="keywords" content="HDB resale prices, Singapore property, HDB transaction history, HDB resale checker, Singapore flat prices, condo resale prices, URA transaction data, property fair value, HDB price trend, Deal Score">
+  <meta name="author" content="WorthIt">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://worthit.canlah.app/">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/logo.png">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="WorthIt — Singapore HDB & Condo Resale Price Tracker">
+  <meta property="og:description" content="Check HDB resale prices, condo transaction history, and fair market value for any Singapore property. Free tool powered by data.gov.sg.">
+  <meta property="og:url" content="https://worthit.canlah.app/">
+  <meta property="og:site_name" content="WorthIt">
+  <meta property="og:locale" content="en_SG">
+  <meta property="og:image" content="https://worthit.canlah.app/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WorthIt — Singapore HDB & Condo Resale Price Tracker">
+  <meta name="twitter:description" content="Check HDB resale prices, condo transaction history, and fair market value for any Singapore property.">
+  <meta name="twitter:image" content="https://worthit.canlah.app/og-image.png">
+  <!-- JSON-LD (replaced by edge function for bots, fallback for direct visits) -->
+  <script type="application/ld+json" id="seo-jsonld">{"@context":"https://schema.org","@type":"WebSite","name":"WorthIt","url":"https://worthit.canlah.app/","description":"Singapore HDB & Property Resale Price Tracker"}</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -31,10 +55,9 @@
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="fixed inset-0 bg-dark-900 z-50 flex items-center justify-center">
     <div class="text-center">
-      <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 mb-6 shadow-lg shadow-brand-500/30">
-        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      <div class="mb-4">
+        <img src="/logo.png" alt="WorthIt" class="w-20 h-20 rounded-2xl mx-auto">
       </div>
-      <h2 class="text-2xl font-bold mb-2">WorthIt</h2>
       <p class="text-gray-400">Loading data...</p>
       <div class="mt-4 w-48 h-1 bg-dark-700 rounded-full mx-auto overflow-hidden">
         <div id="loading-bar" class="h-full bg-brand-500 rounded-full transition-all duration-300" style="width: 0%"></div>
@@ -47,10 +70,10 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-14 sm:h-16">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <div class="flex items-center" style="gap:0;">
+            <img src="/logo.png" alt="W" class="w-9 h-9 rounded-lg">
+            <span class="text-lg font-bold" style="margin-left:-2px;">orthIt</span>
           </div>
-          <span class="text-lg font-bold">WorthIt</span>
           <span class="text-xs text-gray-500 hidden sm:inline">HDB Market Overview</span>
         </div>
         <div class="flex items-center gap-4">
@@ -333,8 +356,43 @@
     </div>
   </section>
 
+  <!-- SEO Content Section (visible, provides keyword-rich content for indexing) -->
+  <section id="seo-content" class="px-4 py-8 sm:py-12 mt-4 border-t border-white/5">
+    <article class="max-w-4xl mx-auto" itemscope itemtype="https://schema.org/WebPage">
+      <h2 class="text-xl font-bold mb-3 text-white">Check HDB Resale Prices & Property Transaction History in Singapore</h2>
+      <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        WorthIt is a free Singapore property tool that helps you check <strong style="color:#60a5fa;">HDB resale prices</strong>,
+        condo transaction records, and fair market value for any Housing & Development Board flat or private property.
+        Search by town name, postal code, or project name to instantly view <strong style="color:#60a5fa;">370,000+ resale transactions</strong>
+        from data.gov.sg and URA records.
+      </p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;color:#e2e8f0;">How It Works</h3>
+      <ul style="font-size:0.875rem;color:#94a3b8;line-height:1.75;list-style:disc;padding-left:1.5rem;margin-bottom:1rem;">
+        <li><strong style="color:#cbd5e1;">Search</strong> any HDB town (Bedok, Tampines, Jurong, Bishan, etc.), postal code, or private condo project name</li>
+        <li><strong style="color:#cbd5e1;">View</strong> median resale prices, price trends over 5 years, price distributions, and percentiles (10th to 90th)</li>
+        <li><strong style="color:#cbd5e1;">Compare</strong> Deal Scores — color-coded markers showing whether each transaction is good value or premium-priced</li>
+        <li><strong style="color:#cbd5e1;">Explore</strong> an interactive map of recent transactions with MRT station overlays</li>
+        <li><strong style="color:#cbd5e1;">Analyze</strong> private property (condo, apartment) resale data by district with URA transaction records</li>
+      </ul>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;color:#e2e8f0;">Covered HDB Towns</h3>
+      <p style="font-size:0.875rem;color:#94a3b8;line-height:1.75;margin-bottom:1rem;">
+        Ang Mo Kio, Bedok, Bishan, Bukit Batok, Bukit Merah, Bukit Panjang, Bukit Timah, Central Area,
+        Choa Chu Kang, Clementi, Geylang, Hougang, Jurong East, Jurong West, Kallang/Whampoa,
+        Marine Parade, Pasir Ris, Punggol, Queenstown, Sembawang, Sengkang, Serangoon, Tampines,
+        Toa Payoh, Woodlands, Yishun — plus private properties across all 28 Singapore districts (D01–D28).
+      </p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;color:#e2e8f0;">Data Sources</h3>
+      <p style="font-size:0.875rem;color:#94a3b8;line-height:1.625;">
+        Transaction data from <a href="https://data.gov.sg" style="color:#60a5fa;text-decoration:underline;">Housing & Development Board (HDB)</a>
+        via data.gov.sg and <strong style="color:#cbd5e1;">Urban Redevelopment Authority (URA)</strong> private property records.
+        Postal code geocoding by <a href="https://www.onemap.gov.sg" style="color:#60a5fa;text-decoration:underline;">OneMap Singapore</a>.
+        Updated monthly with the latest resale transaction records.
+      </p>
+    </article>
+  </section>
+
   <!-- Footer -->
-  <footer class="border-t border-white/5 py-6 sm:py-8 px-4 mt-6 sm:mt-8 pb-[env(safe-area-inset-bottom,16px)]">
+  <footer class="border-t border-white/5 py-6 sm:py-8 px-4 mt-0 pb-[env(safe-area-inset-bottom,16px)]">
     <div class="max-w-7xl mx-auto text-center">
       <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
         <span>Data from <a href="https://data.gov.sg" target="_blank" class="text-brand-400 hover:underline">Housing & Development Board</a>, data.gov.sg</span>

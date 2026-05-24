@@ -43,16 +43,21 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **SEO Implementation** (May 2026):
+  - Added SEO meta tags to `index.html`: description, keywords, canonical, Open Graph, Twitter cards, JSON-LD
+  - Created `functions/[[path]].js` Cloudflare Pages Function for bot detection + edge-side meta injection
+  - Added `/api/seo/metadata` and `/api/seo/sitemap` endpoints to `server/index.js`
+  - Client-side URL routing in `app.js`: `/hdb/<town>`, `/district/<code>`, `/private/<project>`
+  - Dynamic `<title>`, `<meta>`, canonical, OG tag updates on search
+  - SEO content section at page bottom with keyword-rich text
+  - `public/robots.txt` with sitemap reference
+  - Sitemap auto-generated from DB (26 HDB towns + 28 districts + 200 private projects)
+  - JSON-LD: WebSite + SearchAction + FAQPage (5 FAQs) on homepage; BreadcrumbList + ResidentialProperty on town/project pages
 - Custom domain configured: `worthit.canlah.app` (DNS on Cloudflare, domain from Porkbun)
 - README updated with custom domain setup instructions
 - Frontend deployed to Cloudflare Pages via wrangler CLI
-- README updated with Cloudflare Pages CLI deployment instructions
 - Fixed server crash on missing database (graceful startup)
-- Removed duplicate `/api/status` route
-- `/api/status` now shows transaction count and latest month
 - DB middleware rejects other API calls with 503 when DB is missing
-- Added `fly.ssh*` to `.gitignore`
-- Comprehensive README with deployment and debugging guide
 
 ## Active Decisions & Considerations
 - Database is opened in `readonly: true` mode — data only changes via Python scripts

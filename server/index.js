@@ -1563,13 +1563,283 @@ app.get('/api/nearby-hdb', async (req, res) => {
   }
 });
 
-app.get('/api/status', (req, res) => {
+// ============================================================
+// SEO ENDPOINTS (for Cloudflare Pages Function / bot requests)
+// ============================================================
+
+const SEO_BASE_URL = process.env.SEO_BASE_URL || 'https://worthit.canlah.app';
+
+// Slug helpers
+function townToSlug(town) {
+  return town.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function slugToTown(slug) {
+  const s = slug.toUpperCase().replace(/-/g, ' ');
+  if (!db) return null;
+  const towns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE'").all().map(r => r.town);
+  // Exact match after normalization
+  const exact = towns.find(t => t.replace(/[^A-Z0-9]/g, ' ') === s.replace(/[^A-Z0-9]/g, ' '));
+  if (exact) return exact;
+  // Try matching with slashes (KALLANG/WHAMPOA → kallang-whampoa)
+  return towns.find(t => townToSlug(t) === slug) || null;
+}
+
+function slugToProject(slug) {
+  if (!db) return null;
+  const searchPattern = `%${slug.replace(/-/g, '%')}%`;
+  return db.prepare(`
+    SELECT project FROM transactions
+    WHERE dataset_source = 'URA_PRIVATE' AND UPPER(project) LIKE ?
+    GROUP BY project ORDER BY COUNT(*) DESC LIMIT 1
+  `).get(searchPattern)?.project || null;
+}
+
+function titleCase(str) {
+  return str.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+}
+
+/**
+ * GET /api/seo/sitemap — Generate sitemap URLs
+ */
+let sitemapCache = { data: null, timestamp: 0 };
+app.get('/api/seo/sitemap', (req, res) => {
   try {
-    const count = db.prepare('SELECT COUNT(*) as count FROM transactions').get().count;
-    const latestMonth = db.prepare('SELECT MAX(month) as m FROM transactions').get().m;
-    res.json({ status: 'ok', total_transactions: count, latest_month: latestMonth });
+    if (!db) return res.status(503).json({ error: 'Database not ready' });
+
+    const now = Date.now();
+    if (sitemapCache.data && now - sitemapCache.timestamp < 86400000) {
+      return res.json(sitemapCache.data);
+    }
+
+    const urls = [{ url: SEO_BASE_URL + '/', changefreq: 'weekly', priority: '1.0' }];
+
+    // HDB towns
+    const towns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE' ORDER BY town").all();
+    for (const t of towns) {
+      urls.push({
+        url: `${SEO_BASE_URL}/hdb/${townToSlug(t.town)}`,
+        changefreq: 'weekly',
+        priority: '0.9',
+      });
+    }
+
+    // District pages
+    for (const d of Object.keys(DISTRICT_LABELS)) {
+      urls.push({
+        url: `${SEO_BASE_URL}/district/${d}`,
+        changefreq: 'weekly',
+        priority: '0.8',
+      });
+    }
+
+    // Top private projects (by transaction count, limited to keep sitemap reasonable)
+    const projects = db.prepare(`
+      SELECT project FROM transactions
+      WHERE dataset_source = 'URA_PRIVATE'
+      GROUP BY project ORDER BY COUNT(*) DESC LIMIT 200
+    `).all();
+    for (const p of projects) {
+      urls.push({
+        url: `${SEO_BASE_URL}/private/${townToSlug(p.project)}`,
+        changefreq: 'monthly',
+        priority: '0.7',
+      });
+    }
+
+    sitemapCache = { data: { urls }, timestamp: now };
+    res.json({ urls });
   } catch (err) {
-    res.status(500).json({ status: 'error', message: err.message });
+    console.error('Error in /api/seo/sitemap:', err);
+    res.status(500).json({ error: 'Failed to generate sitemap' });
+  }
+});
+
+/**
+ * GET /api/seo/metadata — Generate SEO metadata for a route
+ * Query: ?route=/hdb/bedok
+ */
+app.get('/api/seo/metadata', (req, res) => {
+  try {
+    const { route } = req.query;
+    if (!route) return res.status(400).json({ error: 'Missing route parameter' });
+
+    let meta = {
+      title: 'WorthIt — Singapore HDB Resale Prices & Property Transaction Checker',
+      description: 'Check HDB resale prices, property transaction history, and fair value estimates for Singapore flats and condos. Analyze 370K+ transactions from data.gov.sg with price trends, distributions, and Deal Scores.',
+      canonical: SEO_BASE_URL + '/',
+      og_title: 'WorthIt — Singapore HDB & Condo Resale Price Tracker',
+      og_description: 'Check HDB resale prices, condo transaction history, and fair market value for any Singapore property. Free tool powered by data.gov.sg.',
+      json_ld: null,
+    };
+
+    if (!route || route === '/') {
+      // Homepage
+      meta.json_ld = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'WebSite',
+            '@id': SEO_BASE_URL + '/#website',
+            url: SEO_BASE_URL + '/',
+            name: 'WorthIt',
+            description: 'Singapore HDB & Property Resale Price Tracker',
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: SEO_BASE_URL + '/?q={search_term_string}',
+              'query-input': 'required name=search_term_string',
+            },
+          },
+          {
+            '@type': 'Organization',
+            '@id': SEO_BASE_URL + '/#organization',
+            name: 'WorthIt',
+            url: SEO_BASE_URL + '/',
+          },
+          {
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'How to check HDB resale prices in Singapore?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Use WorthIt to search any HDB town and instantly view median resale prices, price trends, and transaction history. Data sourced from data.gov.sg covering 370,000+ HDB resale transactions across all Singapore towns.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'What is a fair price for an HDB flat in Singapore?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'A fair HDB price depends on town, flat type, floor level, remaining lease, and recent transactions. WorthIt shows price percentiles (10th to 90th), price per sqm benchmarks, and Deal Scores to help you assess fair value against comparable sales.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'Where to find Singapore property transaction history?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'WorthIt provides free access to Singapore property transaction records from HDB and URA data. Search by town, postal code, or project name to see past resale prices, price trends over 5 years, and detailed transaction maps.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'How to check condo resale transaction prices in Singapore?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Search any private property or condo project name on WorthIt to view resale transaction prices, price per sqm, unit mix, and market segment (CCR/RCR/OCR) data sourced from URA records.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'What is the Deal Score for HDB flats?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Deal Score compares a transaction\'s price per sqm against similar flats (same type and remaining lease) in the same area. Green markers indicate good value, while red indicates premium pricing. This helps buyers quickly assess whether a listing is fairly priced.',
+                },
+              },
+            ],
+          },
+        ],
+      });
+    } else if (route.startsWith('/hdb/')) {
+      const slug = route.replace('/hdb/', '');
+      const town = slugToTown(slug);
+      if (town && db) {
+        const townDisplay = titleCase(town);
+        const monthsAgo12 = monthsAgoStr(12);
+        const summary = db.prepare(`
+          SELECT COUNT(*) as tx_count, ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm
+          FROM transactions WHERE town = ? AND resale_price IS NOT NULL AND month >= ? AND dataset_source != 'URA_PRIVATE'
+        `).get(town, monthsAgo12);
+        const txCount = summary?.tx_count || 0;
+        const avgPrice = summary?.avg_price || 0;
+
+        meta.title = `${townDisplay} HDB Resale Prices & Transaction History in Singapore | WorthIt`;
+        meta.description = `Check ${townDisplay} HDB resale flat prices, past transaction history, and fair market value. ${txCount.toLocaleString()} recent transactions with average price $${Math.round(avgPrice).toLocaleString()}. Compare Deal Scores from data.gov.sg records for ${townDisplay} Singapore.`;
+        meta.canonical = `${SEO_BASE_URL}/hdb/${slug}`;
+        meta.og_title = `${townDisplay} HDB Resale Prices — Singapore Property Tracker`;
+        meta.og_description = `${txCount.toLocaleString()} recent HDB transactions in ${townDisplay}. Check prices, trends, and fair value.`;
+        meta.json_ld = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: `${townDisplay} HDB Resale Prices`,
+          description: meta.description,
+          url: meta.canonical,
+          breadcrumb: {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
+              { '@type': 'ListItem', position: 2, name: `${townDisplay} HDB`, item: meta.canonical },
+            ],
+          },
+          mainEntity: {
+            '@type': 'ResidentialProperty',
+            name: `${townDisplay} HDB Estate`,
+            address: { '@type': 'PostalAddress', addressLocality: townDisplay, addressRegion: 'Singapore' },
+          },
+        });
+      }
+    } else if (route.startsWith('/private/')) {
+      const slug = route.replace('/private/', '');
+      const project = slugToProject(slug);
+      if (project && db) {
+        const info = db.prepare(`
+          SELECT project, street_name, district, market_segment, COUNT(*) as tx_count, ROUND(AVG(resale_price)) as avg_price
+          FROM transactions WHERE dataset_source = 'URA_PRIVATE' AND project = ?
+          GROUP BY project
+        `).get(project);
+        if (info) {
+          meta.title = `${info.project} Resale Transaction Prices Singapore | WorthIt`;
+          meta.description = `View ${info.project} resale transaction prices and history in Singapore. ${info.tx_count.toLocaleString()} transactions in District ${info.district} (${info.market_segment || 'Singapore'}). Check fair value, price trends, and URA transaction data.`;
+          meta.canonical = `${SEO_BASE_URL}/private/${slug}`;
+          meta.og_title = `${info.project} — Singapore Condo Price Tracker`;
+          meta.og_description = `${info.tx_count.toLocaleString()} transactions. Check ${info.project} resale prices and trends.`;
+          meta.json_ld = JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: `${info.project} Resale Prices`,
+            description: meta.description,
+            url: meta.canonical,
+            breadcrumb: {
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
+                { '@type': 'ListItem', position: 2, name: info.project, item: meta.canonical },
+              ],
+            },
+            mainEntity: {
+              '@type': 'ResidentialProperty',
+              name: info.project,
+              address: { '@type': 'PostalAddress', streetAddress: info.street_name, addressLocality: 'Singapore' },
+            },
+          });
+        }
+      }
+    } else if (route.startsWith('/district/')) {
+      const dCode = route.replace('/district/', '').padStart(2, '0');
+      const label = DISTRICT_LABELS[dCode];
+      if (label) {
+        meta.title = `${label} — Private Property Resale Prices Singapore | WorthIt`;
+        meta.description = `Check private property resale prices and transaction history in Singapore ${label}. View top projects, price trends, and URA transaction data for District ${dCode}.`;
+        meta.canonical = `${SEO_BASE_URL}/district/${dCode}`;
+        meta.og_title = `${label} — Singapore Property Tracker`;
+        meta.og_description = `Private property prices and transactions in ${label}.`;
+        meta.json_ld = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: `${label} Property Prices`,
+          description: meta.description,
+          url: meta.canonical,
+        });
+      }
+    }
+
+    res.json(meta);
+  } catch (err) {
+    console.error('Error in /api/seo/metadata:', err);
+    res.status(500).json({ error: 'Failed to generate metadata' });
   }
 });
 

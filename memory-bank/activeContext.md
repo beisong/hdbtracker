@@ -43,6 +43,10 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Trend calculation fix** (May 2026):
+  - Old: compared single first month vs single last month — wildly noisy in thin-volume areas (e.g. D01 showed +62.1% 1Y)
+  - New: `trendPct(arr, key, n=3)` helper — averages first 3 months vs last 3 months of each window (falls back to 1 if window too small)
+  - Fixed in all 3 endpoints: HDB `area-overview` (uses `median_price`), private `project-overview` and `district-overview` (use `avg_price`)
 - **Flat Type Multi-Select** (May 2026):
   - Changed flat type toggle from single-select to multi-select
   - `selectedFlatType: 'ALL'` (string) → `selectedFlatTypes: new Set()` (empty = All)

@@ -106,6 +106,17 @@ function percentile(arr, p) {
   return sorted[low] + (sorted[high] - sorted[low]) * (idx - low);
 }
 
+// Compare avg of first N months vs avg of last N months to smooth single-month noise.
+// Falls back to 1-month comparison when the window is too small.
+function trendPct(arr, key, n = 3) {
+  if (!arr || arr.length < 2) return 0;
+  const take = Math.min(n, Math.floor(arr.length / 2));
+  const early = arr.slice(0, take).reduce((s, m) => s + m[key], 0) / take;
+  const late = arr.slice(-take).reduce((s, m) => s + m[key], 0) / take;
+  if (!early || early === 0) return 0;
+  return Math.round((late - early) / early * 1000) / 10;
+}
+
 function monthsAgoStr(months) {
   const latestMonth = db.prepare('SELECT MAX(month) as m FROM transactions').get().m;
   const y = parseInt(latestMonth.substring(0, 4));
@@ -651,7 +662,7 @@ app.get('/api/area-overview', (req, res) => {
     trendQuery += ' GROUP BY month ORDER BY month ASC';
     const trendData = db.prepare(trendQuery).all(...trendParams);
 
-    // Calculate trend direction
+    // Calculate trend direction — compare 3-month rolling avg at start vs end of each window
     let priceTrend = { '6m_change': 0, '1y_change': 0, '3y_change': 0, '5y_change': 0, direction: 'stable' };
     if (trendData.length >= 2) {
       const monthsAgo6 = monthsAgoStr(6);
@@ -662,26 +673,10 @@ app.get('/api/area-overview', (req, res) => {
       const recent12m = trendData.filter(m => m.month >= monthsAgo12m);
       const recent36m = trendData.filter(m => m.month >= monthsAgo36);
 
-      if (recent6m.length >= 2) {
-        const first = recent6m[0].median_price;
-        const last = recent6m[recent6m.length - 1].median_price;
-        priceTrend['6m_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
-      if (recent12m.length >= 2) {
-        const first = recent12m[0].median_price;
-        const last = recent12m[recent12m.length - 1].median_price;
-        priceTrend['1y_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
-      if (recent36m.length >= 2) {
-        const first = recent36m[0].median_price;
-        const last = recent36m[recent36m.length - 1].median_price;
-        priceTrend['3y_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
-      if (trendData.length >= 2) {
-        const first = trendData[0].median_price;
-        const last = trendData[trendData.length - 1].median_price;
-        priceTrend['5y_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
+      priceTrend['6m_change'] = trendPct(recent6m, 'median_price');
+      priceTrend['1y_change'] = trendPct(recent12m, 'median_price');
+      priceTrend['3y_change'] = trendPct(recent36m, 'median_price');
+      priceTrend['5y_change'] = trendPct(trendData, 'median_price');
 
       if (priceTrend['1y_change'] > 2) priceTrend.direction = 'rising';
       else if (priceTrend['1y_change'] < -2) priceTrend.direction = 'falling';
@@ -1062,21 +1057,9 @@ app.get('/api/private/project-overview', (req, res) => {
       const recent12m = trendData.filter(m => m.month >= monthsAgo12m);
       const recent36m = trendData.filter(m => m.month >= monthsAgo36);
 
-      if (recent6m.length >= 2) {
-        const first = recent6m[0].avg_price;
-        const last = recent6m[recent6m.length - 1].avg_price;
-        priceTrend['6m_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
-      if (recent12m.length >= 2) {
-        const first = recent12m[0].avg_price;
-        const last = recent12m[recent12m.length - 1].avg_price;
-        priceTrend['1y_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
-      if (recent36m.length >= 2) {
-        const first = recent36m[0].avg_price;
-        const last = recent36m[recent36m.length - 1].avg_price;
-        priceTrend['3y_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
+      priceTrend['6m_change'] = trendPct(recent6m, 'avg_price');
+      priceTrend['1y_change'] = trendPct(recent12m, 'avg_price');
+      priceTrend['3y_change'] = trendPct(recent36m, 'avg_price');
 
       if (priceTrend['1y_change'] > 2) priceTrend.direction = 'rising';
       else if (priceTrend['1y_change'] < -2) priceTrend.direction = 'falling';
@@ -1353,26 +1336,10 @@ app.get('/api/private/district-overview', (req, res) => {
       const recent12m = trendData.filter(m => m.month >= monthsAgo12m);
       const recent36m = trendData.filter(m => m.month >= monthsAgo36);
 
-      if (recent6m.length >= 2) {
-        const first = recent6m[0].avg_price;
-        const last = recent6m[recent6m.length - 1].avg_price;
-        priceTrend['6m_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
-      if (recent12m.length >= 2) {
-        const first = recent12m[0].avg_price;
-        const last = recent12m[recent12m.length - 1].avg_price;
-        priceTrend['1y_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
-      if (recent36m.length >= 2) {
-        const first = recent36m[0].avg_price;
-        const last = recent36m[recent36m.length - 1].avg_price;
-        priceTrend['3y_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
-      if (trendData.length >= 2) {
-        const first = trendData[0].avg_price;
-        const last = trendData[trendData.length - 1].avg_price;
-        priceTrend['5y_change'] = Math.round((last - first) / first * 1000) / 10;
-      }
+      priceTrend['6m_change'] = trendPct(recent6m, 'avg_price');
+      priceTrend['1y_change'] = trendPct(recent12m, 'avg_price');
+      priceTrend['3y_change'] = trendPct(recent36m, 'avg_price');
+      priceTrend['5y_change'] = trendPct(trendData, 'avg_price');
 
       if (priceTrend['1y_change'] > 2) priceTrend.direction = 'rising';
       else if (priceTrend['1y_change'] < -2) priceTrend.direction = 'falling';

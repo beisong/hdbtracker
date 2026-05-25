@@ -544,7 +544,17 @@ app.get('/api/area-overview', (req, res) => {
     if (!town) return res.status(400).json({ error: 'Missing town parameter' });
 
     const townUpper = town.toUpperCase();
-    const flatTypeFilter = flat_type && flat_type !== 'ALL' ? flat_type.toUpperCase() : null;
+    const flatTypeList = (flat_type && flat_type !== 'ALL')
+      ? flat_type.toUpperCase().split(',').map(t => t.trim()).filter(Boolean)
+      : [];
+    const addFlatClause = (query, params) => {
+      if (flatTypeList.length === 1) {
+        query += ' AND flat_type = ?'; params.push(flatTypeList[0]);
+      } else if (flatTypeList.length > 1) {
+        query += ` AND flat_type IN (${flatTypeList.map(() => '?').join(',')})`; params.push(...flatTypeList);
+      }
+      return query;
+    };
 
     // Build street filter — support both single street name or pre-resolved list
     let streetNames = [];
@@ -575,7 +585,7 @@ app.get('/api/area-overview', (req, res) => {
       WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
     `;
     const pricesByTypeParams = [townUpper, monthsAgo12];
-    if (flatTypeFilter) { pricesByTypeQuery += ' AND flat_type = ?'; pricesByTypeParams.push(flatTypeFilter); }
+    pricesByTypeQuery = addFlatClause(pricesByTypeQuery, pricesByTypeParams);
     if (streetClause) { pricesByTypeQuery += streetClause; pricesByTypeParams.push(...streetNames); }
     pricesByTypeQuery += ' GROUP BY flat_type ORDER BY median_price';
     const pricesByType = db.prepare(pricesByTypeQuery).all(...pricesByTypeParams);
@@ -592,7 +602,7 @@ app.get('/api/area-overview', (req, res) => {
       WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
     `;
     const townSummaryParams = [townUpper, monthsAgo12];
-    if (flatTypeFilter) { townSummaryQuery += ' AND flat_type = ?'; townSummaryParams.push(flatTypeFilter); }
+    townSummaryQuery = addFlatClause(townSummaryQuery, townSummaryParams);
     if (streetClause) { townSummaryQuery += streetClause; townSummaryParams.push(...streetNames); }
     const townSummary = db.prepare(townSummaryQuery).get(...townSummaryParams);
 
@@ -610,7 +620,7 @@ app.get('/api/area-overview', (req, res) => {
       WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
     `;
     const priceParams = [townUpper, monthsAgo12];
-    if (flatTypeFilter) { priceQuery += ' AND flat_type = ?'; priceParams.push(flatTypeFilter); }
+    priceQuery = addFlatClause(priceQuery, priceParams);
     if (streetClause) { priceQuery += streetClause; priceParams.push(...streetNames); }
     priceQuery += ' ORDER BY resale_price ASC LIMIT 10000';
     const allPrices = db.prepare(priceQuery).all(...priceParams).map(r => r.resale_price);
@@ -637,10 +647,7 @@ app.get('/api/area-overview', (req, res) => {
       WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
     `;
     const trendParams = [townUpper, monthsAgo60];
-    if (flatTypeFilter) {
-      trendQuery += ' AND flat_type = ?';
-      trendParams.push(flatTypeFilter);
-    }
+    trendQuery = addFlatClause(trendQuery, trendParams);
     trendQuery += ' GROUP BY month ORDER BY month ASC';
     const trendData = db.prepare(trendQuery).all(...trendParams);
 
@@ -703,14 +710,14 @@ app.get('/api/area-overview', (req, res) => {
       WHERE town = ? AND resale_price IS NOT NULL
     `;
     const txParams = [townUpper];
-    if (flatTypeFilter) { txQuery += ' AND flat_type = ?'; txParams.push(flatTypeFilter); }
+    txQuery = addFlatClause(txQuery, txParams);
     if (streetClause) { txQuery += streetClause; txParams.push(...streetNames); }
     txQuery += ' ORDER BY month DESC, resale_price DESC LIMIT 200';
     const recentTransactions = db.prepare(txQuery).all(...txParams);
 
     res.json({
       town: townUpper,
-      flat_type: flatTypeFilter || 'ALL',
+      flat_type: flatTypeList.length > 0 ? flatTypeList.join(',') : 'ALL',
       street_filtered: streetNames.length > 0,
       street_names: streetNames,
       data_as_of: latestMonth,

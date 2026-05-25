@@ -56,6 +56,9 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - Seed DB: `python scripts/download_data.py` → `fly ssh sftp put server/db/resale.db /data/resale.db` → `fly machine restart <id>`
 - Update monthly: Re-run download locally → re-upload via SFTP
 
+- ✅ Flat type multi-select toggle (May 2026)
+- ✅ CLAUDE.md with Memory Bank workflow
+
 ## What's Left to Build / Improve
 - 🔲 Automated tests
 - 🔲 SQL injection fix in `/api/private/project-overview`

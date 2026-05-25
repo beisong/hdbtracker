@@ -43,6 +43,17 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Flat Type Multi-Select** (May 2026):
+  - Changed flat type toggle from single-select to multi-select
+  - `selectedFlatType: 'ALL'` (string) → `selectedFlatTypes: new Set()` (empty = All)
+  - New helpers: `_updateFlatTypeUI()` syncs button active states from Set; `_getFlatTypeParam()` returns comma-joined string for API
+  - Clicking a type toggles it; clicking "All" clears the Set; any change triggers re-search if town is loaded
+  - Server: `flat_type` query param now accepts comma-separated list (e.g. `4 ROOM,5 ROOM`)
+  - `addFlatClause()` helper in `area-overview` handler builds `= ?` (single) or `IN (?,?)` (multiple) across all 5 query sites
+  - Subtitle label renders `4 ROOM,5 ROOM` as `4 ROOM + 5 ROOM`
+- **CLAUDE.md created** (May 2026):
+  - Documents commands, split architecture, DB layout, key patterns, and known issues
+  - Memory Bank workflow directives added by user config
 - **Light/Dark Theme Toggle** (May 2026):
   - Added CSS custom properties for popup styles (leaflet popups now theme-aware)
   - Created `:root` (light mode) and `.dark` (dark mode) CSS variable overrides

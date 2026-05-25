@@ -1,0 +1,19 @@
+# Python virtual environment
+venv/
+
+# Node dependencies
+node_modules/
+
+# SQLite database files (binary, not useful to read)
+server/db/
+
+# Wrangler build cache
+.wrangler/
+
+# macOS metadata
+.DS_Store
+
+# Sensitive files
+.env
+fly.ssh
+fly.ssh-cert.pub

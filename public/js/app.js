@@ -3,7 +3,7 @@
  */
 
 const App = {
-  selectedFlatType: 'ALL',
+  selectedFlatTypes: new Set(),
   currentTown: null,
   currentStreet: null,  // street filter for postal code searches
   allTransactions: [],
@@ -170,20 +170,22 @@ const App = {
   },
 
   setupEventListeners() {
-    // Flat type buttons
+    // Flat type buttons — multi-select; ALL clears selection
     document.querySelectorAll('.flat-type-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.flat-type-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.selectedFlatType = btn.dataset.value;
-        // Re-search if we have a town
-        if (this.currentTown) {
-          this.selectedFlatType = btn.dataset.value;
-          this.search();
+        const value = btn.dataset.value;
+        if (value === 'ALL') {
+          this.selectedFlatTypes.clear();
+        } else if (this.selectedFlatTypes.has(value)) {
+          this.selectedFlatTypes.delete(value);
+        } else {
+          this.selectedFlatTypes.add(value);
         }
+        this._updateFlatTypeUI();
+        if (this.currentTown) this.search();
       });
     });
-    document.querySelector('.flat-type-btn[data-value="ALL"]').classList.add('active');
+    this._updateFlatTypeUI();
 
     // Search button
     document.getElementById('search-btn').addEventListener('click', () => { this.hideAc(); this.search(); });
@@ -200,6 +202,21 @@ const App = {
 
     // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
+  },
+
+  _updateFlatTypeUI() {
+    document.querySelectorAll('.flat-type-btn').forEach(b => {
+      const val = b.dataset.value;
+      if (val === 'ALL') {
+        b.classList.toggle('active', this.selectedFlatTypes.size === 0);
+      } else {
+        b.classList.toggle('active', this.selectedFlatTypes.has(val));
+      }
+    });
+  },
+
+  _getFlatTypeParam() {
+    return this.selectedFlatTypes.size === 0 ? 'ALL' : [...this.selectedFlatTypes].join(',');
   },
 
   initTheme() {
@@ -354,7 +371,7 @@ const App = {
       this.currentStreet = (isPostalCode && resolved.road) ? resolved.road : null;
 
       // Fetch area overview (with nearby streets for postal codes)
-      const data = await API.getAreaOverview(resolved.town, this.selectedFlatType, this.currentStreet, nearbyStreets);
+      const data = await API.getAreaOverview(resolved.town, this._getFlatTypeParam(), this.currentStreet, nearbyStreets);
       const addressInfo = resolved.address ? ` (${resolved.address})` : '';
       this.renderResults(data, addressInfo);
 
@@ -384,7 +401,7 @@ const App = {
     if (data.street_filtered && data.street_names.length > 0) {
       subtitleParts.push(`📍 Near ${data.street_names[0]} — ${ts.total_transactions_12m.toLocaleString()} nearby transactions`);
     } else {
-      const flatLabel = data.flat_type === 'ALL' ? 'All Types' : data.flat_type;
+      const flatLabel = data.flat_type === 'ALL' ? 'All Types' : data.flat_type.split(',').join(' + ');
       subtitleParts.push(`${flatLabel} • ${ts.total_transactions_12m.toLocaleString()} transactions in last 12 months`);
     }
     subtitleParts.push(`Data as of ${this.formatMonth(data.data_as_of)}`);

@@ -1395,6 +1395,32 @@ app.get('/api/private/district-overview', (req, res) => {
     // Related HDB towns
     const relatedTowns = DISTRICT_TO_TOWNS[districtCode] || [];
 
+    // === HDB TRANSACTIONS FROM RELATED TOWNS ===
+    let hdbTransactions = [];
+    if (relatedTowns.length > 0) {
+      const townClause = `AND town IN (${relatedTowns.map(() => '?').join(',')})`;
+      const townParams = relatedTowns;
+
+      hdbTransactions = db.prepare(`
+        SELECT month, town, flat_type, block, street_name, storey_range,
+               floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
+        FROM transactions
+        WHERE dataset_source = 'primary_2017_2026'
+          ${townClause}
+          AND resale_price IS NOT NULL
+        ORDER BY month DESC, resale_price DESC
+        LIMIT 500
+      `).all(...townParams);
+    }
+
+    // Merge transactions: private and HDB, sorted by date then price
+    const allTransactions = [...(recentTransactions || []), ...hdbTransactions]
+      .sort((a, b) => {
+        const dateCompare = (b.month || '').localeCompare(a.month || '');
+        if (dateCompare !== 0) return dateCompare;
+        return (b.resale_price || 0) - (a.resale_price || 0);
+      });
+
     // District label
     const districtLabel = DISTRICT_LABELS[districtCode] || `D${districtCode}`;
 
@@ -1410,7 +1436,7 @@ app.get('/api/private/district-overview', (req, res) => {
       trend_data: trendData,
       price_percentiles: pricePercentiles,
       distribution: { bins, counts },
-      recent_transactions: recentTransactions,
+      recent_transactions: allTransactions,
       project_coords: projectCoords.filter(p => p.latitude && p.longitude),
     });
   } catch (err) {

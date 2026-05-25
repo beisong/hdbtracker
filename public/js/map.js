@@ -344,19 +344,18 @@ const TransactionMap = {
       // Sort by date descending (newest first)
       txList.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
 
-      // Color based on most recent transaction
+      // Color based on transaction type (HDB vs PRIVATE)
       const recent = txList[0];
-      const tier = this.getLeaseTier(recent.remaining_lease_years || 0);
-      const tierKey = `${recent.flat_type}|${tier}`;
-      const medianPsm = tierMedianPsm[tierKey] || typeMedianPsm[recent.flat_type] || overallMedianPsm;
-      const style = this.getValueStyle(recent.price_per_sqm || 0, medianPsm);
+      const markerColor = recent.transaction_type === 'HDB'
+        ? '#3b82f6'  // Blue for HDB
+        : '#a855f7'; // Purple for private
 
       // Size based on number of transactions
-      const radius = Math.min(12, Math.max(style.radius, 6 + txList.length));
+      const radius = Math.min(12, Math.max(6, 6 + txList.length));
 
       const marker = L.circleMarker([first.lat, first.lng], {
         radius: radius,
-        fillColor: style.color,
+        fillColor: markerColor,
         color: '#fff',
         weight: 1,
         opacity: 0.6,
@@ -392,7 +391,7 @@ const TransactionMap = {
       `;
       marker.bindPopup(popupContent, { maxHeight: 300 });
       this.markers.push(marker);
-      this.addressMarkers[addrKey] = { marker, originalStyle: { radius, fillColor: style.color, color: '#fff', weight: 1, opacity: 0.6, fillOpacity: 0.85 } };
+      this.addressMarkers[addrKey] = { marker, originalStyle: { radius, fillColor: markerColor, color: '#fff', weight: 1, opacity: 0.6, fillOpacity: 0.85 } };
       bounds.push([first.lat, first.lng]);
     }
 

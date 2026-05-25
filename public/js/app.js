@@ -701,14 +701,23 @@ const App = {
     }
 
     // Transactions table
-    this.allTransactions = (data.recent_transactions || []).map(tx => ({
-      ...tx,
-      flat_type: tx.property_type || tx.flat_type,
-      block: tx.project || '--',
-      street_name: tx.project || '--',
-      remaining_lease_years: tx.remaining_lease_years,
-      is_freehold: tx.tenure === 'FREEHOLD',
-    }));
+    this.allTransactions = (data.recent_transactions || []).map(tx => {
+      // Detect transaction type: HDB has flat_type, private has project
+      const isHDB = tx.flat_type && !tx.project;
+
+      return {
+        ...tx,
+        // Set flat_type for display (HDB uses actual flat_type, private uses property_type)
+        flat_type: isHDB ? tx.flat_type : (tx.property_type || '--'),
+        // Set block/street for display (HDB uses actual, private uses project name)
+        block: isHDB ? tx.block : (tx.project || '--'),
+        street_name: isHDB ? tx.street_name : (tx.project || '--'),
+        remaining_lease_years: tx.remaining_lease_years,
+        is_freehold: tx.tenure === 'FREEHOLD',
+        // Mark transaction type for filtering/styling
+        transaction_type: isHDB ? 'HDB' : 'PRIVATE',
+      };
+    });
     this.populateTypeFilter(this.allTransactions);
     this.applyTransactionFilters();
 

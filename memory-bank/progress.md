@@ -19,6 +19,9 @@
 - ✅ District code search with private property overview
 - ✅ Town ↔ district mapping
 - ✅ Server graceful startup without database
+- ✅ Fast initial page load (parallel API calls, no artificial delays)
+- ✅ Logo links to homepage
+- ✅ Clean navbar (removed data-status text)
 
 ## Deployment Status
 
@@ -62,7 +65,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - 🔲 Server refactor (split monolithic `server/index.js` into modules)
 - 🔲 Rate limiting on API endpoints
 - 🔲 Google Search Console verification & submission
-- 🔲 Open Graph image (og:image) for social sharing
+- ✅ Open Graph image (`og-image.png`) for social sharing
 - 🔲 Cloudflare Cache API for sitemap caching at edge
 - 🔲 Structured data testing & rich results validation
 - ✅ Google Analytics 4 (GA4 tag `G-WGC8D0FRSQ` with SPA pageview tracking)

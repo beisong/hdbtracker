@@ -72,6 +72,16 @@ The project is fully deployed and functional:
 - **Fixed SPA direct URL loading** (May 2026):
   - Bug: direct navigation to `/hdb/bedok` stuck at "Loading data..." — all JS/CSS 404'd because relative paths (`js/app.js`) resolved to `/hdb/js/app.js`
   - Fix: changed all relative asset paths in `index.html` to absolute (`/js/app.js`, `/css/styles.css`, `/config.js`)
+- **Logo clickable → homepage** (May 2026):
+  - Wrapped logo `<div>` in `<a href="/">` so clicking "WorthIt" navigates to homepage
+- **Optimized initial page load** (May 2026):
+  - `API.getStatus()` and `API.getTowns()` now run in parallel via `Promise.all` (was sequential)
+  - Removed 300ms artificial `setTimeout` delay before dismissing overlay
+  - Moved `setupEventListeners()` and `setupTransactionFilters()` before API calls
+  - Result: ~1-2 seconds faster perceived load time
+- **Removed "370k transactions" from navbar** (May 2026):
+  - Removed `<span id="data-status">` from navbar HTML and JS that populated it — cleaner UI
+  - Data freshness still shown in footer ("Data as of May 2026")
 - Fixed server crash on missing database (graceful startup)
 - DB middleware rejects other API calls with 503 when DB is missing
 

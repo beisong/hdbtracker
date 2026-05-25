@@ -17,36 +17,34 @@ const App = {
   async init() {
     Charts.initDefaults();
     this.initTheme();
+    this.setupEventListeners();
+    this.setupTransactionFilters();
 
     try {
       this.setLoadingProgress(20);
-      const status = await API.getStatus();
-      this.setLoadingProgress(60);
+
+      // Run both API calls in parallel — towns data only needed for autocomplete
+      const [status, townsData] = await Promise.all([
+        API.getStatus(),
+        API.getTowns(),
+      ]);
+      this.setLoadingProgress(100);
 
       if (status.total_transactions === 0) {
         this.showError('No transaction data found. Please run the download script first.');
         return;
       }
 
-      document.getElementById('data-status').textContent = `${(status.total_transactions / 1000).toFixed(0)}k transactions`;
       document.getElementById('last-updated').textContent = `Data as of ${this.formatMonth(status.latest_month)}`;
-
-      const townsData = await API.getTowns();
-      this.setLoadingProgress(90);
 
       // Store for autocomplete
       this._towns = townsData.towns || [];
       this._districts = townsData.districts || [];
 
-      this.setupEventListeners();
-      this.setupTransactionFilters();
-      this.setLoadingProgress(100);
-
-      setTimeout(() => {
-        const overlay = document.getElementById('loading-overlay');
-        overlay.classList.add('loading-fade-out');
-        setTimeout(() => overlay.style.display = 'none', 500);
-      }, 300);
+      // Dismiss overlay immediately — no artificial delay
+      const overlay = document.getElementById('loading-overlay');
+      overlay.classList.add('loading-fade-out');
+      setTimeout(() => overlay.style.display = 'none', 500);
 
       // Handle URL-based routing (e.g. /hdb/bedok, /private/sky-habitat)
       await this.handleUrlRoute();

@@ -43,6 +43,16 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Price trend metric switched to $/sqm** (May 2026):
+  - All trend charts now display `avg_psm` ($/sqm) instead of average resale price
+  - Fixes compositional bias: raw price fluctuates when flat size mix changes month-to-month; $/sqm is size-neutral
+  - `charts.js`: reads `d.avg_psm`, Y-axis shows `$X.Xk/sqm`, tooltip shows `$/sqm`
+  - `server/index.js`: `trendPct()` now uses `'avg_psm'` in all 3 endpoints (area-overview, project-overview, district-overview) so trend badges (6m/1y/3y/5y %) are consistent with the chart
+  - Applies to all search types: town, postal code, project name, district
+  - No DB changes needed — `avg_psm` was already being fetched but unused for trend calculations
+- **Trend chart fix for private/district** (May 2026):
+  - `charts.js` was hardcoded to `d.median_price`; private/district data only has `d.avg_price` → flat line
+  - Fixed with `d.median_price ?? d.avg_price` first, then superseded by the $/sqm switch above
 - **Trend calculation fix** (May 2026):
   - Old: compared single first month vs single last month — wildly noisy in thin-volume areas (e.g. D01 showed +62.1% 1Y)
   - New: `trendPct(arr, key, n=3)` helper — averages first 3 months vs last 3 months of each window (falls back to 1 if window too small)

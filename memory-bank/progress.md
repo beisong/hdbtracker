@@ -59,6 +59,8 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Flat type multi-select toggle (May 2026)
 - ✅ CLAUDE.md with Memory Bank workflow
 - ✅ Trend calculation fix — 3-month rolling avg instead of point-to-point single months (May 2026)
+- ✅ Trend chart fixed for private/district — was showing flat line due to wrong field name (May 2026)
+- ✅ Price trend metric switched to $/sqm across all search types — eliminates flat-size compositional bias (May 2026)
 
 ## What's Left to Build / Improve
 - 🔲 Automated tests

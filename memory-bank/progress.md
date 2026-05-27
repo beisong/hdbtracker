@@ -65,6 +65,8 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Fixed district-overview HDB query — wrong dataset_source value meant HDB data was always empty (May 2026)
 - ✅ OneMap geocoding fallback in download_ura_data.py for projects missing SVY21 coords (May 2026)
 - ✅ Fixed private project map — was passing empty array to TransactionMap.load (May 2026)
+- ✅ Zero-downtime DB deploy — upload to .new, atomic mv, restart (May 2026)
+- ✅ WAL checkpoint before DB upload — PRAGMA wal_checkpoint(TRUNCATE) ensures all writes are in main file (May 2026)
 
 ## What's Left to Build / Improve
 - 🔲 Automated tests

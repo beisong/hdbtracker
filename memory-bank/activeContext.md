@@ -49,6 +49,8 @@ The project is fully deployed and functional:
   - `project_coords` is never cleared between runs — only truly new missing projects are queried on subsequent downloads
   - Result: 121/128 geocoded automatically; NEWPORT RESIDENCES (192 tx, 80 Anson Rd) inserted manually; 6 single-tx projects remain unmapped
   - Fixed private project map bug: `TransactionMap.load` was passing empty array `[]` → now passes `this.allTransactions`
+  - **WAL checkpoint lesson**: geocoded data landed in `resale.db-wal`, not main `resale.db` — first upload silently missed new coords; fixed by running `PRAGMA wal_checkpoint(TRUNCATE)` before upload
+  - Deploy flow updated: upload to `/data/resale.db.new` → atomic `mv` → restart (zero downtime during upload)
 - **Dual-line price trend chart** (May 2026):
   - Town/postal search: blue HDB line + purple private line (related districts)
   - District search: blue HDB line (related towns) + purple private line

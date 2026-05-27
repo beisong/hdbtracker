@@ -12,7 +12,7 @@
     "download-ura": "node scripts/run-python.js scripts/download_ura_data.py",
     "deploy:frontend": "npx wrangler pages deploy public --project-name=worthit",
     "deploy:api": "fly deploy",
-    "deploy:data": "node scripts/run-python.js scripts/download_data.py && fly ssh sftp put server/db/resale.db /data/resale.db && fly machines restart",
+    "deploy:data": "fly ssh sftp put server/db/resale.db /data/resale.db.new && fly ssh console --command \"mv /data/resale.db.new /data/resale.db\" && fly machines restart e7845746c2d918",
     "deploy": "fly deploy && npx wrangler pages deploy public --project-name=worthit"
   },
   "dependencies": {

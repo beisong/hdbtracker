@@ -102,6 +102,14 @@
   display: none;
 }
 
+/* Flat type scroll: right-edge fade hint on mobile to indicate scrollable content */
+@media (max-width: 639px) {
+  .flat-type-scroll {
+    -webkit-mask-image: linear-gradient(to right, black 82%, transparent 100%);
+    mask-image: linear-gradient(to right, black 82%, transparent 100%);
+  }
+}
+
 /* Loading fade out */
 .loading-fade-out {
   opacity: 0;
@@ -293,13 +301,10 @@ input[type="number"] {
   color: var(--popup-text) !important;
 }
 
-/* Mobile: smaller Leaflet popups */
+/* Mobile: constrain Leaflet popups */
 @media (max-width: 640px) {
   .leaflet-popup-content-wrapper {
-    max-width: 200px;
-  }
-  .leaflet-popup-content {
-    min-width: unset !important;
+    max-width: 240px;
   }
 }
 
@@ -381,6 +386,16 @@ input[type="number"] {
   background: rgba(51, 65, 85, 1);
   border-color: rgba(59, 130, 246, 0.5);
   color: #60a5fa;
+}
+
+/* Section jump targets — account for sticky nav (56px) + jump bar (41px) on mobile */
+#charts-section, #map-section, #transactions-section {
+  scroll-margin-top: 105px;
+}
+@media (min-width: 640px) {
+  #charts-section, #map-section, #transactions-section {
+    scroll-margin-top: 64px;
+  }
 }
 
 /* SEO Section theme overrides */

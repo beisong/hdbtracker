@@ -43,6 +43,38 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Map deal score coloring + private marker differentiation** (May 2026):
+  - Fixed HDB markers: `getValueStyle()` was computed but never used — markers were hardcoded blue. Now wired up to use tier+type median $/sqm for green→blue→red coloring.
+  - Extended deal score coloring to private property markers too (was flat purple).
+  - HDB vs private differentiation: fill color = deal score (both types); border = property type — HDB gets thin white border (`weight:1`), private gets thick purple ring (`color:'#a855f7', weight:4`) + radius +2.
+  - `originalStyle` in `addressMarkers` updated to store `markerRadius` and correct `borderColor`/`borderWeight` so highlight/unhighlight restores correctly.
+  - Updated map legend: added HDB vs Private key below the gradient bar.
+- **Deal score dot on mobile transaction cards** (May 2026):
+  - `renderTransactionsTable()` computes median $/sqm per flat type from `allTransactions` before the loop.
+  - `_dealDot(psm, type)` inline helper interpolates same green→blue→red color as map markers.
+  - Small colored `w-2 h-2` dot rendered next to the $/sqm value on each mobile card.
+- **Mobile UX pass 2** (May 2026):
+  - Section jump bar: sticky mobile-only pill strip (Charts / Map / Transactions) inside results section, hidden via `sm:hidden` — no desktop impact (`index.html`)
+  - Floating "New Search" FAB: `hidden fixed` button revealed by `_onResultsShown()`, scrolls to search input on tap (`index.html`, `app.js`)
+  - Share button: click handler uses `navigator.share()` with clipboard fallback; `showToast()` method for success feedback (`app.js`)
+  - Toast element added to `index.html` for clipboard copy confirmation
+  - Card tap → map highlight: added `click` handler to mobile cards (skips link taps) — `mouseenter`-only didn't fire on touch (`app.js`)
+  - Map scroll-zoom disabled on mobile: `scrollWheelZoom: window.innerWidth >= 640` (`map.js`)
+  - Empty state "Clear filters" button: inline `<button onclick="App.clearTransactionFilters()">` in both table and cards empty states; `clearTransactionFilters()` method resets all filter controls (`app.js`)
+  - `text-[10px]` → `text-xs` for transaction type badges (lines ~894, 896, 925 in `app.js`); autocomplete dropdown badge at line ~1233 intentionally unchanged
+  - `_onResultsShown()` helper called from all 3 render methods (`renderResults`, `renderDistrictResults`, `renderPrivateResults`) to show FAB and jump bar
+  - `scroll-margin-top` CSS for `#charts-section`, `#map-section`, `#transactions-section`: 105px mobile (nav + jump bar), 64px desktop (`styles.css`)
+- **Mobile UI improvements** (May 2026):
+  - Fixed nested scroll trap in transaction cards: removed `max-h-[600px] overflow-y-auto`, now shows first 25 cards with a "Show more" button (`app.js`)
+  - Restructured transaction filter bar: full-width search on own row + 4 selects in `grid-cols-2` on mobile; `sm:contents` on the grid wrapper preserves original single-row layout on desktop (`index.html`)
+  - Increased mobile chart height: `h-48` → `h-56` for both trend and distribution charts (`index.html`)
+  - Added `scrollIntoView` on search input focus (mobile only, `window.innerWidth < 640`) to keep input visible when keyboard opens (`app.js`)
+  - Added right-edge fade on flat type buttons row via CSS `mask-image` at `max-width: 639px` to hint at horizontal scroll (`styles.css`)
+  - Increased map height on mobile: `h-[280px]` → `h-[320px]` (`index.html`)
+  - Fixed "Price Range" stat card overflow: `text-lg` → `text-sm` on mobile (`index.html`)
+- **Map popup fixes** (May 2026):
+  - Fixed element misalignment in popups: mobile CSS had `max-width: 200px` on wrapper but inner divs had `min-width: 220px` — conflict broke `justify-content: space-between` rows; fixed by raising wrapper to `240px` and reducing inner `min-width` to `180px`; added `flex-wrap: wrap` to detail rows (`styles.css`, `map.js`)
+  - Added `shortType()` helper on `TransactionMap` to shorten long flat/property type names in all 4 popup locations — `EXECUTIVE CONDOMINIUM` → `EC`, `CONDOMINIUM` → `Condo`, `SEMI-DETACHED` → `Semi-D`, `STRATA SEMI-DETACHED` → `Strata Semi-D`, etc. (`map.js`)
 - **OneMap geocoding fallback for missing private project coords** (May 2026):
   - 128 private projects lacked coordinates because URA API omits SVY21 coords for under-construction launches
   - Added `geocode_missing_projects(conn)` to `scripts/download_ura_data.py`: queries OneMap for each project missing from `project_coords`, 350ms between requests, 1 retry with 3s backoff on failure

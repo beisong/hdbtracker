@@ -115,11 +115,11 @@ const TransactionMap = {
               <span style="color:var(--popup-muted); font-size:10px;">${App.formatMonth(tx.month)}</span>
               <span style="font-weight:600; color:var(--popup-price); font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
             </div>
-            <div style="font-size:10px; color:var(--popup-muted);">${tx.flat_type} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
+            <div style="font-size:10px; color:var(--popup-muted);">${this.shortType(tx.flat_type)} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
           </div>`).join('');
 
         marker.bindPopup(`
-          <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:180px; max-height:250px; overflow-y:auto;">
+          <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:160px; max-height:250px; overflow-y:auto;">
             <div style="font-weight:700; font-size:12px; margin-bottom:2px;">🏠 ${addrKey}</div>
             <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">HDB · ${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
             ${txRows}
@@ -170,7 +170,7 @@ const TransactionMap = {
 
       // Build popup with recent transactions
       let popupHtml = `
-        <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:200px; max-height:280px; overflow-y:auto;">
+        <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:180px; max-height:280px; overflow-y:auto;">
           <div style="font-weight:700; font-size:12px; margin-bottom:2px; color:#a855f7;">🏢 ${proj.project}</div>
           <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">${proj.street_name} · D${proj.district} · ${proj.market_segment}</div>
           <div style="display:flex; justify-content:space-between;">
@@ -188,7 +188,7 @@ const TransactionMap = {
                 <span style="color:var(--popup-muted); font-size:10px;">${App.formatMonth(tx.month)}</span>
                 <span style="font-weight:600; color:#a855f7; font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
               </div>
-              <div style="font-size:10px; color:var(--popup-muted);">${tx.property_type || ''} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
+              <div style="font-size:10px; color:var(--popup-muted);">${this.shortType(tx.property_type || '')} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
             </div>`;
         });
         popupHtml += `</div>`;
@@ -294,7 +294,7 @@ const TransactionMap = {
     // Initialize Leaflet map
     this.map = L.map(container, {
       zoomControl: true,
-      scrollWheelZoom: true,
+      scrollWheelZoom: window.innerWidth >= 640,
     }).setView([1.3521, 103.8198], 13);
 
     // Add themed tiles
@@ -355,21 +355,27 @@ const TransactionMap = {
       // Sort by date descending (newest first)
       txList.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
 
-      // Color based on transaction type (HDB vs PRIVATE)
       const recent = txList[0];
-      const markerColor = recent.is_private
-        ? '#a855f7'  // Purple for private
-        : '#3b82f6'; // Blue for HDB
-
-      // Size based on number of transactions
-      const radius = Math.min(12, Math.max(6, 6 + txList.length));
+      // Deal score coloring (both HDB and private): green → blue → red
+      const t = recent.flat_type || 'UNKNOWN';
+      const tier = this.getLeaseTier(recent.remaining_lease_years || 0);
+      const key = `${t}|${tier}`;
+      const medianPsm = tierMedianPsm[key] || typeMedianPsm[t] || overallMedianPsm;
+      const style = this.getValueStyle(recent.price_per_sqm || 0, medianPsm);
+      const markerColor = style.color;
+      const radius = style.radius;
+      // Border: purple ring for private, white for HDB
+      const isPrivate = recent.is_private;
+      const borderColor = isPrivate ? '#a855f7' : '#fff';
+      const borderWeight = isPrivate ? 4 : 1;
+      const markerRadius = isPrivate ? radius + 2 : radius;
 
       const marker = L.circleMarker([first.lat, first.lng], {
-        radius: radius,
+        radius: markerRadius,
         fillColor: markerColor,
-        color: '#fff',
-        weight: 1,
-        opacity: 0.6,
+        color: borderColor,
+        weight: borderWeight,
+        opacity: 0.9,
         fillOpacity: 0.85,
       }).addTo(this.map);
 
@@ -382,11 +388,11 @@ const TransactionMap = {
               <span style="color:var(--popup-muted); font-size:11px;">${App.formatMonth(tx.month)}</span>
               <span style="font-weight:700; color:${priceColor}; font-size:13px;">$${App.formatNumber(tx.resale_price)}</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
-              <span>${tx.flat_type} · ${tx.floor_area_sqm}sqm</span>
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:2px; font-size:11px; margin-top:2px;">
+              <span>${this.shortType(tx.flat_type)} · ${tx.floor_area_sqm}sqm</span>
               <span>$${App.formatNumber(tx.price_per_sqm)}/sqm</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--popup-muted);">
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:2px; font-size:11px; color:var(--popup-muted);">
               <span>Floor: ${tx.storey_range || '--'}</span>
               <span>Lease: ${tx.remaining_lease_years ? Math.round(tx.remaining_lease_years) + 'y' : '--'}</span>
             </div>
@@ -394,7 +400,7 @@ const TransactionMap = {
       }).join('');
 
       const popupContent = `
-        <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:220px; max-height:300px; overflow-y:auto;">
+        <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:180px; max-height:300px; overflow-y:auto;">
           <div style="font-weight:700; font-size:13px; margin-bottom:2px;">${addrKey}</div>
           <div style="color:var(--popup-muted); font-size:11px; margin-bottom:6px;">${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
           ${txRows}
@@ -402,7 +408,7 @@ const TransactionMap = {
       `;
       marker.bindPopup(popupContent, { maxHeight: 300 });
       this.markers.push(marker);
-      this.addressMarkers[addrKey] = { marker, originalStyle: { radius, fillColor: markerColor, color: '#fff', weight: 1, opacity: 0.6, fillOpacity: 0.85 } };
+      this.addressMarkers[addrKey] = { marker, originalStyle: { radius: markerRadius, fillColor: markerColor, color: borderColor, weight: borderWeight, opacity: 0.9, fillOpacity: 0.85 } };
       bounds.push([first.lat, first.lng]);
     }
 
@@ -434,7 +440,7 @@ const TransactionMap = {
 
       const locationName = resolvedData.projectName || resolvedData.address || resolvedData.input || '';
       let pinPopupHtml = `
-        <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:220px; max-height:300px; overflow-y:auto;">
+        <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:180px; max-height:300px; overflow-y:auto;">
           <div style="font-weight:700; font-size:13px; margin-bottom:4px; color:${pinColor};">${pinLabel}</div>
           <div>${locationName}</div>`;
 
@@ -450,8 +456,8 @@ const TransactionMap = {
                 <span style="color:var(--popup-muted); font-size:11px;">${App.formatMonth(tx.month)}</span>
                 <span style="font-weight:700; color:${priceColor}; font-size:13px;">$${App.formatNumber(tx.resale_price)}</span>
               </div>
-              <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
-                <span>${tx.flat_type} · ${tx.floor_area_sqm}sqm</span>
+              <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:2px; font-size:11px; margin-top:2px;">
+                <span>${this.shortType(tx.flat_type)} · ${tx.floor_area_sqm}sqm</span>
                 <span>$${App.formatNumber(tx.price_per_sqm)}/sqm</span>
               </div>
             </div>`;
@@ -520,6 +526,26 @@ const TransactionMap = {
     marker.setStyle(originalStyle);
     marker.closePopup();
     this._highlightedMarker = null;
+  },
+
+  shortType(type) {
+    const map = {
+      'EXECUTIVE CONDOMINIUM': 'EC',
+      'STRATA SEMI-DETACHED': 'Strata Semi-D',
+      'STRATA DETACHED': 'Strata Detached',
+      'STRATA TERRACE': 'Strata Terrace',
+      'MULTI-GENERATION': 'Multi-Gen',
+      'SEMI-DETACHED': 'Semi-D',
+      'CONDOMINIUM': 'Condo',
+      'EXECUTIVE': 'Exec',
+      'APARTMENT': 'Apt',
+      '1 ROOM': '1RM',
+      '2 ROOM': '2RM',
+      '3 ROOM': '3RM',
+      '4 ROOM': '4RM',
+      '5 ROOM': '5RM',
+    };
+    return map[type] || type;
   },
 
   getLeaseTier(remainingLeaseYears) {

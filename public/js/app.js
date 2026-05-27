@@ -195,13 +195,28 @@ const App = {
     searchInput.addEventListener('input', () => this.onAcInput());
     searchInput.addEventListener('keydown', (e) => this.onAcKeydown(e));
     searchInput.addEventListener('blur', () => setTimeout(() => this.hideAc(), 200));
-    searchInput.addEventListener('focus', () => { if (searchInput.value.trim().length >= 1) this.onAcInput(); });
+    searchInput.addEventListener('focus', () => {
+      if (searchInput.value.trim().length >= 1) this.onAcInput();
+      // On mobile, scroll the input into view after the keyboard opens (300ms delay)
+      if (window.innerWidth < 640) setTimeout(() => searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+    });
 
     // MRT toggle
     document.getElementById('mrt-toggle-btn').addEventListener('click', () => MrtOverlay.toggle(TransactionMap.map));
 
     // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
+
+    // Share button
+    document.getElementById('share-btn').addEventListener('click', () => this.share());
+
+    // Floating "New Search" FAB — scroll to search + focus
+    document.getElementById('new-search-fab').addEventListener('click', () => {
+      const input = document.getElementById('search-input');
+      input.value = '';
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => input.focus(), 400);
+    });
   },
 
   _updateFlatTypeUI() {
@@ -217,6 +232,44 @@ const App = {
 
   _getFlatTypeParam() {
     return this.selectedFlatTypes.size === 0 ? 'ALL' : [...this.selectedFlatTypes].join(',');
+  },
+
+  _onResultsShown() {
+    // Show section jump bar and floating FAB (mobile only — hidden via CSS on sm+)
+    const jumpBar = document.getElementById('section-jump-bar');
+    const fab = document.getElementById('new-search-fab');
+    if (jumpBar) jumpBar.classList.remove('hidden');
+    if (fab) fab.classList.remove('hidden');
+  },
+
+  share() {
+    const url = window.location.href;
+    const title = document.getElementById('town-title')?.textContent?.trim() || 'WorthIt';
+    const text = `${title} — Singapore property prices on WorthIt`;
+    if (navigator.share) {
+      navigator.share({ title, text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => this.showToast('Link copied!')).catch(() => this.showToast('Copy failed'));
+    }
+  },
+
+  showToast(msg) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.remove('hidden');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => toast.classList.add('hidden'), 2500);
+  },
+
+  clearTransactionFilters() {
+    document.getElementById('tx-search').value = '';
+    document.getElementById('tx-filter-type').value = '';
+    document.getElementById('tx-filter-storey').value = '';
+    document.getElementById('tx-filter-lease').value = '';
+    document.getElementById('tx-sort').value = 'date-desc';
+    this.setupTransactionFilters();
+    this.renderTransactionsTable(this.allTransactions);
   },
 
   initTheme() {
@@ -389,6 +442,7 @@ const App = {
     const section = document.getElementById('results-section');
     section.classList.remove('hidden');
     setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    this._onResultsShown();
 
     // Town header
     const title = data.town;
@@ -623,6 +677,7 @@ const App = {
     const section = document.getElementById('results-section');
     section.classList.remove('hidden');
     setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    this._onResultsShown();
 
     // District header with label
     document.getElementById('town-title').innerHTML =
@@ -858,25 +913,53 @@ const App = {
     cardsContainer.innerHTML = '';
 
     if (!transactions || transactions.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-gray-500">No transactions match your filters</td></tr>`;
-      cardsContainer.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm">No transactions match your filters</div>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-gray-500 text-sm">No transactions match your filters<br><button onclick="App.clearTransactionFilters()" class="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 transition-colors">Clear filters</button></td></tr>`;
+      cardsContainer.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm">No transactions match your filters<br><button onclick="App.clearTransactionFilters()" class="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 transition-colors">Clear filters</button></div>`;
       return;
     }
 
-    transactions.forEach(tx => {
-      // Desktop row
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-gray-200 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors';
+    // Compute median $/sqm per flat type for deal score coloring
+    const _psmGroups = {};
+    for (const tx of this.allTransactions) {
+      const t = tx.flat_type || 'UNKNOWN';
+      if (!_psmGroups[t]) _psmGroups[t] = [];
+      if (tx.price_per_sqm) _psmGroups[t].push(tx.price_per_sqm);
+    }
+    const _typeMedian = {};
+    for (const [t, vals] of Object.entries(_psmGroups)) {
+      const s = [...vals].sort((a, b) => a - b);
+      _typeMedian[t] = s[Math.floor(s.length / 2)];
+    }
+    const _dealDot = (psm, type) => {
+      const med = _typeMedian[type] || 0;
+      if (!med) return '';
+      const ratio = psm / med;
+      let color;
+      if (ratio <= 1.0) {
+        const t = Math.max(0, Math.min(1, (ratio - 0.70) / 0.30));
+        const r = Math.round(34 + (96 - 34) * t), g = Math.round(197 + (165 - 197) * t), b = Math.round(94 + (250 - 94) * t);
+        color = `rgb(${r},${g},${b})`;
+      } else {
+        const t = Math.max(0, Math.min(1, (ratio - 1.0) / 0.30));
+        const r = Math.round(96 + (239 - 96) * t), g = Math.round(165 + (68 - 165) * t), b = Math.round(250 + (68 - 250) * t);
+        color = `rgb(${r},${g},${b})`;
+      }
+      return `<span class="inline-block w-2 h-2 rounded-full shrink-0 mt-0.5" style="background:${color}" title="Deal score vs similar ${type} flats"></span>`;
+    };
 
+    const mobileCards = [];
+
+    transactions.forEach(tx => {
       const address = `${tx.block} ${tx.street_name || ''} Singapore`.trim();
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
       const leaseDisplay = tx.is_freehold ? '∞' : (tx.remaining_lease_years ? `${Math.round(tx.remaining_lease_years)}y` : '--');
-
-      // Hover: highlight map marker (key must match map's address key format)
       const addrKey = `${tx.block} ${tx.street_name || ''}`.trim().toUpperCase();
+
+      // Desktop row
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-gray-200 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors';
       tr.addEventListener('mouseenter', () => TransactionMap.highlightAddress(addrKey));
       tr.addEventListener('mouseleave', () => TransactionMap.unhighlight());
-
       tr.innerHTML = `
         <td class="py-2.5 pr-2 text-gray-400 text-xs">${this.formatMonth(tx.month)}</td>
         <td class="py-2.5 pr-2">
@@ -888,9 +971,9 @@ const App = {
           </a>
         </td>
         <td class="py-2.5 pr-2 text-xs">
-          ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] mr-1">🏢</span>' : ''}
+          ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs mr-1">🏢</span>' : ''}
           <span class="px-1.5 py-0.5 rounded ${tx.is_private ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-200' : 'bg-gray-200 dark:bg-dark-600/50 text-gray-600 dark:text-gray-300'}">${tx.flat_type}</span>
-          ${tx.is_freehold !== undefined ? `<span class="ml-1 text-purple-600 dark:text-purple-300 text-[10px]">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
+          ${tx.is_freehold !== undefined ? `<span class="ml-1 text-purple-600 dark:text-purple-300 text-xs">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
         </td>
         <td class="py-2.5 pr-2 text-right text-gray-400 text-xs">${tx.storey_range || '--'}</td>
         <td class="py-2.5 pr-2 text-right text-xs">${tx.floor_area_sqm} sqm</td>
@@ -900,11 +983,12 @@ const App = {
       `;
       tbody.appendChild(tr);
 
-      // Mobile card
+      // Mobile card — collect into array for pagination
       const card = document.createElement('div');
       card.className = 'tx-card';
       card.addEventListener('mouseenter', () => TransactionMap.highlightAddress(addrKey));
       card.addEventListener('mouseleave', () => TransactionMap.unhighlight());
+      card.addEventListener('click', (e) => { if (!e.target.closest('a')) TransactionMap.highlightAddress(addrKey); });
       card.innerHTML = `
         <div class="flex items-start justify-between gap-2">
           <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"
@@ -914,12 +998,12 @@ const App = {
           </a>
           <span class="text-xs text-gray-500 whitespace-nowrap">${this.formatMonth(tx.month)}</span>
         </div>
-        <div class="flex items-baseline justify-between mt-2">
+        <div class="flex items-center justify-between mt-2 gap-2">
           <span class="text-lg font-bold">$${this.formatNumber(tx.resale_price)}</span>
-          <span class="text-xs text-gray-400">$${this.formatNumber(tx.price_per_sqm)}/sqm</span>
+          <span class="flex items-center gap-1.5 text-xs text-gray-400">${_dealDot(tx.price_per_sqm, tx.flat_type || 'UNKNOWN')}$${this.formatNumber(tx.price_per_sqm)}/sqm</span>
         </div>
         <div class="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
-          ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px]">🏢 Private</span>' : ''}
+          ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs">🏢 Private</span>' : ''}
           <span class="px-1.5 py-0.5 rounded ${tx.is_private ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-200' : 'bg-gray-200 dark:bg-dark-600/50 text-gray-600 dark:text-gray-300'}">${tx.flat_type}</span>
           ${tx.is_freehold !== undefined ? `<span class="text-purple-600 dark:text-purple-300">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
           <span>·</span>
@@ -930,14 +1014,29 @@ const App = {
           <span>Lease ${leaseDisplay}</span>
         </div>
       `;
-      cardsContainer.appendChild(card);
+      mobileCards.push(card);
     });
+
+    // Paginate mobile cards: show first 25, then "Show more" button
+    const MOBILE_PAGE = 25;
+    mobileCards.slice(0, MOBILE_PAGE).forEach(card => cardsContainer.appendChild(card));
+    if (mobileCards.length > MOBILE_PAGE) {
+      const btn = document.createElement('button');
+      btn.className = 'w-full py-3 mt-1 text-sm font-medium text-brand-500 bg-gray-50 dark:bg-dark-700/50 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-600 transition-colors';
+      btn.textContent = `Show ${mobileCards.length - MOBILE_PAGE} more transactions`;
+      btn.onclick = () => {
+        btn.remove();
+        mobileCards.slice(MOBILE_PAGE).forEach(card => cardsContainer.appendChild(card));
+      };
+      cardsContainer.appendChild(btn);
+    }
   },
 
   renderPrivateResults(data, addressInfo) {
     const section = document.getElementById('results-section');
     section.classList.remove('hidden');
     setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    this._onResultsShown();
 
     const proj = data.project;
     const segmentLabels = { CCR: 'Core Central', RCR: 'Rest of Central', OCR: 'Outside Central' };

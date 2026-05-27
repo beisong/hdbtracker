@@ -67,6 +67,19 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Fixed private project map — was passing empty array to TransactionMap.load (May 2026)
 - ✅ Zero-downtime DB deploy — upload to .new, atomic mv, restart (May 2026)
 - ✅ WAL checkpoint before DB upload — PRAGMA wal_checkpoint(TRUNCATE) ensures all writes are in main file (May 2026)
+- ✅ Map deal score coloring fixed — `getValueStyle()` was computed but hardcoded blue was used; now wired up for both HDB and private markers (May 2026)
+- ✅ Private marker visual differentiation — thick purple border (`weight:4`, `+2` radius) vs HDB thin white border; fill = deal score for both (May 2026)
+- ✅ Deal score dot on mobile transaction cards — colored dot next to $/sqm, same green→blue→red scale as map (May 2026)
+- ✅ Section jump bar (Charts/Map/Transactions) — mobile-only sticky pill strip inside results section (May 2026)
+- ✅ Floating "New Search" FAB — appears after first search, scrolls to search input on tap (May 2026)
+- ✅ Share button — `navigator.share()` with clipboard fallback + toast notification (May 2026)
+- ✅ Card tap → map highlight — click handler on mobile cards for touch devices (May 2026)
+- ✅ Map scroll-zoom disabled on mobile — `scrollWheelZoom: window.innerWidth >= 640` (May 2026)
+- ✅ Empty state "Clear filters" button — resets all transaction filter controls (May 2026)
+- ✅ Tiny text fix — `text-[10px]` → `text-xs` for type badges in transactions (May 2026)
+- ✅ Map popup alignment fix — resolved min-width vs max-width conflict on mobile (May 2026)
+- ✅ Map popup type shortening — `shortType()` helper for all 16 flat/property type values (May 2026)
+- ✅ Mobile UI pass — nested scroll fix, filter bar 2-row layout, chart/map height, scroll hint fade, stat card overflow, keyboard scroll (May 2026)
 
 ## What's Left to Build / Improve
 - 🔲 Automated tests

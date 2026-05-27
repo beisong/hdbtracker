@@ -74,7 +74,7 @@ const Charts = {
       const date = new Date(parseInt(y), parseInt(m) - 1);
       return date.toLocaleDateString('en-SG', { month: 'short', year: '2-digit' });
     });
-    const prices = data.map(d => d.median_price);
+    const prices = data.map(d => d.median_price ?? d.avg_price);
 
     const firstPrice = prices[0] || 0;
     const lastPrice = prices[prices.length - 1] || 0;

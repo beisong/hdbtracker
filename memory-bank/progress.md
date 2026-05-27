@@ -84,7 +84,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 
 ## What's Left to Build / Improve
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)
-- 🔲 SQL injection fix in `/api/private/project-overview`
+- ✅ SQL injection fix in `/api/private/project-overview` — replaced string-interpolated `property_type` with parameterized `?` + spread pattern across all 5 queries (May 2026)
 - 🔲 Input validation/sanitization across all endpoints
 - 🔲 Geocode cache size limits (prevent memory leak)
 - 🔲 Database indexes for query performance
@@ -98,9 +98,8 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ GA4 custom events: search, view_results, click_outbound, search_failed, select_flat_type, filter_transactions, toggle_mrt, share (8 events via `App.track()` helper)
 
 ## Known Issues
-1. **SQL injection**: `/api/private/project-overview` builds SQL with string interpolation for `property_type` filter
-2. **Memory leak potential**: Geocode cache (`Map`) has no size limit or eviction policy
-3. **No DB indexes**: Large queries may be slow without proper indexing
+1. **Memory leak potential**: Geocode cache (`Map`) has no size limit or eviction policy
+2. **No DB indexes**: Large queries may be slow without proper indexing
 
 ## Evolution of Project Decisions
 - Started as HDB-only tool, later expanded to include URA private property data

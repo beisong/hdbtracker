@@ -1005,8 +1005,9 @@ app.get('/api/private/project-overview', (req, res) => {
     const monthsAgo12 = monthsAgoStr(12);
     const monthsAgo60 = monthsAgoStr(60);
 
-    // Build property type filter
-    const propTypeFilter = property_type ? ` AND flat_type = '${property_type.toUpperCase()}'` : '';
+    // Build property type filter — use parameterized placeholder to avoid SQL injection
+    const propTypeFilter = property_type ? ' AND flat_type = ?' : '';
+    const propTypeParam = property_type ? [property_type.toUpperCase()] : [];
 
     // Project info
     const projectInfo = db.prepare(`
@@ -1025,7 +1026,7 @@ app.get('/api/private/project-overview', (req, res) => {
       FROM transactions
       WHERE dataset_source = 'URA_PRIVATE' AND project = ? ${propTypeFilter}
       GROUP BY project
-    `).get(project);
+    `).get(project, ...propTypeParam);
 
     // Get project coordinates from project_coords table
     const projectCoords = db.prepare(`
@@ -1048,7 +1049,7 @@ app.get('/api/private/project-overview', (req, res) => {
       WHERE dataset_source = 'URA_PRIVATE' AND project = ? AND month >= ? ${propTypeFilter}
       GROUP BY flat_type
       ORDER BY avg_price
-    `).all(project, monthsAgo12);
+    `).all(project, monthsAgo12, ...propTypeParam);
 
     // Price trend (last 60 months)
     const trendData = db.prepare(`
@@ -1060,7 +1061,7 @@ app.get('/api/private/project-overview', (req, res) => {
       FROM transactions
       WHERE dataset_source = 'URA_PRIVATE' AND project = ? AND month >= ? ${propTypeFilter}
       GROUP BY month ORDER BY month ASC
-    `).all(project, monthsAgo60);
+    `).all(project, monthsAgo60, ...propTypeParam);
 
     // Calculate trend
     let priceTrend = { '6m_change': 0, '1y_change': 0, '3y_change': 0, direction: 'stable' };
@@ -1089,14 +1090,14 @@ app.get('/api/private/project-overview', (req, res) => {
       FROM transactions
       WHERE dataset_source = 'URA_PRIVATE' AND project = ? ${propTypeFilter}
       ORDER BY month DESC, resale_price DESC LIMIT 50
-    `).all(project);
+    `).all(project, ...propTypeParam);
 
     // Price distribution (last 12 months)
     const allPrices = db.prepare(`
       SELECT resale_price FROM transactions
       WHERE dataset_source = 'URA_PRIVATE' AND project = ? AND month >= ? ${propTypeFilter}
       ORDER BY resale_price ASC LIMIT 5000
-    `).all(project, monthsAgo12).map(r => r.resale_price);
+    `).all(project, monthsAgo12, ...propTypeParam).map(r => r.resale_price);
 
     const pricePercentiles = {
       p10: percentile(allPrices, 10),

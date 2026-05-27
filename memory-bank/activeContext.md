@@ -141,6 +141,15 @@ The project is fully deployed and functional:
   - GA4 tag (`G-WGC8D0FRSQ`) added to `index.html` `<head>` (after anti-FOUC script)
   - SPA pageview tracking: `gtag('event', 'page_view')` fires on `history.pushState()` in `updateSeoForSearch()` and on `popstate` (back/forward)
   - Tracks all routes: `/hdb/<town>`, `/district/<code>`, `/private/<project>`
+  - **Custom GA4 events** (8 events tracked via `App.track()` helper):
+    1. `search` — every search with `search_type` (town/postal/district) and `query`
+    2. `view_results` — results loaded with `result_type` (hdb/private/district), `location`, `transaction_count`
+    3. `click_outbound` — Google Maps link clicks in transactions with `address`, `property_type`
+    4. `search_failed` — failed searches with `query`, `failure_reason`
+    5. `select_flat_type` — flat type toggle with `flat_types`
+    6. `filter_transactions` — transaction filter/sort with `filter_type`, `filter_value`
+    7. `toggle_mrt` — MRT overlay toggle with `visible` (boolean)
+    8. `share` — share button with `method` (web_share_api/clipboard), `page_path`
 - **Fixed SPA direct URL loading** (May 2026):
   - Bug: direct navigation to `/hdb/bedok` stuck at "Loading data..." — all JS/CSS 404'd because relative paths (`js/app.js`) resolved to `/hdb/js/app.js`
   - Fix: changed all relative asset paths in `index.html` to absolute (`/js/app.js`, `/css/styles.css`, `/config.js`)

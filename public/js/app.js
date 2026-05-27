@@ -13,6 +13,11 @@ const App = {
   _acIndex: -1,
   _acDebounce: null,
 
+  /** GA4 custom event tracking helper */
+  track(name, params = {}) {
+    if (typeof gtag === 'function') gtag('event', name, params);
+  },
+
 
   async init() {
     Charts.initDefaults();
@@ -181,6 +186,8 @@ const App = {
         } else {
           this.selectedFlatTypes.add(value);
         }
+        // GA4 Event 5: select_flat_type
+        this.track('select_flat_type', { flat_types: this._getFlatTypeParam() });
         this._updateFlatTypeUI();
         if (this.currentTown) this.search();
       });
@@ -209,6 +216,20 @@ const App = {
 
     // Share button
     document.getElementById('share-btn').addEventListener('click', () => this.share());
+
+    // GA4 Event 3: click_outbound — event delegation for Google Maps links in transactions
+    document.getElementById('results-section').addEventListener('click', (e) => {
+      const link = e.target.closest('a[href*="google.com/maps"]');
+      if (link) {
+        const row = link.closest('tr, .tx-card');
+        const priceEl = row?.querySelector('.font-semibold, .text-lg');
+        const isPrivate = row?.querySelector('[class*="purple"]') !== null;
+        this.track('click_outbound', {
+          address: link.textContent.trim().replace(/\s+/g, ' '),
+          property_type: isPrivate ? 'private' : 'HDB',
+        });
+      }
+    });
 
     // Floating "New Search" FAB — scroll to search + focus
     document.getElementById('new-search-fab').addEventListener('click', () => {
@@ -246,9 +267,12 @@ const App = {
     const url = window.location.href;
     const title = document.getElementById('town-title')?.textContent?.trim() || 'WorthIt';
     const text = `${title} — Singapore property prices on WorthIt`;
+    // GA4 Event 8: share
     if (navigator.share) {
+      this.track('share', { method: 'web_share_api', page_path: window.location.pathname });
       navigator.share({ title, text, url }).catch(() => {});
     } else {
+      this.track('share', { method: 'clipboard', page_path: window.location.pathname });
       navigator.clipboard.writeText(url).then(() => this.showToast('Link copied!')).catch(() => this.showToast('Copy failed'));
     }
   },
@@ -303,6 +327,12 @@ const App = {
     const input = document.getElementById('search-input').value.trim();
     if (!input) { this.showAlert('Please enter a town name, postal code, or project name.'); return; }
 
+    // GA4 Event 1: search — determine search type for tracking
+    const _isPostal = /^\d{6}$/.test(input);
+    const _isDistrict = /^(?:D(?:ISTRICT)?\s*)(\d{1,2})$/i.test(input);
+    const _searchType = _isPostal ? 'postal' : _isDistrict ? 'district' : 'town';
+    this.track('search', { search_type: _searchType, query: input });
+
     const btn = document.getElementById('search-btn');
     const btnText = document.getElementById('search-btn-text');
     const btnLoading = document.getElementById('search-btn-loading');
@@ -330,6 +360,7 @@ const App = {
           this.renderDistrictResults(data);
           return;
         }
+        this.track('search_failed', { query: input, failure_reason: 'no_district_data' });
         this.showAlert(`No data found for District ${districtCode}.`);
         return;
       }
@@ -374,6 +405,7 @@ const App = {
           }
         }
 
+        this.track('search_failed', { query: input, failure_reason: 'no_hdb_no_private' });
         this.showAlert(resolved.message || 'Could not find a matching location.');
         return;
       } else {
@@ -389,6 +421,7 @@ const App = {
             }
           }
         }
+        this.track('search_failed', { query: input, failure_reason: 'postal_no_match' });
         this.showAlert(resolved.message || 'Could not find a matching location.');
         return;
       }
@@ -430,6 +463,7 @@ const App = {
 
     } catch (err) {
       console.error('Search error:', err);
+      this.track('search_failed', { query: input, failure_reason: 'error', error_message: err.message });
       this.showAlert(`Search failed: ${err.message}`);
     } finally {
       btn.disabled = false;
@@ -439,6 +473,13 @@ const App = {
   },
 
   renderResults(data, addressInfo) {
+    // GA4 Event 2: view_results
+    this.track('view_results', {
+      result_type: 'hdb',
+      location: data.town,
+      transaction_count: data.town_summary?.total_transactions_12m || 0,
+    });
+
     const section = document.getElementById('results-section');
     section.classList.remove('hidden');
     setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
@@ -674,6 +715,13 @@ const App = {
   },
 
   renderDistrictResults(data) {
+    // GA4 Event 2: view_results
+    this.track('view_results', {
+      result_type: 'district',
+      location: `D${data.district}`,
+      transaction_count: data.summary?.total_transactions || 0,
+    });
+
     const section = document.getElementById('results-section');
     section.classList.remove('hidden');
     setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
@@ -811,11 +859,15 @@ const App = {
   },
 
   setupTransactionFilters() {
-    document.getElementById('tx-search').addEventListener('input', () => this.applyTransactionFilters());
-    document.getElementById('tx-filter-type').addEventListener('change', () => this.applyTransactionFilters());
-    document.getElementById('tx-filter-storey').addEventListener('change', () => this.applyTransactionFilters());
-    document.getElementById('tx-filter-lease').addEventListener('change', () => this.applyTransactionFilters());
-    document.getElementById('tx-sort').addEventListener('change', () => this.applyTransactionFilters());
+    // GA4 Event 6: filter_transactions — debounced tracking helper
+    const _trackFilter = (filterType, filterValue) => {
+      this.track('filter_transactions', { filter_type: filterType, filter_value: filterValue });
+    };
+    document.getElementById('tx-search').addEventListener('input', (e) => { _trackFilter('search', e.target.value.trim() || 'text'); this.applyTransactionFilters(); });
+    document.getElementById('tx-filter-type').addEventListener('change', (e) => { _trackFilter('type', e.target.value || 'all'); this.applyTransactionFilters(); });
+    document.getElementById('tx-filter-storey').addEventListener('change', (e) => { _trackFilter('storey', e.target.value || 'all'); this.applyTransactionFilters(); });
+    document.getElementById('tx-filter-lease').addEventListener('change', (e) => { _trackFilter('lease', e.target.value || 'all'); this.applyTransactionFilters(); });
+    document.getElementById('tx-sort').addEventListener('change', (e) => { _trackFilter('sort', e.target.value); this.applyTransactionFilters(); });
   },
 
   populateTypeFilter(transactions) {
@@ -1033,6 +1085,13 @@ const App = {
   },
 
   renderPrivateResults(data, addressInfo) {
+    // GA4 Event 2: view_results
+    this.track('view_results', {
+      result_type: 'private',
+      location: data.project?.project || '',
+      transaction_count: data.project?.total_transactions || 0,
+    });
+
     const section = document.getElementById('results-section');
     section.classList.remove('hidden');
     setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);

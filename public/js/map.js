@@ -641,6 +641,10 @@ const MrtOverlay = {
     }
 
     this.visible = !this.visible;
+
+    // GA4 Event 7: toggle_mrt
+    if (typeof gtag === 'function') gtag('event', 'toggle_mrt', { visible: this.visible });
+
     const label = document.getElementById('mrt-toggle-label');
     const dot = document.querySelector('#mrt-toggle-btn .w-2\\.5');
 

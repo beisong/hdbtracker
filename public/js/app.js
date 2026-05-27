@@ -1058,7 +1058,8 @@ const App = {
         console.warn('Failed to load nearby transactions:', err.message);
       });
     } else {
-      TransactionMap.load([], this.lastResolvedData);
+      // No pre-geocoded coords — fall back to geocoding via project street address
+      TransactionMap.load(this.allTransactions, this.lastResolvedData);
     }
   },
 

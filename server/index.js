@@ -1405,7 +1405,7 @@ app.get('/api/private/district-overview', (req, res) => {
         SELECT month, town, flat_type, block, street_name, storey_range,
                floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
         FROM transactions
-        WHERE dataset_source = 'primary_2017_2026'
+        WHERE dataset_source != 'URA_PRIVATE'
           ${townClause}
           AND resale_price IS NOT NULL
         ORDER BY month DESC, resale_price DESC

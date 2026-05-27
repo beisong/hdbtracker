@@ -335,6 +335,85 @@ def insert_transactions(conn, all_projects, batch_num):
     return count
 
 
+def geocode_missing_projects(conn):
+    """Use OneMap API to geocode projects missing from project_coords."""
+    rows = conn.execute('''
+        SELECT DISTINCT t.project, t.street_name, t.district, t.market_segment
+        FROM transactions t
+        LEFT JOIN project_coords pc ON t.project = pc.project
+        WHERE t.dataset_source = 'URA_PRIVATE'
+          AND t.project IS NOT NULL AND t.project != ''
+          AND pc.project IS NULL
+        ORDER BY t.project
+    ''').fetchall()
+
+    if not rows:
+        print("   ✅ No missing project coordinates to geocode")
+        return 0
+
+    print(f"\n🌍 Geocoding {len(rows)} projects missing coordinates via OneMap...")
+    geocoded = 0
+    failed = []
+    ONEMAP_URL = 'https://www.onemap.gov.sg/api/common/elastic/search'
+
+    for i, (project, street, district, market_segment) in enumerate(rows):
+        query = f"{project} {street}".strip()
+        for attempt in range(2):
+            try:
+                time.sleep(0.35)
+                resp = requests.get(ONEMAP_URL, params={
+                    'searchVal': query,
+                    'returnGeom': 'Y',
+                    'getAddrDetails': 'N',
+                    'pageNum': 1,
+                }, headers={'User-Agent': 'WorthIt/1.0'}, timeout=10)
+                resp.raise_for_status()
+                data = resp.json()
+                results = data.get('results', [])
+                if results:
+                    r = results[0]
+                    lat = float(r.get('LATITUDE', 0))
+                    lng = float(r.get('LONGITUDE', 0))
+                    if lat and lng:
+                        conn.execute('''
+                            INSERT OR REPLACE INTO project_coords
+                                (project, street_name, district, market_segment, svy21_x, svy21_y, latitude, longitude)
+                            VALUES (?, ?, ?, ?, NULL, NULL, ?, ?)
+                        ''', (project, street, district, market_segment, round(lat, 7), round(lng, 7)))
+                        geocoded += 1
+                        print(f"   [{i+1}/{len(rows)}] ✅ {project}: {lat:.5f}, {lng:.5f}")
+                        break
+                    else:
+                        if attempt == 0:
+                            print(f"   [{i+1}/{len(rows)}] ⚠️  Zero coords for '{query}', retrying in 3s...")
+                            time.sleep(3)
+                        else:
+                            failed.append(project)
+                            print(f"   [{i+1}/{len(rows)}] ❌ {project}: zero coordinates")
+                else:
+                    if attempt == 0:
+                        print(f"   [{i+1}/{len(rows)}] ⚠️  No results for '{query}', retrying in 3s...")
+                        time.sleep(3)
+                    else:
+                        failed.append(project)
+                        print(f"   [{i+1}/{len(rows)}] ❌ {project}: no results")
+            except Exception as e:
+                if attempt == 0:
+                    print(f"   [{i+1}/{len(rows)}] ⚠️  Error for '{query}': {e}, retrying in 3s...")
+                    time.sleep(3)
+                else:
+                    failed.append(project)
+                    print(f"   [{i+1}/{len(rows)}] ❌ {project}: {e}")
+
+    conn.commit()
+    print(f"\n   ✅ Geocoded {geocoded}/{len(rows)} projects via OneMap")
+    if failed:
+        print(f"   ⚠️  {len(failed)} projects could not be geocoded:")
+        for p in failed:
+            print(f"      - {p}")
+    return geocoded
+
+
 def update_aggregations(conn):
     """Update pre-computed aggregations to include private property data."""
     print("\n📊 Updating aggregations...")
@@ -455,6 +534,9 @@ def main():
             continue
 
     print(f"\n📍 Saved coordinates for {total_coords:,} projects")
+
+    # Geocode any projects still missing coordinates via OneMap
+    geocode_missing_projects(conn)
 
     # Update aggregations
     update_aggregations(conn)

@@ -63,6 +63,8 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Price trend metric switched to $/sqm across all search types — eliminates flat-size compositional bias (May 2026)
 - ✅ Dual-line trend chart — HDB (blue) + Private (purple) shown together for town and district searches (May 2026)
 - ✅ Fixed district-overview HDB query — wrong dataset_source value meant HDB data was always empty (May 2026)
+- ✅ OneMap geocoding fallback in download_ura_data.py for projects missing SVY21 coords (May 2026)
+- ✅ Fixed private project map — was passing empty array to TransactionMap.load (May 2026)
 
 ## What's Left to Build / Improve
 - 🔲 Automated tests

@@ -43,6 +43,12 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **OneMap geocoding fallback for missing private project coords** (May 2026):
+  - 128 private projects lacked coordinates because URA API omits SVY21 coords for under-construction launches
+  - Added `geocode_missing_projects(conn)` to `scripts/download_ura_data.py`: queries OneMap for each project missing from `project_coords`, 350ms between requests, 1 retry with 3s backoff on failure
+  - `project_coords` is never cleared between runs — only truly new missing projects are queried on subsequent downloads
+  - Result: 121/128 geocoded automatically; NEWPORT RESIDENCES (192 tx, 80 Anson Rd) inserted manually; 6 single-tx projects remain unmapped
+  - Fixed private project map bug: `TransactionMap.load` was passing empty array `[]` → now passes `this.allTransactions`
 - **Dual-line price trend chart** (May 2026):
   - Town/postal search: blue HDB line + purple private line (related districts)
   - District search: blue HDB line (related towns) + purple private line

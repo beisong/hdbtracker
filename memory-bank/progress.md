@@ -80,9 +80,10 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Map popup alignment fix — resolved min-width vs max-width conflict on mobile (May 2026)
 - ✅ Map popup type shortening — `shortType()` helper for all 16 flat/property type values (May 2026)
 - ✅ Mobile UI pass — nested scroll fix, filter bar 2-row layout, chart/map height, scroll hint fade, stat card overflow, keyboard scroll (May 2026)
+- ✅ Automated test suite — 127 tests, 9 files: Vitest + supertest + fixture SQLite; unit (helpers + frontend utils) + integration (all 15 API endpoints); fixed null-town bug in `/api/resolve` as part of writing tests (May 2026)
 
 ## What's Left to Build / Improve
-- 🔲 Automated tests
+- ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)
 - 🔲 SQL injection fix in `/api/private/project-overview`
 - 🔲 Input validation/sanitization across all endpoints
 - 🔲 Geocode cache size limits (prevent memory leak)

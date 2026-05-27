@@ -426,8 +426,8 @@ app.get('/api/resolve', async (req, res) => {
         lng: result.lng,
       });
     } else {
-      // Town name — fuzzy match
-      const towns = db.prepare('SELECT DISTINCT town FROM transactions').all().map(r => r.town);
+      // Town name — fuzzy match (exclude NULL towns from private records)
+      const towns = db.prepare("SELECT DISTINCT town FROM transactions WHERE town IS NOT NULL AND dataset_source != 'URA_PRIVATE'").all().map(r => r.town);
       const inputUpper = input.toUpperCase();
 
       // Exact match
@@ -1880,13 +1880,17 @@ app.get('*', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  if (db) {
-    const count = db.prepare('SELECT COUNT(*) as count FROM transactions').get().count;
-    console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
-    console.log(`   Database has ${count.toLocaleString()} transactions\n`);
-  } else {
-    console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
-    console.log(`   ⚠️  No database — run download scripts via SSH\n`);
-  }
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    if (db) {
+      const count = db.prepare('SELECT COUNT(*) as count FROM transactions').get().count;
+      console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
+      console.log(`   Database has ${count.toLocaleString()} transactions\n`);
+    } else {
+      console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
+      console.log(`   ⚠️  No database — run download scripts via SSH\n`);
+    }
+  });
+}
+
+module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName } };

@@ -1,0 +1,123 @@
+'use strict';
+const Database = require('better-sqlite3');
+const fs = require('fs');
+
+// Must match vitest.config.js test.env.DB_PATH
+const FIXTURE_DB_PATH = '/tmp/worthornot-test.db';
+
+function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
+  // Remove existing file so we get a clean slate each test run
+  if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
+  if (fs.existsSync(dbPath + '-wal')) fs.unlinkSync(dbPath + '-wal');
+  if (fs.existsSync(dbPath + '-shm')) fs.unlinkSync(dbPath + '-shm');
+
+  const db = new Database(dbPath);
+
+  db.exec(`
+    CREATE TABLE transactions (
+      town TEXT,
+      flat_type TEXT,
+      block TEXT,
+      street_name TEXT,
+      storey_range TEXT,
+      floor_area_sqm REAL,
+      flat_model TEXT,
+      remaining_lease_years INTEGER,
+      resale_price INTEGER,
+      price_per_sqm REAL,
+      month TEXT,
+      dataset_source TEXT,
+      project TEXT,
+      district TEXT,
+      market_segment TEXT,
+      type_of_sale TEXT,
+      type_of_area TEXT
+    );
+    CREATE TABLE project_coords (
+      project TEXT,
+      district TEXT,
+      latitude REAL,
+      longitude REAL,
+      street_name TEXT,
+      market_segment TEXT
+    );
+  `);
+
+  const insertTx = db.prepare(`
+    INSERT INTO transactions
+      (town, flat_type, block, street_name, storey_range, floor_area_sqm, flat_model,
+       remaining_lease_years, resale_price, price_per_sqm, month, dataset_source,
+       project, district, market_segment, type_of_sale, type_of_area)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `);
+
+  // HDB BEDOK — 10 rows (5 × 3 ROOM, 5 × 4 ROOM)
+  const bedokHdb = [
+    ['BEDOK','3 ROOM','100','BEDOK NORTH ST 1','01 TO 03',65,'MODEL A',67,280000,4307,'2024-06','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','200','BEDOK NORTH ST 1','04 TO 06',65,'MODEL A',68,285000,4384,'2024-09','HDB',null,null,null,'Resale',null],
+    ['BEDOK','4 ROOM','300','BEDOK SOUTH AVE 1','01 TO 03',90,'MODEL A',72,420000,4666,'2024-09','HDB',null,null,null,'Resale',null],
+    ['BEDOK','4 ROOM','400','BEDOK SOUTH AVE 1','04 TO 06',90,'MODEL A',73,430000,4777,'2024-11','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','500','BEDOK NORTH ST 1','07 TO 09',65,'MODEL A',69,290000,4461,'2025-01','HDB',null,null,null,'Resale',null],
+    ['BEDOK','4 ROOM','600','BEDOK SOUTH AVE 1','07 TO 09',90,'MODEL A',74,440000,4888,'2025-01','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','700','BEDOK NORTH ST 1','10 TO 12',65,'MODEL A',70,295000,4538,'2025-03','HDB',null,null,null,'Resale',null],
+    ['BEDOK','4 ROOM','800','BEDOK SOUTH AVE 1','10 TO 12',90,'MODEL A',75,450000,5000,'2025-03','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','900','BEDOK NORTH ST 1','13 TO 15',65,'MODEL A',71,298000,4584,'2025-05','HDB',null,null,null,'Resale',null],
+    ['BEDOK','4 ROOM','1000','BEDOK SOUTH AVE 1','13 TO 15',90,'MODEL A',76,455000,5055,'2025-05','HDB',null,null,null,'Resale',null],
+  ];
+
+  // HDB TOA PAYOH — 8 rows (4 × 3 ROOM, 4 × 4 ROOM), district 11/12
+  const toaPayohHdb = [
+    ['TOA PAYOH','3 ROOM','10','TOA PAYOH RISE','01 TO 03',65,'MODEL A',55,270000,4153,'2024-06','HDB',null,'11',null,'Resale',null],
+    ['TOA PAYOH','3 ROOM','20','TOA PAYOH RISE','04 TO 06',65,'MODEL A',56,275000,4230,'2024-09','HDB',null,'11',null,'Resale',null],
+    ['TOA PAYOH','4 ROOM','30','TOA PAYOH CTRL 1','01 TO 03',90,'MODEL A',58,400000,4444,'2024-11','HDB',null,'11',null,'Resale',null],
+    ['TOA PAYOH','4 ROOM','40','TOA PAYOH CTRL 1','04 TO 06',90,'MODEL A',59,410000,4555,'2025-01','HDB',null,'11',null,'Resale',null],
+    ['TOA PAYOH','3 ROOM','50','TOA PAYOH RISE','07 TO 09',65,'MODEL A',57,280000,4307,'2025-03','HDB',null,'11',null,'Resale',null],
+    ['TOA PAYOH','4 ROOM','60','TOA PAYOH CTRL 1','07 TO 09',90,'MODEL A',60,420000,4666,'2025-03','HDB',null,'11',null,'Resale',null],
+    ['TOA PAYOH','3 ROOM','70','TOA PAYOH RISE','10 TO 12',65,'MODEL A',58,282000,4338,'2025-05','HDB',null,'11',null,'Resale',null],
+    ['TOA PAYOH','4 ROOM','80','TOA PAYOH CTRL 1','10 TO 12',90,'MODEL A',61,425000,4722,'2025-05','HDB',null,'11',null,'Resale',null],
+  ];
+
+  // Private SKY HABITAT — 8 rows, district 11
+  const skyHabitat = [
+    [null,'APARTMENT',null,'BISHAN ST 21',null,60,null,null,900000,15000,'2024-06','URA_PRIVATE','SKY HABITAT','11','RCR','New Sale','Strata'],
+    [null,'APARTMENT',null,'BISHAN ST 21',null,60,null,null,910000,15166,'2024-09','URA_PRIVATE','SKY HABITAT','11','RCR','New Sale','Strata'],
+    [null,'APARTMENT',null,'BISHAN ST 21',null,60,null,null,920000,15333,'2024-11','URA_PRIVATE','SKY HABITAT','11','RCR','Resale','Strata'],
+    [null,'APARTMENT',null,'BISHAN ST 21',null,60,null,null,930000,15500,'2025-01','URA_PRIVATE','SKY HABITAT','11','RCR','Resale','Strata'],
+    [null,'CONDOMINIUM',null,'BISHAN ST 21',null,100,null,null,1200000,12000,'2025-01','URA_PRIVATE','SKY HABITAT','11','RCR','Resale','Strata'],
+    [null,'APARTMENT',null,'BISHAN ST 21',null,60,null,null,940000,15666,'2025-03','URA_PRIVATE','SKY HABITAT','11','RCR','Resale','Strata'],
+    [null,'APARTMENT',null,'BISHAN ST 21',null,60,null,null,950000,15833,'2025-05','URA_PRIVATE','SKY HABITAT','11','RCR','Resale','Strata'],
+    [null,'CONDOMINIUM',null,'BISHAN ST 21',null,100,null,null,1220000,12200,'2025-05','URA_PRIVATE','SKY HABITAT','11','RCR','Resale','Strata'],
+  ];
+
+  // Private THE CANOPY — 4 rows, district 11
+  const theCanopy = [
+    [null,'CONDOMINIUM',null,'TOA PAYOH RISE',null,100,null,null,1100000,11000,'2024-09','URA_PRIVATE','THE CANOPY','11','RCR','New Sale','Strata'],
+    [null,'CONDOMINIUM',null,'TOA PAYOH RISE',null,100,null,null,1120000,11200,'2025-01','URA_PRIVATE','THE CANOPY','11','RCR','Resale','Strata'],
+    [null,'CONDOMINIUM',null,'TOA PAYOH RISE',null,100,null,null,1130000,11300,'2025-03','URA_PRIVATE','THE CANOPY','11','RCR','Resale','Strata'],
+    [null,'CONDOMINIUM',null,'TOA PAYOH RISE',null,100,null,null,1150000,11500,'2025-05','URA_PRIVATE','THE CANOPY','11','RCR','Resale','Strata'],
+  ];
+
+  const insertAll = db.transaction((rows) => {
+    for (const row of rows) insertTx.run(...row);
+  });
+  insertAll([...bedokHdb, ...toaPayohHdb, ...skyHabitat, ...theCanopy]);
+
+  // Project coords
+  const insertCoord = db.prepare(`
+    INSERT INTO project_coords (project, district, latitude, longitude, street_name, market_segment)
+    VALUES (?,?,?,?,?,?)
+  `);
+  insertCoord.run('SKY HABITAT', '11', 1.3521, 103.8198, 'BISHAN ST 21', 'RCR');
+  insertCoord.run('THE CANOPY', '11', 1.3400, 103.8450, 'TOA PAYOH RISE', 'RCR');
+
+  db.close();
+
+  return {
+    dbPath,
+    cleanup() {
+      if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
+    },
+  };
+}
+
+module.exports = { createFixtureDb, FIXTURE_DB_PATH };

@@ -74,10 +74,10 @@ const Charts = {
       const date = new Date(parseInt(y), parseInt(m) - 1);
       return date.toLocaleDateString('en-SG', { month: 'short', year: '2-digit' });
     });
-    const prices = data.map(d => d.median_price ?? d.avg_price);
+    const prices = data.map(d => d.avg_psm);
 
-    const firstPrice = prices[0] || 0;
-    const lastPrice = prices[prices.length - 1] || 0;
+    const firstPrice = prices.find(p => p) || 0;
+    const lastPrice = [...prices].reverse().find(p => p) || 0;
     const trendColor = lastPrice >= firstPrice ? this.colors.green : this.colors.red;
     const trendBg = lastPrice >= firstPrice ? this.colors.greenLight : this.colors.redLight;
 
@@ -116,7 +116,7 @@ const Charts = {
             displayColors: false,
             callbacks: {
               title: (items) => items[0]?.label || '',
-              label: (item) => `$${this.formatNumber(item.raw)}`,
+              label: (item) => `$${this.formatNumber(item.raw)}/sqm`,
               afterLabel: (item) => {
                 const count = data[item.dataIndex]?.count || 0;
                 return `${count} transactions`;
@@ -126,7 +126,7 @@ const Charts = {
         },
         scales: {
           x: { grid: { display: false }, ticks: { maxTicksLimit: mobile ? 5 : 8 } },
-          y: { grid: { color: tc.gridColor }, ticks: { callback: (val) => '$' + (val / 1000) + 'k', maxTicksLimit: mobile ? 4 : 8 } },
+          y: { grid: { color: tc.gridColor }, ticks: { callback: (val) => '$' + (val / 1000).toFixed(1) + 'k/sqm', maxTicksLimit: mobile ? 4 : 8 } },
         },
       },
     });

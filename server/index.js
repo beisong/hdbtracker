@@ -673,10 +673,10 @@ app.get('/api/area-overview', (req, res) => {
       const recent12m = trendData.filter(m => m.month >= monthsAgo12m);
       const recent36m = trendData.filter(m => m.month >= monthsAgo36);
 
-      priceTrend['6m_change'] = trendPct(recent6m, 'median_price');
-      priceTrend['1y_change'] = trendPct(recent12m, 'median_price');
-      priceTrend['3y_change'] = trendPct(recent36m, 'median_price');
-      priceTrend['5y_change'] = trendPct(trendData, 'median_price');
+      priceTrend['6m_change'] = trendPct(recent6m, 'avg_psm');
+      priceTrend['1y_change'] = trendPct(recent12m, 'avg_psm');
+      priceTrend['3y_change'] = trendPct(recent36m, 'avg_psm');
+      priceTrend['5y_change'] = trendPct(trendData, 'avg_psm');
 
       if (priceTrend['1y_change'] > 2) priceTrend.direction = 'rising';
       else if (priceTrend['1y_change'] < -2) priceTrend.direction = 'falling';
@@ -1057,9 +1057,9 @@ app.get('/api/private/project-overview', (req, res) => {
       const recent12m = trendData.filter(m => m.month >= monthsAgo12m);
       const recent36m = trendData.filter(m => m.month >= monthsAgo36);
 
-      priceTrend['6m_change'] = trendPct(recent6m, 'avg_price');
-      priceTrend['1y_change'] = trendPct(recent12m, 'avg_price');
-      priceTrend['3y_change'] = trendPct(recent36m, 'avg_price');
+      priceTrend['6m_change'] = trendPct(recent6m, 'avg_psm');
+      priceTrend['1y_change'] = trendPct(recent12m, 'avg_psm');
+      priceTrend['3y_change'] = trendPct(recent36m, 'avg_psm');
 
       if (priceTrend['1y_change'] > 2) priceTrend.direction = 'rising';
       else if (priceTrend['1y_change'] < -2) priceTrend.direction = 'falling';
@@ -1336,10 +1336,10 @@ app.get('/api/private/district-overview', (req, res) => {
       const recent12m = trendData.filter(m => m.month >= monthsAgo12m);
       const recent36m = trendData.filter(m => m.month >= monthsAgo36);
 
-      priceTrend['6m_change'] = trendPct(recent6m, 'avg_price');
-      priceTrend['1y_change'] = trendPct(recent12m, 'avg_price');
-      priceTrend['3y_change'] = trendPct(recent36m, 'avg_price');
-      priceTrend['5y_change'] = trendPct(trendData, 'avg_price');
+      priceTrend['6m_change'] = trendPct(recent6m, 'avg_psm');
+      priceTrend['1y_change'] = trendPct(recent12m, 'avg_psm');
+      priceTrend['3y_change'] = trendPct(recent36m, 'avg_psm');
+      priceTrend['5y_change'] = trendPct(trendData, 'avg_psm');
 
       if (priceTrend['1y_change'] > 2) priceTrend.direction = 'rising';
       else if (priceTrend['1y_change'] < -2) priceTrend.direction = 'falling';

@@ -227,9 +227,20 @@ const TransactionMap = {
     if (mapLoading) mapLoading.style.display = 'flex';
 
     try {
+      // Separate transactions with pre-existing coordinates from those needing geocoding
+      const preGeocoded = [];
+      const needsGeocoding = [];
+      for (const tx of transactions) {
+        if (tx.lat && tx.lng) {
+          preGeocoded.push(tx);
+        } else {
+          needsGeocoding.push(tx);
+        }
+      }
+
       const seen = new Set();
       const uniqueAddresses = [];
-      for (const tx of transactions) {
+      for (const tx of needsGeocoding) {
         const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
         if (!seen.has(key)) {
           seen.add(key);
@@ -244,8 +255,8 @@ const TransactionMap = {
         if (r.lat && r.lng) geoMap[r.query] = { lat: r.lat, lng: r.lng };
       }
 
-      const markerData = [];
-      for (const tx of transactions) {
+      const markerData = [...preGeocoded];
+      for (const tx of needsGeocoding) {
         const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
         if (geoMap[key]) {
           markerData.push({ ...tx, lat: geoMap[key].lat, lng: geoMap[key].lng });
@@ -346,9 +357,9 @@ const TransactionMap = {
 
       // Color based on transaction type (HDB vs PRIVATE)
       const recent = txList[0];
-      const markerColor = recent.transaction_type === 'HDB'
-        ? '#3b82f6'  // Blue for HDB
-        : '#a855f7'; // Purple for private
+      const markerColor = recent.is_private
+        ? '#a855f7'  // Purple for private
+        : '#3b82f6'; // Blue for HDB
 
       // Size based on number of transactions
       const radius = Math.min(12, Math.max(6, 6 + txList.length));

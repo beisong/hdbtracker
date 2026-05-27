@@ -577,49 +577,45 @@ const App = {
       projectsEl.innerHTML = '';
     }
 
-    // Add private project markers to map
-    if (data.project_coords && data.project_coords.length > 0) {
-      const projects = data.project_coords.map(pc => ({
-        project: pc.project,
-        latitude: pc.latitude,
-        longitude: pc.longitude,
-        tx_count: 0,
-        avg_price: 0,
-        avg_psm: 0,
-      }));
-      // Merge with top_projects data for better popups
-      for (const tp of (data.top_projects || [])) {
-        const match = projects.find(p => p.project === tp.project);
-        if (match) {
-          match.tx_count = tp.tx_count;
-          match.avg_price = tp.avg_price;
-          match.avg_psm = tp.avg_psm;
+    // Build project_coords lookup for attaching lat/lng to transactions
+    const projectGeoMap = {};
+    if (data.project_coords) {
+      for (const pc of data.project_coords) {
+        if (pc.latitude && pc.longitude) {
+          projectGeoMap[pc.project.toUpperCase()] = { lat: pc.latitude, lng: pc.longitude };
         }
       }
-      TransactionMap.addNearbyProjects(projects, null);
     }
 
     // Merge private transactions into the main transaction list
     if (data.recent_transactions && data.recent_transactions.length > 0) {
-      const privateTxs = data.recent_transactions.map(tx => ({
-        month: tx.month,
-        town: 'PRIVATE',
-        flat_type: tx.property_type || tx.flat_type,
-        block: tx.project || '--',
-        street_name: tx.project || '--',
-        storey_range: tx.storey_range || '--',
-        floor_area_sqm: tx.floor_area_sqm,
-        flat_model: tx.tenure || '--',
-        remaining_lease_years: tx.remaining_lease_years,
-        resale_price: tx.resale_price,
-        price_per_sqm: tx.price_per_sqm,
-        is_private: true,
-        is_freehold: tx.tenure === 'FREEHOLD',
-      }));
+      const privateTxs = data.recent_transactions.map(tx => {
+        const coords = projectGeoMap[(tx.project || '').toUpperCase()];
+        return {
+          month: tx.month,
+          town: 'PRIVATE',
+          flat_type: tx.property_type || tx.flat_type,
+          block: tx.project || '--',
+          street_name: tx.project || '--',
+          storey_range: tx.storey_range || '--',
+          floor_area_sqm: tx.floor_area_sqm,
+          flat_model: tx.tenure || '--',
+          remaining_lease_years: tx.remaining_lease_years,
+          resale_price: tx.resale_price,
+          price_per_sqm: tx.price_per_sqm,
+          is_private: true,
+          is_freehold: tx.tenure === 'FREEHOLD',
+          // Attach coordinates from project_coords if available
+          ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+        };
+      });
       // Prepend private transactions (sorted by date) to existing HDB transactions
       this.allTransactions = [...privateTxs, ...this.allTransactions];
       this.populateTypeFilter(this.allTransactions);
       this.applyTransactionFilters();
+
+      // Re-load map with combined transactions (HDB + private with coordinates)
+      TransactionMap.load(this.allTransactions, this.lastResolvedData);
     }
   },
 
@@ -716,6 +712,7 @@ const App = {
         is_freehold: tx.tenure === 'FREEHOLD',
         // Mark transaction type for filtering/styling
         transaction_type: isHDB ? 'HDB' : 'PRIVATE',
+        is_private: !isHDB,
       };
     });
     this.populateTypeFilter(this.allTransactions);
@@ -735,17 +732,27 @@ const App = {
     // Update URL and meta for district search
     this.updateSeoForSearch('district', data);
 
-    // Load map with district project coordinates
-    TransactionMap.load(this.allTransactions, this.lastResolvedData);
-    if (data.project_coords && data.project_coords.length > 0) {
-      const projects = data.project_coords.map(pc => ({
-        project: pc.project,
-        latitude: pc.latitude,
-        longitude: pc.longitude,
-        tx_count: 0, avg_price: 0, avg_psm: 0,
-      }));
-      TransactionMap.addNearbyProjects(projects, null);
+    // Build project_coords lookup for map rendering
+    const districtGeoMap = {};
+    if (data.project_coords) {
+      for (const pc of data.project_coords) {
+        if (pc.latitude && pc.longitude) {
+          districtGeoMap[pc.project.toUpperCase()] = { lat: pc.latitude, lng: pc.longitude };
+        }
+      }
     }
+
+    // Attach lat/lng to private transactions for map rendering
+    this.allTransactions = this.allTransactions.map(tx => {
+      if (tx.is_private) {
+        const coords = districtGeoMap[(tx.block || '').toUpperCase()];
+        if (coords) return { ...tx, lat: coords.lat, lng: coords.lng };
+      }
+      return tx;
+    });
+
+    // Load map with transactions (private ones now have coordinates)
+    TransactionMap.load(this.allTransactions, this.lastResolvedData);
   },
 
   setupTransactionFilters() {
@@ -865,10 +872,8 @@ const App = {
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
       const leaseDisplay = tx.is_freehold ? '∞' : (tx.remaining_lease_years ? `${Math.round(tx.remaining_lease_years)}y` : '--');
 
-      // Hover: highlight map marker
-      const addrKey = tx.is_private
-        ? (tx.block || '').toUpperCase()
-        : `${tx.block} ${tx.street_name || ''}`.trim().toUpperCase();
+      // Hover: highlight map marker (key must match map's address key format)
+      const addrKey = `${tx.block} ${tx.street_name || ''}`.trim().toUpperCase();
       tr.addEventListener('mouseenter', () => TransactionMap.highlightAddress(addrKey));
       tr.addEventListener('mouseleave', () => TransactionMap.unhighlight());
 

@@ -43,6 +43,13 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Dual-line price trend chart** (May 2026):
+  - Town/postal search: blue HDB line + purple private line (related districts)
+  - District search: blue HDB line (related towns) + purple private line
+  - Project search: single line (green/red based on trend direction)
+  - Server: `/api/area-overview` now returns `private_trend_data`; `/api/private/district-overview` now returns `hdb_trend_data`
+  - `charts.js`: `renderTrendChart(hdbData, privateData)` — shared X-axis from union of months, legend shown only when both lines present
+  - Fixed bug: `/api/private/district-overview` was querying `dataset_source = 'primary_2017_2026'` (wrong value, always returned 0 rows) — changed to `dataset_source != 'URA_PRIVATE'`
 - **Price trend metric switched to $/sqm** (May 2026):
   - All trend charts now display `avg_psm` ($/sqm) instead of average resale price
   - Fixes compositional bias: raw price fluctuates when flat size mix changes month-to-month; $/sqm is size-neutral

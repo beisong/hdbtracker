@@ -6,6 +6,7 @@ const Charts = {
   trendChart: null,
   distributionChart: null,
   _lastTrendData: null,
+  _lastPrivateTrendData: null,
   _lastDistBins: null,
   _lastDistCounts: null,
 
@@ -53,59 +54,112 @@ const Charts = {
   /** Re-render charts after theme change */
   rerender() {
     this.initDefaults();
-    if (this._lastTrendData) {
-      this.renderTrendChart(this._lastTrendData);
+    if (this._lastTrendData || this._lastPrivateTrendData) {
+      this.renderTrendChart(this._lastTrendData, this._lastPrivateTrendData);
     }
     if (this._lastDistBins && this._lastDistCounts) {
       this.renderDistributionChart(this._lastDistBins, this._lastDistCounts);
     }
   },
 
-  renderTrendChart(data) {
+  // hdbData = HDB monthly trend array, privateData = private monthly trend array
+  // Either can be null for single-line mode.
+  renderTrendChart(hdbData, privateData = null) {
     const canvas = document.getElementById('trend-chart');
     if (!canvas) return;
 
-    this._lastTrendData = data;
+    this._lastTrendData = hdbData;
+    this._lastPrivateTrendData = privateData;
     if (this.trendChart) this.trendChart.destroy();
 
     const tc = this.getThemeColors();
-    const labels = data.map(d => {
-      const [y, m] = d.month.split('-');
-      const date = new Date(parseInt(y), parseInt(m) - 1);
-      return date.toLocaleDateString('en-SG', { month: 'short', year: '2-digit' });
-    });
-    const prices = data.map(d => d.avg_psm);
-
-    const firstPrice = prices.find(p => p) || 0;
-    const lastPrice = [...prices].reverse().find(p => p) || 0;
-    const trendColor = lastPrice >= firstPrice ? this.colors.green : this.colors.red;
-    const trendBg = lastPrice >= firstPrice ? this.colors.greenLight : this.colors.redLight;
-
     const mobile = this.isMobile();
+    const hasHdb = hdbData && hdbData.length > 0;
+    const hasPrivate = privateData && privateData.length > 0;
+    const hasBoth = hasHdb && hasPrivate;
+
+    // Build union of months for a shared X-axis
+    const allMonthsSet = new Set([
+      ...(hasHdb ? hdbData.map(d => d.month) : []),
+      ...(hasPrivate ? privateData.map(d => d.month) : []),
+    ]);
+    const allMonths = [...allMonthsSet].sort();
+    const labels = allMonths.map(month => {
+      const [y, m] = month.split('-');
+      return new Date(parseInt(y), parseInt(m) - 1)
+        .toLocaleDateString('en-SG', { month: 'short', year: '2-digit' });
+    });
+
+    const datasets = [];
+
+    if (hasHdb) {
+      const hdbMap = Object.fromEntries(hdbData.map(d => [d.month, d.avg_psm]));
+      const hdbPrices = allMonths.map(m => hdbMap[m] ?? null);
+      let hdbColor, hdbBg;
+      if (hasBoth) {
+        hdbColor = this.colors.brand;
+        hdbBg = 'transparent';
+      } else {
+        const first = hdbPrices.find(p => p != null) || 0;
+        const last = [...hdbPrices].reverse().find(p => p != null) || 0;
+        hdbColor = last >= first ? this.colors.green : this.colors.red;
+        hdbBg = last >= first ? this.colors.greenLight : this.colors.redLight;
+      }
+      datasets.push({
+        label: 'HDB',
+        data: hdbPrices,
+        borderColor: hdbColor,
+        backgroundColor: hdbBg,
+        fill: !hasBoth,
+        tension: 0.4,
+        pointRadius: mobile ? 0 : 1.5,
+        pointHoverRadius: 5,
+        pointBackgroundColor: hdbColor,
+        borderWidth: 2,
+        spanGaps: true,
+      });
+    }
+
+    if (hasPrivate) {
+      const privMap = Object.fromEntries(privateData.map(d => [d.month, d.avg_psm]));
+      const privPrices = allMonths.map(m => privMap[m] ?? null);
+      let privColor, privBg;
+      if (hasBoth) {
+        privColor = '#a855f7';
+        privBg = 'transparent';
+      } else {
+        const first = privPrices.find(p => p != null) || 0;
+        const last = [...privPrices].reverse().find(p => p != null) || 0;
+        privColor = last >= first ? this.colors.green : this.colors.red;
+        privBg = last >= first ? this.colors.greenLight : this.colors.redLight;
+      }
+      datasets.push({
+        label: 'Private',
+        data: privPrices,
+        borderColor: privColor,
+        backgroundColor: privBg,
+        fill: !hasBoth,
+        tension: 0.4,
+        pointRadius: mobile ? 0 : 1.5,
+        pointHoverRadius: 5,
+        pointBackgroundColor: privColor,
+        borderWidth: 2,
+        spanGaps: true,
+      });
+    }
 
     this.trendChart = new Chart(canvas, {
       type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Average Price',
-          data: prices,
-          borderColor: trendColor,
-          backgroundColor: trendBg,
-          fill: true,
-          tension: 0.4,
-          pointRadius: mobile ? 0 : 1.5,
-          pointHoverRadius: 5,
-          pointBackgroundColor: trendColor,
-          borderWidth: 2,
-        }],
-      },
+      data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         interaction: { intersect: false, mode: 'index' },
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: hasBoth,
+            labels: { color: tc.textColor, boxWidth: 12, padding: 12, font: { size: mobile ? 10 : 11 } },
+          },
           tooltip: {
             backgroundColor: tc.tooltipBg,
             titleColor: tc.tooltipTitle,
@@ -113,13 +167,15 @@ const Charts = {
             borderColor: tc.tooltipBorder,
             borderWidth: 1,
             padding: 12,
-            displayColors: false,
+            displayColors: hasBoth,
             callbacks: {
               title: (items) => items[0]?.label || '',
-              label: (item) => `$${this.formatNumber(item.raw)}/sqm`,
+              label: (item) => `${hasBoth ? item.dataset.label + ': ' : ''}$${this.formatNumber(item.raw)}/sqm`,
               afterLabel: (item) => {
-                const count = data[item.dataIndex]?.count || 0;
-                return `${count} transactions`;
+                const month = allMonths[item.dataIndex];
+                const src = item.dataset.label === 'Private' ? privateData : hdbData;
+                const entry = src?.find(d => d.month === month);
+                return entry ? `${entry.count} transactions` : '';
               },
             },
           },

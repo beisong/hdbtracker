@@ -458,8 +458,8 @@ const App = {
     document.getElementById('trend-3y').innerHTML = fmtPct(trend['3y_change']);
     document.getElementById('trend-5y').innerHTML = fmtPct(trend['5y_change']);
 
-    // Charts
-    Charts.renderTrendChart(data.trend_data || []);
+    // Charts — HDB primary, private secondary (if available for related districts)
+    Charts.renderTrendChart(data.trend_data || [], data.private_trend_data || null);
     if (data.distribution && data.distribution.bins.length > 0) {
       Charts.renderDistributionChart(data.distribution.bins, data.distribution.counts);
     }
@@ -690,8 +690,8 @@ const App = {
     document.getElementById('trend-3y').innerHTML = fmtPct(trend['3y_change']);
     document.getElementById('trend-5y').innerHTML = fmtPct(trend['5y_change']);
 
-    // Charts
-    Charts.renderTrendChart(data.trend_data || []);
+    // Charts — private primary, HDB secondary (if related towns have data)
+    Charts.renderTrendChart(data.hdb_trend_data || null, data.trend_data || []);
     if (data.distribution && data.distribution.bins.length > 0) {
       Charts.renderDistributionChart(data.distribution.bins, data.distribution.counts);
     }
@@ -1012,8 +1012,8 @@ const App = {
     document.getElementById('trend-3y').innerHTML = fmtPct(trend['3y_change']);
     document.getElementById('trend-5y').innerHTML = '--';
 
-    // Charts
-    Charts.renderTrendChart(data.trend_data || []);
+    // Charts — private project only, single line
+    Charts.renderTrendChart(null, data.trend_data || []);
     if (data.distribution && data.distribution.bins.length > 0) {
       Charts.renderDistributionChart(data.distribution.bins, data.distribution.counts);
     }

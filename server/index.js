@@ -662,6 +662,21 @@ app.get('/api/area-overview', (req, res) => {
     trendQuery += ' GROUP BY month ORDER BY month ASC';
     const trendData = db.prepare(trendQuery).all(...trendParams);
 
+    // Private property trend for related districts (dual-line chart)
+    const relatedDistricts = TOWN_TO_DISTRICTS[townUpper] || [];
+    let privateTrendData = [];
+    if (relatedDistricts.length > 0) {
+      const distPlaceholders = relatedDistricts.map(() => '?').join(',');
+      privateTrendData = db.prepare(`
+        SELECT month, COUNT(*) as count, ROUND(AVG(price_per_sqm), 0) as avg_psm
+        FROM transactions
+        WHERE dataset_source = 'URA_PRIVATE'
+          AND district IN (${distPlaceholders})
+          AND resale_price IS NOT NULL AND month >= ?
+        GROUP BY month ORDER BY month ASC
+      `).all(...relatedDistricts, monthsAgo60);
+    }
+
     // Calculate trend direction — compare 3-month rolling avg at start vs end of each window
     let priceTrend = { '6m_change': 0, '1y_change': 0, '3y_change': 0, '5y_change': 0, direction: 'stable' };
     if (trendData.length >= 2) {
@@ -717,6 +732,7 @@ app.get('/api/area-overview', (req, res) => {
       street_names: streetNames,
       data_as_of: latestMonth,
       prices_by_type: pricesByType,
+      private_trend_data: privateTrendData,
       town_summary: {
         median_price: townSummary?.median_price || 0,
         median_psm: townSummary?.median_psm || 0,
@@ -1395,6 +1411,20 @@ app.get('/api/private/district-overview', (req, res) => {
     // Related HDB towns
     const relatedTowns = DISTRICT_TO_TOWNS[districtCode] || [];
 
+    // HDB trend for related towns (dual-line chart)
+    let hdbTrendData = [];
+    if (relatedTowns.length > 0) {
+      const townPlaceholders = relatedTowns.map(() => '?').join(',');
+      hdbTrendData = db.prepare(`
+        SELECT month, COUNT(*) as count, ROUND(AVG(price_per_sqm), 0) as avg_psm
+        FROM transactions
+        WHERE dataset_source != 'URA_PRIVATE'
+          AND town IN (${townPlaceholders})
+          AND resale_price IS NOT NULL AND month >= ?
+        GROUP BY month ORDER BY month ASC
+      `).all(...relatedTowns, monthsAgo60);
+    }
+
     // === HDB TRANSACTIONS FROM RELATED TOWNS ===
     let hdbTransactions = [];
     if (relatedTowns.length > 0) {
@@ -1434,6 +1464,7 @@ app.get('/api/private/district-overview', (req, res) => {
       prices_by_type: pricesByType,
       price_trend: priceTrend,
       trend_data: trendData,
+      hdb_trend_data: hdbTrendData,
       price_percentiles: pricePercentiles,
       distribution: { bins, counts },
       recent_transactions: allTransactions,

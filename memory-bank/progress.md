@@ -61,6 +61,8 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Trend calculation fix — 3-month rolling avg instead of point-to-point single months (May 2026)
 - ✅ Trend chart fixed for private/district — was showing flat line due to wrong field name (May 2026)
 - ✅ Price trend metric switched to $/sqm across all search types — eliminates flat-size compositional bias (May 2026)
+- ✅ Dual-line trend chart — HDB (blue) + Private (purple) shown together for town and district searches (May 2026)
+- ✅ Fixed district-overview HDB query — wrong dataset_source value meant HDB data was always empty (May 2026)
 
 ## What's Left to Build / Improve
 - 🔲 Automated tests

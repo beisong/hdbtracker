@@ -362,6 +362,12 @@ const DISTRICT_LABELS = {
   '28': 'D28 — Seletar, Sengkang',
 };
 
+// Singapore bounding box — rejects obviously wrong coordinates before hitting Nominatim/OneMap
+function isSgCoord(lat, lng) {
+  return Number.isFinite(lat) && Number.isFinite(lng) &&
+    lat >= 1.1 && lat <= 1.5 && lng >= 103.5 && lng <= 104.1;
+}
+
 /**
  * GET /api/towns — List all HDB towns + district labels for autocomplete
  */
@@ -401,6 +407,7 @@ app.get('/api/resolve', async (req, res) => {
   try {
     const { q } = req.query;
     if (!q) return res.status(400).json({ error: 'Missing query parameter q' });
+    if (q.length > 200) return res.status(400).json({ error: 'Query too long' });
 
     const input = q.trim();
     const isPostalCode = /^\d{6}$/.test(input);
@@ -538,8 +545,13 @@ app.get('/api/nearby-streets', async (req, res) => {
     if (!lat || !lng || !town) {
       return res.status(400).json({ error: 'Missing lat, lng, or town parameter' });
     }
-    const streets = await findNearbyStreets(parseFloat(lat), parseFloat(lng), town);
-    res.json({ streets, town, lat: parseFloat(lat), lng: parseFloat(lng) });
+    const latF = parseFloat(lat);
+    const lngF = parseFloat(lng);
+    if (!isSgCoord(latF, lngF)) {
+      return res.status(400).json({ error: 'Invalid coordinates — must be within Singapore' });
+    }
+    const streets = await findNearbyStreets(latF, lngF, town);
+    res.json({ streets, town, lat: latF, lng: lngF });
   } catch (err) {
     console.error('Error in /api/nearby-streets:', err);
     res.status(500).json({ error: 'Failed to find nearby streets: ' + err.message });
@@ -553,6 +565,9 @@ app.get('/api/area-overview', (req, res) => {
   try {
     const { town, flat_type, street, streets } = req.query;
     if (!town) return res.status(400).json({ error: 'Missing town parameter' });
+    if (town.length > 100) return res.status(400).json({ error: 'town parameter too long' });
+    if (street && street.length > 200) return res.status(400).json({ error: 'street parameter too long' });
+    if (streets && streets.length > 5000) return res.status(400).json({ error: 'streets parameter too long' });
 
     const townUpper = town.toUpperCase();
     const flatTypeList = (flat_type && flat_type !== 'ALL')
@@ -571,7 +586,7 @@ app.get('/api/area-overview', (req, res) => {
     let streetNames = [];
     if (streets) {
       // Comma-separated list of DB street names (from nearby-streets)
-      streetNames = streets.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      streetNames = streets.split(',').map(s => s.trim()).filter(s => s.length > 0).slice(0, 200);
       console.log(`[area-overview] pre-resolved streets: ${streetNames.length} streets: ${streetNames.slice(0, 5).join(', ')}`);
     } else if (street) {
       streetNames = findDbStreets(street, townUpper);
@@ -854,6 +869,9 @@ app.post('/api/geocode', async (req, res) => {
     if (!addresses || !Array.isArray(addresses)) {
       return res.status(400).json({ error: 'Missing addresses array' });
     }
+    if (addresses.length > 100) {
+      return res.status(400).json({ error: 'addresses array exceeds limit of 100' });
+    }
 
     // Deduplicate addresses
     const uniqueKeys = [...new Set(
@@ -963,6 +981,7 @@ app.get('/api/private/projects', (req, res) => {
     if (!q || q.trim().length < 2) {
       return res.json({ projects: [] });
     }
+    if (q.length > 200) return res.status(400).json({ error: 'Query too long' });
 
     const searchPattern = `%${q.toUpperCase().trim()}%`;
 
@@ -1001,6 +1020,7 @@ app.get('/api/private/project-overview', (req, res) => {
   try {
     const { project, property_type } = req.query;
     if (!project) return res.status(400).json({ error: 'Missing project parameter' });
+    if (project.length > 200) return res.status(400).json({ error: 'project parameter too long' });
 
     const monthsAgo12 = monthsAgoStr(12);
     const monthsAgo60 = monthsAgoStr(60);
@@ -1160,7 +1180,7 @@ app.get('/api/private/district-summary', (req, res) => {
     const { districts } = req.query;
     if (!districts) return res.json({ found: false });
 
-    const districtList = districts.split(',').map(d => d.trim()).filter(d => d.length > 0);
+    const districtList = districts.split(',').map(d => d.trim()).filter(d => d.length > 0).slice(0, 30);
     if (districtList.length === 0) return res.json({ found: false });
 
     const placeholders = districtList.map(() => '?').join(',');
@@ -1274,6 +1294,7 @@ app.get('/api/private/district-overview', (req, res) => {
   try {
     const { district } = req.query;
     if (!district) return res.status(400).json({ error: 'Missing district parameter' });
+    if (!/^\d{1,2}$/.test(district)) return res.status(400).json({ error: 'district must be a 1 or 2 digit number' });
 
     const districtCode = district.padStart(2, '0');
     const monthsAgo12 = monthsAgoStr(12);
@@ -1505,6 +1526,9 @@ app.get('/api/nearby-hdb', async (req, res) => {
 
     const latF = parseFloat(lat);
     const lngF = parseFloat(lng);
+    if (!isSgCoord(latF, lngF)) {
+      return res.status(400).json({ error: 'Invalid coordinates — must be within Singapore' });
+    }
 
     // 1. Reverse geocode to get road names via Nominatim
     const nearbyStreets = await findNearbyStreets(latF, lngF, null);
@@ -1695,6 +1719,7 @@ app.get('/api/seo/metadata', (req, res) => {
   try {
     const { route } = req.query;
     if (!route) return res.status(400).json({ error: 'Missing route parameter' });
+    if (route.length > 500) return res.status(400).json({ error: 'route parameter too long' });
 
     let meta = {
       title: 'WorthIt — Singapore HDB Resale Prices & Property Transaction Checker',

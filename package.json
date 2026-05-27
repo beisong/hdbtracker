@@ -10,6 +10,8 @@
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
+    "test:smoke": "vitest run --config vitest.smoke.config.js",
+    "test:smoke-local": "SMOKE_API_URL=http://localhost:3000 vitest run --config vitest.smoke.config.js",
     "setup": "node scripts/run-python.js --setup",
     "download": "node scripts/run-python.js scripts/download_data.py && node scripts/run-python.js scripts/download_ura_data.py",
     "download-hdb": "node scripts/run-python.js scripts/download_data.py",

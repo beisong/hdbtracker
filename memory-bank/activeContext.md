@@ -43,6 +43,16 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **SQL injection fix** (May 2026):
+  - `/api/private/project-overview`: `property_type` was string-interpolated into SQL — replaced with parameterized `?` placeholder + `propTypeParam` spread across all 5 queries in the handler
+- **Smoke test suite** (May 2026):
+  - `tests/smoke/api.smoke.test.js` — 19 tests hitting the live API at `https://worthit-api.fly.dev`
+  - Covers: status, towns, flat-types, area-overview, resolve, private projects/project-overview/district-overview, SEO sitemap + metadata
+  - `vitest.smoke.config.js` — separate Vitest config (no fixture DB / globalSetup needed)
+  - `npm run test:smoke` — hits live API; `npm run test:smoke-local` — hits `http://localhost:3000`
+  - Smoke tests excluded from default `npm test` via `exclude` in `vitest.config.js`
+- **Pre-deploy test gate** (May 2026):
+  - `deploy`, `deploy:api`, `deploy:frontend` npm scripts all prepend `npm test &&` — failing tests block deploys
 - **Map deal score coloring + private marker differentiation** (May 2026):
   - Fixed HDB markers: `getValueStyle()` was computed but never used — markers were hardcoded blue. Now wired up to use tier+type median $/sqm for green→blue→red coloring.
   - Extended deal score coloring to private property markers too (was flat purple).

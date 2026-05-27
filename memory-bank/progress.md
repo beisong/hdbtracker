@@ -81,6 +81,9 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Map popup type shortening — `shortType()` helper for all 16 flat/property type values (May 2026)
 - ✅ Mobile UI pass — nested scroll fix, filter bar 2-row layout, chart/map height, scroll hint fade, stat card overflow, keyboard scroll (May 2026)
 - ✅ Automated test suite — 127 tests, 9 files: Vitest + supertest + fixture SQLite; unit (helpers + frontend utils) + integration (all 15 API endpoints); fixed null-town bug in `/api/resolve` as part of writing tests (May 2026)
+- ✅ SQL injection fix in `/api/private/project-overview` — parameterized `property_type` across all 5 queries (May 2026)
+- ✅ Smoke test suite — 19 tests in `tests/smoke/` hitting live `worthit-api.fly.dev`; separate `vitest.smoke.config.js`; `npm run test:smoke` (live) + `npm run test:smoke-local` (localhost:3000) (May 2026)
+- ✅ Pre-deploy test gate — `deploy`, `deploy:api`, `deploy:frontend` scripts all chain `npm test &&` so a failing test blocks the deploy (May 2026)
 
 ## What's Left to Build / Improve
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)

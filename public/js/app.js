@@ -515,7 +515,7 @@ const App = {
 
     // Stats cards
     document.getElementById('stat-median').textContent = `$${this.formatNumber(ts.median_price)}`;
-    document.getElementById('stat-psm').textContent = `$${this.formatNumber(this.psmToPsf(ts.median_psm))}/sqft`;
+    document.getElementById('stat-psf').textContent = `$${this.formatNumber(this.psmToPsf(ts.median_psm))}/sqft`;
     document.getElementById('stat-range').textContent = ts.min_price ? `$${this.formatNumber(ts.min_price / 1000)}k - $${this.formatNumber(ts.max_price / 1000)}k` : '--';
     document.getElementById('stat-popular').textContent = ts.most_popular_type || '--';
 
@@ -754,7 +754,7 @@ const App = {
 
     // Stats cards
     document.getElementById('stat-median').textContent = `$${this.formatNumber(s.avg_price)}`;
-    document.getElementById('stat-psm').textContent = `$${this.formatNumber(this.psmToPsf(s.avg_psm))}/sqft`;
+    document.getElementById('stat-psf').textContent = `$${this.formatNumber(this.psmToPsf(s.avg_psm))}/sqft`;
     document.getElementById('stat-range').textContent = s.min_price ? `$${this.formatNumber(s.min_price / 1000)}k - $${this.formatNumber(s.max_price / 1000)}k` : '--';
     document.getElementById('stat-popular').textContent = data.related_hdb_towns ? data.related_hdb_towns[0] : '--';
 
@@ -936,8 +936,8 @@ const App = {
         case 'date-asc': return a.month.localeCompare(b.month) || a.resale_price - b.resale_price;
         case 'price-desc': return b.resale_price - a.resale_price;
         case 'price-asc': return a.resale_price - b.resale_price;
-        case 'psm-desc': return (b.price_per_sqm || 0) - (a.price_per_sqm || 0);
-        case 'psm-asc': return (a.price_per_sqm || 0) - (b.price_per_sqm || 0);
+        case 'psf-desc': return (b.price_per_sqm || 0) - (a.price_per_sqm || 0);
+        case 'psf-asc': return (a.price_per_sqm || 0) - (b.price_per_sqm || 0);
         case 'area-desc': return (b.floor_area_sqm || 0) - (a.floor_area_sqm || 0);
         case 'area-asc': return (a.floor_area_sqm || 0) - (b.floor_area_sqm || 0);
         case 'lease-desc': return (b.remaining_lease_years || 0) - (a.remaining_lease_years || 0);
@@ -970,22 +970,22 @@ const App = {
       return;
     }
 
-    // Compute median $/sqm per flat type for deal score coloring
-    const _psmGroups = {};
+    // Compute median $/sqft per flat type for deal score coloring
+    const _psfGroups = {};
     for (const tx of this.allTransactions) {
       const t = tx.flat_type || 'UNKNOWN';
-      if (!_psmGroups[t]) _psmGroups[t] = [];
-      if (tx.price_per_sqm) _psmGroups[t].push(tx.price_per_sqm);
+      if (!_psfGroups[t]) _psfGroups[t] = [];
+      if (tx.price_per_sqm) _psfGroups[t].push(tx.price_per_sqm);
     }
     const _typeMedian = {};
-    for (const [t, vals] of Object.entries(_psmGroups)) {
+    for (const [t, vals] of Object.entries(_psfGroups)) {
       const s = [...vals].sort((a, b) => a - b);
       _typeMedian[t] = s[Math.floor(s.length / 2)];
     }
-    const _dealDot = (psm, type) => {
+    const _dealDot = (psf, type) => {
       const med = _typeMedian[type] || 0;
       if (!med) return '';
-      const ratio = psm / med;
+      const ratio = psf / med;
       let color;
       if (ratio <= 1.0) {
         const t = Math.max(0, Math.min(1, (ratio - 0.70) / 0.30));
@@ -1131,7 +1131,7 @@ const App = {
 
     // Stats cards
     document.getElementById('stat-median').textContent = `$${this.formatNumber(proj.avg_price)}`;
-    document.getElementById('stat-psm').textContent = `$${this.formatNumber(this.psmToPsf(proj.avg_psm))}/sqft`;
+    document.getElementById('stat-psf').textContent = `$${this.formatNumber(this.psmToPsf(proj.avg_psm))}/sqft`;
     document.getElementById('stat-range').textContent = proj.tenure || '--';
     document.getElementById('stat-popular').textContent = `D${proj.district} • ${segmentLabels[proj.market_segment] || proj.market_segment || ''}`;
 

@@ -302,32 +302,32 @@ const TransactionMap = {
 
     const bounds = [];
 
-    // Calculate per-type+lease-tier median $/sqm for value-based coloring
-    const tierPsm = {};
-    const typePsm = {};
+    // Calculate per-type+lease-tier median $/sqft for value-based coloring
+    const tierPsf = {};
+    const typePsf = {};
     for (const tx of markerData) {
       const t = tx.flat_type || 'UNKNOWN';
       const tier = this.getLeaseTier(tx.remaining_lease_years || 0);
       const key = `${t}|${tier}`;
-      if (!tierPsm[key]) tierPsm[key] = [];
-      tierPsm[key].push(tx.price_per_sqm || 0);
-      if (!typePsm[t]) typePsm[t] = [];
-      typePsm[t].push(tx.price_per_sqm || 0);
+      if (!tierPsf[key]) tierPsf[key] = [];
+      tierPsf[key].push(tx.price_per_sqm || 0);
+      if (!typePsf[t]) typePsf[t] = [];
+      typePsf[t].push(tx.price_per_sqm || 0);
     }
-    const tierMedianPsm = {};
-    for (const [key, vals] of Object.entries(tierPsm)) {
+    const tierMedianPsf = {};
+    for (const [key, vals] of Object.entries(tierPsf)) {
       if (vals.length >= 5) {
         const sorted = [...vals].sort((a, b) => a - b);
-        tierMedianPsm[key] = sorted[Math.floor(sorted.length / 2)];
+        tierMedianPsf[key] = sorted[Math.floor(sorted.length / 2)];
       }
     }
-    const typeMedianPsm = {};
-    for (const [t, vals] of Object.entries(typePsm)) {
+    const typeMedianPsf = {};
+    for (const [t, vals] of Object.entries(typePsf)) {
       const sorted = [...vals].sort((a, b) => a - b);
-      typeMedianPsm[t] = sorted[Math.floor(sorted.length / 2)] || 0;
+      typeMedianPsf[t] = sorted[Math.floor(sorted.length / 2)] || 0;
     }
-    const overallPsm = markerData.map(m => m.price_per_sqm || 0).sort((a, b) => a - b);
-    const overallMedianPsm = overallPsm[Math.floor(overallPsm.length / 2)] || 0;
+    const overallPsf = markerData.map(m => m.price_per_sqm || 0).sort((a, b) => a - b);
+    const overallMedianPsf = overallPsf[Math.floor(overallPsf.length / 2)] || 0;
 
     // Group transactions by address for combined popups
     const addressGroups = {};
@@ -360,7 +360,7 @@ const TransactionMap = {
       const t = recent.flat_type || 'UNKNOWN';
       const tier = this.getLeaseTier(recent.remaining_lease_years || 0);
       const key = `${t}|${tier}`;
-      const medianPsm = tierMedianPsm[key] || typeMedianPsm[t] || overallMedianPsm;
+      const medianPsm = tierMedianPsf[key] || typeMedianPsf[t] || overallMedianPsf;
       const style = this.getValueStyle(recent.price_per_sqm || 0, medianPsm);
       const markerColor = style.color;
       const radius = style.radius;

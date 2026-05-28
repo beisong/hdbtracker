@@ -93,7 +93,7 @@ const Charts = {
     const datasets = [];
 
     if (hasHdb) {
-      const hdbMap = Object.fromEntries(hdbData.map(d => [d.month, d.avg_psm / 10.7639]));
+      const hdbMap = Object.fromEntries(hdbData.map(d => [d.month, App.psmToPsf(d.avg_psm)]));
       const hdbPrices = allMonths.map(m => hdbMap[m] ?? null);
       let hdbColor, hdbBg;
       if (hasBoth) {
@@ -121,7 +121,7 @@ const Charts = {
     }
 
     if (hasPrivate) {
-      const privMap = Object.fromEntries(privateData.map(d => [d.month, d.avg_psm / 10.7639]));
+      const privMap = Object.fromEntries(privateData.map(d => [d.month, App.psmToPsf(d.avg_psm)]));
       const privPrices = allMonths.map(m => privMap[m] ?? null);
       let privColor, privBg;
       if (hasBoth) {

@@ -16,7 +16,9 @@ WORKDIR /app
 
 # Install Node.js dependencies first (better Docker layer caching)
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+— Map unavailable
+
+RUN npm install --omit=dev
 
 # Install Python dependencies
 COPY requirements.txt ./

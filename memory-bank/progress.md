@@ -91,6 +91,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)
 - ✅ SQL injection fix in `/api/private/project-overview` — replaced string-interpolated `property_type` with parameterized `?` + spread pattern across all 5 queries (May 2026)
 - ✅ Input validation across all endpoints — string length caps, lat/lng Singapore bounding box check, geocode array size limit (100), district-summary list cap (30), district-overview format check (May 2026)
+- 🔲 Improve test coverage to catch client-server contract mismatches — current gaps: (1) `POST /api/geocode` has no test for the >100 addresses limit returning 400; (2) `TransactionMap.load()` is entirely untested — a mock-API test with >100 addresses would have caught the "Map unavailable" bug before it shipped
 - 🔲 Geocode cache size limits (prevent memory leak)
 - 🔲 Database indexes for query performance
 - 🔲 Server refactor (split monolithic `server/index.js` into modules)

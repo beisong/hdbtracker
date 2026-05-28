@@ -1769,7 +1769,7 @@ app.get('/api/seo/metadata', (req, res) => {
                 name: 'What is a fair price for an HDB flat in Singapore?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'A fair HDB price depends on town, flat type, floor level, remaining lease, and recent transactions. WorthIt shows price percentiles (10th to 90th), price per sqm benchmarks, and Deal Scores to help you assess fair value against comparable sales.',
+                  text: 'A fair HDB price depends on town, flat type, floor level, remaining lease, and recent transactions. WorthIt shows price percentiles (10th to 90th), price per sqft benchmarks, and Deal Scores to help you assess fair value against comparable sales.',
                 },
               },
               {
@@ -1785,7 +1785,7 @@ app.get('/api/seo/metadata', (req, res) => {
                 name: 'How to check condo resale transaction prices in Singapore?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'Search any private property or condo project name on WorthIt to view resale transaction prices, price per sqm, unit mix, and market segment (CCR/RCR/OCR) data sourced from URA records.',
+                  text: 'Search any private property or condo project name on WorthIt to view resale transaction prices, price per sqft, unit mix, and market segment (CCR/RCR/OCR) data sourced from URA records.',
                 },
               },
               {
@@ -1793,7 +1793,7 @@ app.get('/api/seo/metadata', (req, res) => {
                 name: 'What is the Deal Score for HDB flats?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'Deal Score compares a transaction\'s price per sqm against similar flats (same type and remaining lease) in the same area. Green markers indicate good value, while red indicates premium pricing. This helps buyers quickly assess whether a listing is fairly priced.',
+                  text: 'Deal Score compares a transaction\'s price per sqft against similar flats (same type and remaining lease) in the same area. Green markers indicate good value, while red indicates premium pricing. This helps buyers quickly assess whether a listing is fairly priced.',
                 },
               },
             ],

@@ -175,7 +175,7 @@
   text-overflow: ellipsis;
 }
 
-/* Column widths: Date 9%, Location 26%, Type 13%, Floor 10%, Area 11%, Lease 8%, Price 12%, $/sqm 11% */
+/* Column widths: Date 9%, Location 26%, Type 13%, Floor 10%, Area 11%, Lease 8%, Price 12%, $/sqft 11% */
 .scrollable-table-container th:nth-child(1), .scrollable-table-container td:nth-child(1) { width: 9%; }
 .scrollable-table-container th:nth-child(2), .scrollable-table-container td:nth-child(2) { width: 26%; }
 .scrollable-table-container th:nth-child(3), .scrollable-table-container td:nth-child(3) { width: 13%; }

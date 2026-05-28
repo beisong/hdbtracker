@@ -115,7 +115,7 @@ const TransactionMap = {
               <span style="color:var(--popup-muted); font-size:10px;">${App.formatMonth(tx.month)}</span>
               <span style="font-weight:600; color:var(--popup-price); font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
             </div>
-            <div style="font-size:10px; color:var(--popup-muted);">${this.shortType(tx.flat_type)} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
+            <div style="font-size:10px; color:var(--popup-muted);">${this.shortType(tx.flat_type)} · ${App.sqmToSqft(tx.floor_area_sqm)}sqft · $${App.formatNumber(App.psmToPsf(tx.price_per_sqm))}/sqft</div>
           </div>`).join('');
 
         marker.bindPopup(`
@@ -175,7 +175,7 @@ const TransactionMap = {
           <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">${proj.street_name} · D${proj.district} · ${proj.market_segment}</div>
           <div style="display:flex; justify-content:space-between;">
             <span style="font-size:11px;">${proj.tx_count} transactions</span>
-            <span style="font-weight:600; font-size:11px; color:#a855f7;">$${App.formatNumber(proj.avg_psm)}/sqm</span>
+            <span style="font-weight:600; font-size:11px; color:#a855f7;">$${App.formatNumber(App.psmToPsf(proj.avg_psm))}/sqft</span>
           </div>
           <div style="font-size:10px; color:var(--popup-muted); margin-top:2px;">Avg: $${App.formatNumber(proj.avg_price)}</div>`;
 
@@ -188,7 +188,7 @@ const TransactionMap = {
                 <span style="color:var(--popup-muted); font-size:10px;">${App.formatMonth(tx.month)}</span>
                 <span style="font-weight:600; color:#a855f7; font-size:11px;">$${App.formatNumber(tx.resale_price)}</span>
               </div>
-              <div style="font-size:10px; color:var(--popup-muted);">${this.shortType(tx.property_type || '')} · ${tx.floor_area_sqm}sqm · $${App.formatNumber(tx.price_per_sqm)}/sqm</div>
+              <div style="font-size:10px; color:var(--popup-muted);">${this.shortType(tx.property_type || '')} · ${App.sqmToSqft(tx.floor_area_sqm)}sqft · $${App.formatNumber(App.psmToPsf(tx.price_per_sqm))}/sqft</div>
             </div>`;
         });
         popupHtml += `</div>`;
@@ -245,7 +245,7 @@ const TransactionMap = {
         if (!seen.has(key)) {
           seen.add(key);
           uniqueAddresses.push({ block: tx.block, street_name: tx.street_name });
-          if (uniqueAddresses.length >= 200) break;
+          if (uniqueAddresses.length >= 100) break;
         }
       }
 
@@ -389,8 +389,8 @@ const TransactionMap = {
               <span style="font-weight:700; color:${priceColor}; font-size:13px;">$${App.formatNumber(tx.resale_price)}</span>
             </div>
             <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:2px; font-size:11px; margin-top:2px;">
-              <span>${this.shortType(tx.flat_type)} · ${tx.floor_area_sqm}sqm</span>
-              <span>$${App.formatNumber(tx.price_per_sqm)}/sqm</span>
+              <span>${this.shortType(tx.flat_type)} · ${App.sqmToSqft(tx.floor_area_sqm)}sqft</span>
+              <span>$${App.formatNumber(App.psmToPsf(tx.price_per_sqm))}/sqft</span>
             </div>
             <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:2px; font-size:11px; color:var(--popup-muted);">
               <span>Floor: ${tx.storey_range || '--'}</span>
@@ -457,8 +457,8 @@ const TransactionMap = {
                 <span style="font-weight:700; color:${priceColor}; font-size:13px;">$${App.formatNumber(tx.resale_price)}</span>
               </div>
               <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:2px; font-size:11px; margin-top:2px;">
-                <span>${this.shortType(tx.flat_type)} · ${tx.floor_area_sqm}sqm</span>
-                <span>$${App.formatNumber(tx.price_per_sqm)}/sqm</span>
+                <span>${this.shortType(tx.flat_type)} · ${App.sqmToSqft(tx.floor_area_sqm)}sqft</span>
+                <span>$${App.formatNumber(App.psmToPsf(tx.price_per_sqm))}/sqft</span>
               </div>
             </div>`;
         });

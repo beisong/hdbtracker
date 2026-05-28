@@ -515,7 +515,7 @@ const App = {
 
     // Stats cards
     document.getElementById('stat-median').textContent = `$${this.formatNumber(ts.median_price)}`;
-    document.getElementById('stat-psm').textContent = `$${this.formatNumber(ts.median_psm)}/sqm`;
+    document.getElementById('stat-psm').textContent = `$${this.formatNumber(this.psmToPsf(ts.median_psm))}/sqft`;
     document.getElementById('stat-range').textContent = ts.min_price ? `$${this.formatNumber(ts.min_price / 1000)}k - $${this.formatNumber(ts.max_price / 1000)}k` : '--';
     document.getElementById('stat-popular').textContent = ts.most_popular_type || '--';
 
@@ -528,7 +528,7 @@ const App = {
       card.innerHTML = `
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">${item.flat_type}</div>
         <div class="text-base font-bold">$${this.formatNumber(item.median_price)}</div>
-        <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(item.median_psm)}/sqm</div>
+        <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(this.psmToPsf(item.median_psm))}/sqft</div>
         <div class="text-xs text-gray-600 dark:text-gray-500 mt-1">${item.count} sales</div>
       `;
       container.appendChild(card);
@@ -640,8 +640,8 @@ const App = {
           <div class="text-lg font-bold text-purple-700 dark:text-purple-200">$${this.formatNumber(s.avg_price)}</div>
         </div>
         <div>
-          <div class="text-xs text-purple-500 dark:text-purple-300/60 uppercase tracking-wider">Avg $/sqm</div>
-          <div class="text-lg font-bold text-purple-700 dark:text-purple-200">$${this.formatNumber(s.avg_psm)}</div>
+          <div class="text-xs text-purple-500 dark:text-purple-300/60 uppercase tracking-wider">Avg $/sqft</div>
+          <div class="text-lg font-bold text-purple-700 dark:text-purple-200">$${this.formatNumber(this.psmToPsf(s.avg_psm))}</div>
         </div>
         <div>
           <div class="text-xs text-purple-500 dark:text-purple-300/60 uppercase tracking-wider">Transactions (12m)</div>
@@ -754,7 +754,7 @@ const App = {
 
     // Stats cards
     document.getElementById('stat-median').textContent = `$${this.formatNumber(s.avg_price)}`;
-    document.getElementById('stat-psm').textContent = `$${this.formatNumber(s.avg_psm)}/sqm`;
+    document.getElementById('stat-psm').textContent = `$${this.formatNumber(this.psmToPsf(s.avg_psm))}/sqft`;
     document.getElementById('stat-range').textContent = s.min_price ? `$${this.formatNumber(s.min_price / 1000)}k - $${this.formatNumber(s.max_price / 1000)}k` : '--';
     document.getElementById('stat-popular').textContent = data.related_hdb_towns ? data.related_hdb_towns[0] : '--';
 
@@ -768,7 +768,7 @@ const App = {
       card.innerHTML = `
         <div class="text-xs text-purple-500 dark:text-purple-300 mb-1">${item.property_type} <span class="text-purple-400/60 dark:text-purple-300/60">~${bedEst}</span></div>
         <div class="text-base font-bold">$${this.formatNumber(item.avg_price)}</div>
-        <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(item.avg_psm)}/sqm • ${item.avg_area} sqm</div>
+        <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(this.psmToPsf(item.avg_psm))}/sqft • ${this.sqmToSqft(item.avg_area)} sqft</div>
         <div class="text-xs text-gray-600 dark:text-gray-500 mt-1">${item.count} sales</div>
       `;
       container.appendChild(card);
@@ -1028,10 +1028,10 @@ const App = {
           ${tx.is_freehold !== undefined ? `<span class="ml-1 text-purple-600 dark:text-purple-300 text-xs">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
         </td>
         <td class="py-2.5 pr-2 text-right text-gray-400 text-xs">${tx.storey_range || '--'}</td>
-        <td class="py-2.5 pr-2 text-right text-xs">${tx.floor_area_sqm} sqm</td>
+        <td class="py-2.5 pr-2 text-right text-xs">${this.sqmToSqft(tx.floor_area_sqm)} sqft</td>
         <td class="py-2.5 pr-2 text-right text-gray-400 text-xs">${leaseDisplay}</td>
         <td class="py-2.5 pr-2 text-right font-semibold text-xs">$${this.formatNumber(tx.resale_price)}</td>
-        <td class="py-2.5 text-right text-gray-400 text-xs">$${this.formatNumber(tx.price_per_sqm)}</td>
+        <td class="py-2.5 text-right text-gray-400 text-xs">$${this.formatNumber(this.psmToPsf(tx.price_per_sqm))}</td>
       `;
       tbody.appendChild(tr);
 
@@ -1052,14 +1052,14 @@ const App = {
         </div>
         <div class="flex items-center justify-between mt-2 gap-2">
           <span class="text-lg font-bold">$${this.formatNumber(tx.resale_price)}</span>
-          <span class="flex items-center gap-1.5 text-xs text-gray-400">${_dealDot(tx.price_per_sqm, tx.flat_type || 'UNKNOWN')}$${this.formatNumber(tx.price_per_sqm)}/sqm</span>
+          <span class="flex items-center gap-1.5 text-xs text-gray-400">${_dealDot(tx.price_per_sqm, tx.flat_type || 'UNKNOWN')}$${this.formatNumber(this.psmToPsf(tx.price_per_sqm))}/sqft</span>
         </div>
         <div class="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
           ${tx.is_private ? '<span class="px-1 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs">🏢 Private</span>' : ''}
           <span class="px-1.5 py-0.5 rounded ${tx.is_private ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-200' : 'bg-gray-200 dark:bg-dark-600/50 text-gray-600 dark:text-gray-300'}">${tx.flat_type}</span>
           ${tx.is_freehold !== undefined ? `<span class="text-purple-600 dark:text-purple-300">~${this.estimateBedrooms(tx.floor_area_sqm, tx.flat_type)}</span>` : ''}
           <span>·</span>
-          <span>${tx.floor_area_sqm}sqm</span>
+          <span>${this.sqmToSqft(tx.floor_area_sqm)}sqft</span>
           <span>·</span>
           <span>Floor ${tx.storey_range || '--'}</span>
           <span>·</span>
@@ -1131,7 +1131,7 @@ const App = {
 
     // Stats cards
     document.getElementById('stat-median').textContent = `$${this.formatNumber(proj.avg_price)}`;
-    document.getElementById('stat-psm').textContent = `$${this.formatNumber(proj.avg_psm)}/sqm`;
+    document.getElementById('stat-psm').textContent = `$${this.formatNumber(this.psmToPsf(proj.avg_psm))}/sqft`;
     document.getElementById('stat-range').textContent = proj.tenure || '--';
     document.getElementById('stat-popular').textContent = `D${proj.district} • ${segmentLabels[proj.market_segment] || proj.market_segment || ''}`;
 
@@ -1145,7 +1145,7 @@ const App = {
       card.innerHTML = `
         <div class="text-xs text-purple-500 dark:text-purple-300 mb-1">${item.property_type} <span class="text-purple-400/60 dark:text-purple-300/60">~${bedEst}</span></div>
         <div class="text-base font-bold">$${this.formatNumber(item.avg_price)}</div>
-        <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(item.avg_psm)}/sqm • ${item.avg_area} sqm</div>
+        <div class="text-xs text-gray-400 mt-0.5">$${this.formatNumber(this.psmToPsf(item.avg_psm))}/sqft • ${this.sqmToSqft(item.avg_area)} sqft</div>
         <div class="text-xs text-gray-600 dark:text-gray-500 mt-1">${item.count} sales</div>
       `;
       container.appendChild(card);
@@ -1254,6 +1254,16 @@ const App = {
   formatNumber(num) {
     if (num === null || num === undefined) return '--';
     return Math.round(num).toLocaleString('en-SG');
+  },
+
+  sqmToSqft(sqm) {
+    if (!sqm) return '--';
+    return Math.round(parseFloat(sqm) * 10.7639);
+  },
+
+  psmToPsf(psm) {
+    if (!psm) return null;
+    return Math.round(parseFloat(psm) / 10.7639);
   },
 
   setLoadingProgress(pct) {

@@ -84,6 +84,8 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ SQL injection fix in `/api/private/project-overview` — parameterized `property_type` across all 5 queries (May 2026)
 - ✅ Smoke test suite — 19 tests in `tests/smoke/` hitting live `worthit-api.fly.dev`; separate `vitest.smoke.config.js`; `npm run test:smoke` (live) + `npm run test:smoke-local` (localhost:3000) (May 2026)
 - ✅ Pre-deploy test gate — `deploy`, `deploy:api`, `deploy:frontend` scripts all chain `npm test &&` so a failing test blocks the deploy (May 2026)
+- ✅ Units switched from sqm to sqft — display-only conversion via `sqmToSqft()`/`psmToPsf()` helpers in `app.js`; chart data divided by 10.7639 before plotting; DB schema unchanged (May 2026)
+- ✅ Map unavailable bug fixed — client was sending up to 200 addresses to `/api/geocode` but server cap is 100; introduced in commit `082d253`; fixed by capping client at 100 (May 2026)
 
 ## What's Left to Build / Improve
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)

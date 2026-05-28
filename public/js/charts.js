@@ -93,7 +93,7 @@ const Charts = {
     const datasets = [];
 
     if (hasHdb) {
-      const hdbMap = Object.fromEntries(hdbData.map(d => [d.month, d.avg_psm]));
+      const hdbMap = Object.fromEntries(hdbData.map(d => [d.month, d.avg_psm / 10.7639]));
       const hdbPrices = allMonths.map(m => hdbMap[m] ?? null);
       let hdbColor, hdbBg;
       if (hasBoth) {
@@ -121,7 +121,7 @@ const Charts = {
     }
 
     if (hasPrivate) {
-      const privMap = Object.fromEntries(privateData.map(d => [d.month, d.avg_psm]));
+      const privMap = Object.fromEntries(privateData.map(d => [d.month, d.avg_psm / 10.7639]));
       const privPrices = allMonths.map(m => privMap[m] ?? null);
       let privColor, privBg;
       if (hasBoth) {
@@ -170,7 +170,7 @@ const Charts = {
             displayColors: hasBoth,
             callbacks: {
               title: (items) => items[0]?.label || '',
-              label: (item) => `${hasBoth ? item.dataset.label + ': ' : ''}$${this.formatNumber(item.raw)}/sqm`,
+              label: (item) => `${hasBoth ? item.dataset.label + ': ' : ''}$${this.formatNumber(item.raw)}/sqft`,
               afterLabel: (item) => {
                 const month = allMonths[item.dataIndex];
                 const src = item.dataset.label === 'Private' ? privateData : hdbData;
@@ -182,7 +182,7 @@ const Charts = {
         },
         scales: {
           x: { grid: { display: false }, ticks: { maxTicksLimit: mobile ? 5 : 8 } },
-          y: { grid: { color: tc.gridColor }, ticks: { callback: (val) => '$' + (val / 1000).toFixed(1) + 'k/sqm', maxTicksLimit: mobile ? 4 : 8 } },
+          y: { grid: { color: tc.gridColor }, ticks: { callback: (val) => '$' + (val / 1000).toFixed(1) + 'k/sqft', maxTicksLimit: mobile ? 4 : 8 } },
         },
       },
     });

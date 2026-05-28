@@ -43,6 +43,19 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Units changed from sqm to sqft** (May 2026):
+  - All display values converted: floor area (sqm → sqft), price rate ($/sqm → $/sqft)
+  - Conversion factor: 1 sqm = 10.7639 sqft; price/sqft = price/sqm ÷ 10.7639
+  - Added `sqmToSqft(sqm)` and `psmToPsf(psm)` helpers to `App` in `app.js`
+  - Conversion is display-only — DB column names (`floor_area_sqm`, `price_per_sqm`) and server SQL are unchanged
+  - Files updated: `public/js/app.js`, `public/js/charts.js`, `public/js/map.js`, `public/index.html`, `public/css/styles.css`
+  - Chart data also converted: `avg_psm / 10.7639` applied before building datasets in `charts.js`
+  - Chatbot FAQ text in `server/index.js` updated (3 occurrences of "price per sqm")
+- **Map unavailable bug fixed** (May 2026):
+  - Symptom: Transaction Map showed "— Map unavailable" on every search
+  - Root cause: client (`map.js`) collected up to 200 unique addresses but server (`/api/geocode`) enforced a hard limit of 100, returning 400 → client threw → caught as "Map unavailable"
+  - Introduced by commit `082d253` ("Enhance input validation and sanitization") which added the server-side 100-address cap without updating the client
+  - Fix: capped `uniqueAddresses` in `map.js` at 100 to match server limit
 - **SQL injection fix** (May 2026):
   - `/api/private/project-overview`: `property_type` was string-interpolated into SQL — replaced with parameterized `?` placeholder + `propTypeParam` spread across all 5 queries in the handler
 - **Smoke test suite** (May 2026):

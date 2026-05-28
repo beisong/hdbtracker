@@ -64,6 +64,12 @@ User Request → Cloudflare Edge
 - Sitemap cache with 24-hour TTL on server
 - No external cache (Redis, etc.)
 
+### Frontend Cache Busting
+No build step means no content-hashed filenames. Strategy:
+- `public/_headers`: sets `index.html` to `Cache-Control: no-cache, must-revalidate` so browsers always fetch fresh HTML; JS/CSS set to `max-age=31536000, immutable`
+- `?v=N` query strings on all local asset `<script>`/`<link>` tags in `index.html` — increment N on every deploy where JS or CSS changes
+- Current version: `v=2` (May 2026)
+
 ## Component Relationships
 
 ### Server (`server/index.js` — monolithic ~1164 lines)

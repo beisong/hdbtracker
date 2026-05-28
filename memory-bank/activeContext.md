@@ -51,6 +51,11 @@ The project is fully deployed and functional:
   - Files updated: `public/js/app.js`, `public/js/charts.js`, `public/js/map.js`, `public/index.html`, `public/css/styles.css`
   - Chart data also converted: `avg_psm / 10.7639` applied before building datasets in `charts.js`
   - Chatbot FAQ text in `server/index.js` updated (3 occurrences of "price per sqm")
+- **Frontend cache busting added** (May 2026):
+  - Added `public/_headers`: `index.html` → `no-cache, must-revalidate`; JS/CSS → `max-age=31536000, immutable`
+  - Added `?v=2` query strings to all local asset includes in `index.html`
+  - Rule: bump `?v=N` on every deploy where JS or CSS changes
+  - Created `CLAUDE.md` documenting commands, architecture, units, cache busting procedure, Dockerfile note, and testing gaps
 - **Map unavailable bug fixed** (May 2026):
   - Symptom: Transaction Map showed "— Map unavailable" on every search
   - Root cause: client (`map.js`) collected up to 200 unique addresses but server (`/api/geocode`) enforced a hard limit of 100, returning 400 → client threw → caught as "Map unavailable"

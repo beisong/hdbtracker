@@ -46,6 +46,7 @@ function makeBrowserContext() {
     API: {
       getStatus: () => Promise.resolve({}),
       getTowns: () => Promise.resolve({ towns: [], districts: [] }),
+      geocodeAddresses: () => Promise.resolve({ results: [] }),
     },
     Charts: {
       initDefaults: () => {},
@@ -79,10 +80,10 @@ function makeBrowserContext() {
   return ctx;
 }
 
-let App, TransactionMap;
+let App, TransactionMap, ctx;
 
 beforeAll(() => {
-  const ctx = vm.createContext(makeBrowserContext());
+  ctx = vm.createContext(makeBrowserContext());
 
   // Load map.js — append globalThis assignment to expose const TransactionMap
   const mapSrc = fs.readFileSync(path.join(__dirname, '../../public/js/map.js'), 'utf8');
@@ -183,5 +184,64 @@ describe('TransactionMap.getValueStyle', () => {
       expect(s.radius).toBeGreaterThanOrEqual(5);
       expect(s.radius).toBeLessThanOrEqual(9);
     }
+  });
+});
+
+// ─── App.sqmToSqft ────────────────────────────────────────────────────────
+describe('App.sqmToSqft', () => {
+  it('returns "--" for null', () => expect(App.sqmToSqft(null)).toBe('--'));
+  it('returns "--" for 0', () => expect(App.sqmToSqft(0)).toBe('--'));
+  it('converts 100 sqm to 1076 sqft', () => expect(App.sqmToSqft(100)).toBe(1076));
+  it('converts 65 sqm to 700 sqft', () => expect(App.sqmToSqft(65)).toBe(700));
+  it('converts string input', () => expect(App.sqmToSqft('90')).toBe(969));
+});
+
+// ─── App.psmToPsf ─────────────────────────────────────────────────────────
+describe('App.psmToPsf', () => {
+  it('returns null for null', () => expect(App.psmToPsf(null)).toBeNull());
+  it('returns null for 0', () => expect(App.psmToPsf(0)).toBeNull());
+  it('converts 10764 psm to 1000 psf', () => expect(App.psmToPsf(10764)).toBe(1000));
+  it('converts 5000 psm to 465 psf', () => expect(App.psmToPsf(5000)).toBe(465));
+  it('converts string input', () => expect(App.psmToPsf('10764')).toBe(1000));
+});
+
+// ─── Geocode address cap (client-server contract) ──────────────────────────
+// These tests guard the invariant: the client must never send more than 100
+// addresses to /api/geocode (the server rejects >100 with HTTP 400).
+// A violation causes silent map failure — the bug that shipped in commit 082d253.
+describe('TransactionMap.load — geocode address cap', () => {
+  function makeTx(i) {
+    return { block: String(i + 1), street_name: `STREET ${i + 1}`, month: '2025-01', resale_price: 500000, price_per_sqm: 5000 };
+  }
+
+  it('sends ≤ 100 addresses even when given 150 unique-address transactions', async () => {
+    let capturedAddresses = null;
+    ctx.API.geocodeAddresses = (addresses) => {
+      capturedAddresses = addresses;
+      throw new Error('spy stop');
+    };
+    const transactions = Array.from({ length: 150 }, (_, i) => makeTx(i));
+    await TransactionMap.load(transactions, {});
+    expect(capturedAddresses).not.toBeNull();
+    expect(capturedAddresses.length).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('TransactionMap.addNearbyHDB — geocode address cap', () => {
+  function makeTx(i) {
+    return { block: String(i + 1), street_name: `STREET ${i + 1}`, month: '2025-01', resale_price: 500000, price_per_sqm: 5000, flat_type: '4 ROOM', floor_area_sqm: 90, storey_range: '07 TO 09' };
+  }
+
+  it('sends ≤ 100 addresses even when given 150 unique-address transactions', async () => {
+    let capturedAddresses = null;
+    ctx.API.geocodeAddresses = (addresses) => {
+      capturedAddresses = addresses;
+      throw new Error('spy stop');
+    };
+    TransactionMap.map = { on: () => {}, setView: () => {}, addLayer: () => {}, getBounds: () => ({ extend: () => {} }), fitBounds: () => {} };
+    const transactions = Array.from({ length: 150 }, (_, i) => makeTx(i));
+    await TransactionMap.addNearbyHDB(transactions);
+    expect(capturedAddresses).not.toBeNull();
+    expect(capturedAddresses.length).toBeLessThanOrEqual(100);
   });
 });

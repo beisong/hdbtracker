@@ -63,7 +63,7 @@ const TransactionMap = {
       if (!seen.has(key)) {
         seen.add(key);
         uniqueAddresses.push({ block: tx.block, street_name: tx.street_name });
-        if (uniqueAddresses.length >= 200) break;
+        if (uniqueAddresses.length >= 100) break;
       }
     }
 

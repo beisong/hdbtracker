@@ -57,6 +57,34 @@ describe('GET /api/private/project-overview', () => {
     const res = await request.get('/api/private/project-overview?project=SKY+HABITAT');
     expect(res.body.recent_transactions.length).toBe(8);
   });
+
+  // Contract: charts.js reads d.avg_psm from trend_data — silent if missing.
+  it('trend_data entries have avg_psm field', async () => {
+    const res = await request.get('/api/private/project-overview?project=SKY+HABITAT');
+    expect(res.body.trend_data.length).toBeGreaterThan(0);
+    for (const entry of res.body.trend_data) {
+      expect(entry).toHaveProperty('avg_psm');
+      expect(typeof entry.avg_psm).toBe('number');
+    }
+  });
+
+  // Contract: app.js uses coordinates for map pre-geocoding; missing → geocode fallback (slow).
+  it('returns coordinates for a project that has project_coords', async () => {
+    const res = await request.get('/api/private/project-overview?project=SKY+HABITAT');
+    expect(res.body).toHaveProperty('coordinates');
+    expect(res.body.coordinates).not.toBeNull();
+    expect(res.body.coordinates).toHaveProperty('lat');
+    expect(res.body.coordinates).toHaveProperty('lng');
+  });
+
+  // Contract: $/sqft type cards read prices_by_type[*].avg_psm.
+  it('prices_by_type entries have avg_psm field', async () => {
+    const res = await request.get('/api/private/project-overview?project=SKY+HABITAT');
+    expect(res.body.prices_by_type.length).toBeGreaterThan(0);
+    for (const entry of res.body.prices_by_type) {
+      expect(entry).toHaveProperty('avg_psm');
+    }
+  });
 });
 
 describe('GET /api/private/property-types', () => {
@@ -100,6 +128,27 @@ describe('GET /api/private/district-summary', () => {
     expect(res.status).toBe(200);
     expect(res.body.found).toBe(false);
   });
+
+  // Contract: map.js attaches coordinates to private transactions via project_coords.
+  it('returns project_coords with latitude and longitude', async () => {
+    const res = await request.get('/api/private/district-summary?districts=11');
+    expect(res.body).toHaveProperty('project_coords');
+    expect(Array.isArray(res.body.project_coords)).toBe(true);
+    expect(res.body.project_coords.length).toBeGreaterThan(0);
+    const coord = res.body.project_coords[0];
+    expect(coord).toHaveProperty('latitude');
+    expect(coord).toHaveProperty('longitude');
+  });
+
+  // Contract: renderTransactionsTable reads price_per_sqm for deal score coloring.
+  it('recent_transactions have price_per_sqm field', async () => {
+    const res = await request.get('/api/private/district-summary?districts=11');
+    const txs = res.body.recent_transactions || [];
+    expect(txs.length).toBeGreaterThan(0);
+    for (const tx of txs) {
+      expect(tx).toHaveProperty('price_per_sqm');
+    }
+  });
 });
 
 describe('GET /api/private/district-overview', () => {
@@ -123,5 +172,36 @@ describe('GET /api/private/district-overview', () => {
     const res = await request.get('/api/private/district-overview?district=99');
     expect(res.status).toBe(200);
     expect(res.body.found).toBe(false);
+  });
+
+  // Contract: dual-line chart needs hdb_trend_data. A bug (wrong dataset_source value) caused
+  // this to always return an empty array — it had no test, so it shipped undetected.
+  it('hdb_trend_data is a non-empty array for a district that has HDB data', async () => {
+    // District 11 has TOA PAYOH HDB rows in the fixture
+    const res = await request.get('/api/private/district-overview?district=11');
+    expect(res.body).toHaveProperty('hdb_trend_data');
+    expect(Array.isArray(res.body.hdb_trend_data)).toBe(true);
+    expect(res.body.hdb_trend_data.length).toBeGreaterThan(0);
+  });
+
+  // Contract: charts.js reads d.avg_psm from trend_data.
+  it('trend_data entries have avg_psm field', async () => {
+    const res = await request.get('/api/private/district-overview?district=11');
+    expect(res.body.trend_data.length).toBeGreaterThan(0);
+    for (const entry of res.body.trend_data) {
+      expect(entry).toHaveProperty('avg_psm');
+    }
+  });
+
+  // Contract: map.js uses project_coords to attach lat/lng to private transactions.
+  it('returns project_coords with latitude and longitude', async () => {
+    const res = await request.get('/api/private/district-overview?district=11');
+    expect(res.body).toHaveProperty('project_coords');
+    expect(Array.isArray(res.body.project_coords)).toBe(true);
+    expect(res.body.project_coords.length).toBeGreaterThan(0);
+    const coord = res.body.project_coords[0];
+    expect(coord).toHaveProperty('project');
+    expect(coord).toHaveProperty('latitude');
+    expect(coord).toHaveProperty('longitude');
   });
 });

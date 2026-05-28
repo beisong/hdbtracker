@@ -69,4 +69,41 @@ describe('GET /api/area-overview', () => {
     expect(res.status).toBe(200);
     expect(res.body.town).toBe('BEDOK');
   });
+
+  // Contract: charts.js reads d.avg_psm from trend_data — if this field is renamed the chart breaks silently.
+  it('trend_data entries have avg_psm field', async () => {
+    const res = await request.get('/api/area-overview?town=BEDOK');
+    expect(res.body.trend_data.length).toBeGreaterThan(0);
+    for (const entry of res.body.trend_data) {
+      expect(entry).toHaveProperty('avg_psm');
+      expect(typeof entry.avg_psm).toBe('number');
+    }
+  });
+
+  // Contract: dual-line trend chart requires private_trend_data to be an array (can be empty).
+  it('returns private_trend_data as an array', async () => {
+    const res = await request.get('/api/area-overview?town=BEDOK');
+    expect(res.body).toHaveProperty('private_trend_data');
+    expect(Array.isArray(res.body.private_trend_data)).toBe(true);
+  });
+
+  // Contract: $/sqft stat card reads prices_by_type[*].median_psm.
+  it('prices_by_type entries have median_psm field', async () => {
+    const res = await request.get('/api/area-overview?town=BEDOK');
+    expect(res.body.prices_by_type.length).toBeGreaterThan(0);
+    for (const entry of res.body.prices_by_type) {
+      expect(entry).toHaveProperty('median_psm');
+    }
+  });
+
+  // Street filter path — used by postal code searches via the nearby-streets pipeline.
+  it('street filter returns only transactions for that street', async () => {
+    const res = await request.get('/api/area-overview?town=BEDOK&street=BEDOK+NORTH+ST+1');
+    expect(res.status).toBe(200);
+    expect(res.body.street_filtered).toBe(true);
+    // Fixture: BEDOK NORTH ST 1 has only 3 ROOM (not 4 ROOM)
+    const types = res.body.prices_by_type.map(t => t.flat_type);
+    expect(types).toContain('3 ROOM');
+    expect(types).not.toContain('4 ROOM');
+  });
 });

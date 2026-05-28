@@ -89,6 +89,12 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ CLAUDE.md created — commands, architecture, units, cache busting procedure, Dockerfile note, testing gaps (May 2026)
 - ✅ Map unavailable bug fixed — client was sending up to 200 addresses to `/api/geocode` but server cap is 100; introduced in commit `082d253`; fixed by capping client at 100 (May 2026)
 
+- ✅ Test suite expanded to 158 tests (up from 127) (May 2026):
+  - `addNearbyHDB()` geocode cap bug fixed (was 200, should be 100 — same silent failure as the original map bug)
+  - Resolve regression tests guard the private-project-name-as-town routing bug
+  - API contract tests: `avg_psm` in trend_data, `private_trend_data`, `hdb_trend_data` (directly tests the dataset_source bug), `project_coords`, `coordinates`, `price_per_sqm` for deal score, street filter path
+  - `nearby-hdb` endpoint validation tests (was completely untested)
+  - `sqmToSqft`/`psmToPsf` unit tests; geocode address-cap tests for both `load()` and `addNearbyHDB()`
 - ✅ Private project search routing bug fixed — 55 projects containing town names (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES") were incorrectly routed to HDB town pages; fixed in `/api/resolve` by removing `inputUpper.includes(t)` and adding word-boundary check to `t.includes(inputUpper)` (May 2026)
 - ✅ psm→psf internal variable and ID renaming — magic number `10.7639` consolidated to helpers only; sort values, HTML IDs, and JS variable names all renamed to match display unit (May 2026)
 
@@ -96,7 +102,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)
 - ✅ SQL injection fix in `/api/private/project-overview` — replaced string-interpolated `property_type` with parameterized `?` + spread pattern across all 5 queries (May 2026)
 - ✅ Input validation across all endpoints — string length caps, lat/lng Singapore bounding box check, geocode array size limit (100), district-summary list cap (30), district-overview format check (May 2026)
-- 🔲 Improve test coverage to catch client-server contract mismatches — current gaps: (1) `POST /api/geocode` has no test for the >100 addresses limit returning 400; (2) `TransactionMap.load()` is entirely untested — a mock-API test with >100 addresses would have caught the "Map unavailable" bug before it shipped
+- ✅ Test coverage for client-server contract mismatches — geocode limit test, `TransactionMap.load()` and `addNearbyHDB()` address cap, API field shape contracts (May 2026)
 - 🔲 Geocode cache size limits (prevent memory leak)
 - 🔲 Database indexes for query performance
 - 🔲 Server refactor (split monolithic `server/index.js` into modules)

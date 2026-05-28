@@ -43,6 +43,14 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Test suite expanded: 130 → 158 tests** (May 2026):
+  - **`addNearbyHDB()` geocode cap bug fixed**: was collecting up to 200 unique addresses before sending to `/api/geocode`; server caps at 100 and returns 400. Silent failure — `catch` swallowed the error, no HDB markers shown on private project pages. Fixed to cap at 100, matching `load()`.
+  - **Resolve regression tests** (`resolve.test.js`): "BEDOK RESIDENCES" → `resolved: false` (catches the `inputUpper.includes(t)` routing bug); partial prefix/suffix matching still works ("TOA" → TOA PAYOH, "PAYOH" → TOA PAYOH).
+  - **API contract tests** (`area-overview.test.js`): `trend_data[*].avg_psm` field exists (charts.js reads this silently); `private_trend_data` is an array (dual-line chart); `prices_by_type[*].median_psm` exists; street filter returns `street_filtered: true`.
+  - **Private endpoint contract tests** (`private.test.js`): `hdb_trend_data` is non-empty for district 11 (directly tests the dataset_source bug that shipped); `project_coords` has lat/lng in both district-overview and district-summary; `coordinates` present in project-overview; `price_per_sqm` on district-summary transactions (deal score coloring); `avg_psm` in trend_data for both project-overview and district-overview.
+  - **`nearby-hdb` validation** (`validation.test.js`): missing lat → 400, missing lng → 400, non-SG coordinates → 400. Endpoint was completely untested.
+  - **Unit conversion helpers** (`frontend.test.js`): `App.sqmToSqft()` and `App.psmToPsf()` — null/0/number/string inputs; catches wrong conversion factor or broken helper logic.
+  - **Geocode cap tests** (`frontend.test.js`): `TransactionMap.load()` and `TransactionMap.addNearbyHDB()` both verified to send ≤ 100 addresses to the geocode API.
 - **Private project search routing bug fixed** (May 2026):
   - Bug: Searching a private project name containing a town name (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES", "AFFINITY AT SERANGOON") would route to the HDB town page instead of the private project page. 55 projects affected.
   - Root cause: `/api/resolve` partial-match check used `inputUpper.includes(t)` — any input containing a town name as a substring resolved as that town. Also, `t.includes(inputUpper)` lacked word-boundary protection, so "QUEENS" matched "QUEENSTOWN".

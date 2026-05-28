@@ -43,6 +43,16 @@ The project is fully deployed and functional:
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
 ## Recent Changes
+- **Private project search routing bug fixed** (May 2026):
+  - Bug: Searching a private project name containing a town name (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES", "AFFINITY AT SERANGOON") would route to the HDB town page instead of the private project page. 55 projects affected.
+  - Root cause: `/api/resolve` partial-match check used `inputUpper.includes(t)` — any input containing a town name as a substring resolved as that town. Also, `t.includes(inputUpper)` lacked word-boundary protection, so "QUEENS" matched "QUEENSTOWN".
+  - Fix in `server/index.js`: Removed `inputUpper.includes(t)` entirely; added word-boundary check to `t.includes(inputUpper)` (match must end at a non-alphanumeric character, not mid-word). e.g. "ANG MO" → "ANG MO KIO" ✓, "QUEENS" → NOT "QUEENSTOWN" ✓.
+  - All 127 unit+integration tests pass.
+- **psm→psf internal variable renaming** (May 2026):
+  - Renamed internal JS variables (`_psmGroups`→`_psfGroups`, `tierPsm`→`tierPsf`, etc.) and HTML IDs (`stat-psm`→`stat-psf`) to match the display unit
+  - Consolidated magic number `10.7639` to only appear in `sqmToSqft()` and `psmToPsf()` helper bodies; `charts.js` now delegates to `App.psmToPsf()` instead of inline division
+  - Sort option values renamed (`psm-desc`→`psf-desc`, `psm-asc`→`psf-asc`) to match
+  - No API or DB changes — server column names (`price_per_sqm`, `avg_psm`) are internal and unchanged
 - **Units changed from sqm to sqft** (May 2026):
   - All display values converted: floor area (sqm → sqft), price rate ($/sqm → $/sqft)
   - Conversion factor: 1 sqm = 10.7639 sqft; price/sqft = price/sqm ÷ 10.7639

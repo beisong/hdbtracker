@@ -442,10 +442,17 @@ app.get('/api/resolve', async (req, res) => {
         return res.json({ resolved: true, input, town: inputUpper });
       }
 
-      // Partial match
-      const matches = towns.filter(t =>
-        t.includes(inputUpper) || inputUpper.includes(t)
-      );
+      // Partial match — input is a prefix/substring of a town name, with word-boundary check.
+      // e.g. "ANG MO" → "ANG MO KIO", "KALLANG" → "KALLANG/WHAMPOA"
+      // "QUEENS" must NOT match "QUEENSTOWN" (no word boundary after the match).
+      // Intentionally NOT matching the reverse ("BEDOK RESIDENCES" contains "BEDOK") —
+      // that causes private project names with town names in them to misroute to HDB pages.
+      const matches = towns.filter(t => {
+        const idx = t.indexOf(inputUpper);
+        if (idx === -1) return false;
+        const after = t[idx + inputUpper.length];
+        return after === undefined || !/[A-Z0-9]/.test(after);
+      });
       if (matches.length > 0) {
         return res.json({ resolved: true, input, town: matches[0] });
       }

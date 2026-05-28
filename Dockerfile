@@ -16,7 +16,6 @@ WORKDIR /app
 
 # Install Node.js dependencies first (better Docker layer caching)
 COPY package.json package-lock.json ./
-— Map unavailable
 
 RUN npm install --omit=dev
 

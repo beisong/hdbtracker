@@ -16,10 +16,10 @@
     "download": "node scripts/run-python.js scripts/download_data.py && node scripts/run-python.js scripts/download_ura_data.py",
     "download-hdb": "node scripts/run-python.js scripts/download_data.py",
     "download-ura": "node scripts/run-python.js scripts/download_ura_data.py",
-    "deploy:frontend": "npm test && npx wrangler pages deploy public --project-name=worthit",
+    "deploy:frontend": "npm test && node scripts/bump-version.js && npx wrangler pages deploy public --project-name=worthit",
     "deploy:api": "npm test && fly deploy",
     "deploy:data": "python3 -c \"import sqlite3; db=sqlite3.connect('server/db/resale.db'); db.execute('PRAGMA wal_checkpoint(TRUNCATE)'); db.close(); print('WAL checkpointed')\" && fly ssh sftp put server/db/resale.db /data/resale.db.new && fly ssh console --command \"mv /data/resale.db.new /data/resale.db\" && fly machines restart e7845746c2d918",
-    "deploy": "npm test && fly deploy && npx wrangler pages deploy public --project-name=worthit"
+    "deploy": "npm test && node scripts/bump-version.js && fly deploy && npx wrangler pages deploy public --project-name=worthit"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",

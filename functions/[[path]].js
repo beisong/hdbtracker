@@ -12,7 +12,7 @@ const API_BASE = 'https://worthit-api.fly.dev';
 const SITE_URL = 'https://worthit.canlah.app';
 
 const BOT_PATTERNS = [
-  /googlebot/i, /bingbot/i, /yandexbot/i, /baiduspider/i, /duckduckbot/i,
+  /googlebot/i, /google-inspectiontool/i, /bingbot/i, /yandexbot/i, /baiduspider/i, /duckduckbot/i,
   /slurp/i, /facebot/i, /facebookexternalhit/i, /twitterbot/i,
   /linkedinbot/i, /slackbot/i, /discordbot/i, /telegrambot/i,
   /whatsapp/i, /applebot/i, /semrushbot/i, /ahrefsbot/i,
@@ -114,6 +114,15 @@ function injectMeta(html, meta) {
   return html;
 }
 
+// Replace the static seo-content section with bot-specific content when available
+function injectContent(html, meta) {
+  if (!meta.content_html) return html;
+  return html.replace(
+    /<section[^>]+id=["']seo-content["'][^>]*>[\s\S]*?<\/section>/i,
+    meta.content_html
+  );
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -164,8 +173,9 @@ ${(data.urls || []).map(u => `  <url>
       const assetResp = await env.ASSETS.fetch(new Request(new URL('/', url.toString())));
       let html = await assetResp.text();
 
-      // Inject metadata
+      // Inject metadata and page-specific content
       html = injectMeta(html, meta);
+      html = injectContent(html, meta);
 
       return new Response(html, {
         headers: {

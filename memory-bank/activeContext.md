@@ -42,6 +42,48 @@ The project is fully deployed and functional:
 - **Update data monthly**: Re-run `python scripts/download_data.py` locally → re-upload via SFTP
 - **Debug**: `fly logs`, `fly ssh console`, `fly ssh sftp`
 
+## SEO Enhancement — COMPLETE (2026-05-29)
+
+### What was built
+Enhanced `/api/seo/metadata` in `server/index.js` and `functions/[[path]].js` to inject rich, data-driven content for all bot-visible pages. All 158 tests pass.
+
+### Changes made
+- **`fmtPrice()` / `fmtPsf()`** helpers added to `server/index.js` (after `titleCase`)
+- **HDB branch** (`/hdb/<town>`):
+  - Title: `[Town] HDB Resale Price 2025 — $XXX psf Avg | WorthIt`
+  - Flat-type breakdown query + YoY comparison query
+  - `@graph: [WebPage, FAQPage]` JSON-LD with real price Q&As (overall avg, top 3 flat types, YoY direction)
+  - `content_html`: heading + summary paragraph + prices-by-type table + "Compare Other HDB Towns" internal links (all 25 other towns)
+- **Private branch** (`/private/<project>`):
+  - Detects EC via `flat_type = 'EXECUTIVE CONDOMINIUM'`
+  - Detects new launch vs MOP-reached via avg tx/month velocity (>8/month = new launch)
+  - Title includes "New EC Launch" or "MOP YYYY" tag for ECs
+  - `@graph: [WebPage, FAQPage]` JSON-LD with EC-specific MOP Q&As
+  - `content_html`: summary with green "MOP YYYY" or amber "New EC Launch" badge
+- **District branch** (`/district/<code>`):
+  - Top 6 projects with avg PSF + tx count
+  - Title includes avg PSF
+  - FAQPage JSON-LD with avg price + top project names
+  - `content_html`: summary + clickable top-projects table with EC labels
+- **`functions/[[path]].js`**:
+  - Added `injectContent(html, meta)` — regex-replaces `<section id="seo-content">` with `meta.content_html`
+  - Called after `injectMeta()` in the bot handler
+
+### Post-deploy fixes
+- Added `Google-InspectionTool` to `BOT_PATTERNS` in `functions/[[path]].js` — Rich Results Test uses this UA, not `Googlebot`, so it was getting static HTML without JSON-LD injection
+- Redeployed frontend to fix validation
+
+### FAQ rich results deprecation (May 7, 2026)
+Google deprecated FAQ rich results — they no longer appear in SERPs. FAQPage JSON-LD is kept (harmless, may still inform Google's understanding), but won't produce rich result cards. Remaining value of SEO work:
+- ✅ `content_html` bot-visible content (prices table, internal links) — still indexed
+- ✅ Real prices in page titles/descriptions — shows in search snippets  
+- ✅ Internal town links — PageRank distribution unaffected
+- ✅ `BreadcrumbList` JSON-LD — still supported, shows breadcrumbs in SERPs
+- ❌ `FAQPage` JSON-LD — deprecated, no rich result cards
+
+### Remaining steps
+- 🔲 Submit sitemap to Google Search Console (manual — go to GSC → Sitemaps → enter `sitemap.xml`)
+
 ## Recent Changes
 - **Test suite expanded: 130 → 158 tests** (May 2026):
   - **`addNearbyHDB()` geocode cap bug fixed**: was collecting up to 200 unique addresses before sending to `/api/geocode`; server caps at 100 and returns 400. Silent failure — `catch` swallowed the error, no HDB markers shown on private project pages. Fixed to cap at 100, matching `load()`.

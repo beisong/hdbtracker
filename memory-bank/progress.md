@@ -98,6 +98,19 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Private project search routing bug fixed — 55 projects containing town names (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES") were incorrectly routed to HDB town pages; fixed in `/api/resolve` by removing `inputUpper.includes(t)` and adding word-boundary check to `t.includes(inputUpper)` (May 2026)
 - ✅ psm→psf internal variable and ID renaming — magic number `10.7639` consolidated to helpers only; sort values, HTML IDs, and JS variable names all renamed to match display unit (May 2026)
 
+## SEO Enhancement — COMPLETE (2026-05-29)
+
+- ✅ HDB pages: FAQ JSON-LD with real prices by flat type + YoY direction; content_html with prices table + internal links to all 25 other towns
+- ✅ Private project pages: EC detection (new launch vs MOP-reached via tx velocity); title tag "New EC Launch" or "MOP YYYY"; FAQPage with EC MOP Q&As; badge in content_html
+- ✅ District pages: top-projects table, avg PSF in title, FAQPage with top project names
+- ✅ Edge function `injectContent()` replaces static seo-content section with bot-specific HTML
+- ✅ `fmtPrice()` / `fmtPsf()` helpers added (psm → psf via ÷10.7639)
+- ✅ Deployed to production (May 2026)
+- ✅ Added `Google-InspectionTool` to bot patterns — Rich Results Test now correctly gets injected JSON-LD
+- ✅ Validated with Google Rich Results Test — FAQPage detected
+- ⚠️ FAQ rich results deprecated by Google as of May 7, 2026 — FAQPage JSON-LD kept (harmless) but won't show rich result cards; BreadcrumbList + content injection still fully valuable
+- 🔲 Submit sitemap to Google Search Console (manual — GSC → Sitemaps → `sitemap.xml`)
+
 ## What's Left to Build / Improve
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)
 - ✅ SQL injection fix in `/api/private/project-overview` — replaced string-interpolated `property_type` with parameterized `?` + spread pattern across all 5 queries (May 2026)

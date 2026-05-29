@@ -1662,6 +1662,18 @@ function titleCase(str) {
   return str.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
 }
 
+function fmtPrice(p) {
+  if (!p) return 'N/A';
+  if (p >= 1000000) return `$${(p / 1000000).toFixed(2)}M`;
+  if (p >= 1000) return `$${Math.round(p / 1000)}k`;
+  return `$${Math.round(p)}`;
+}
+
+function fmtPsf(psm) {
+  if (!psm) return 'N/A';
+  return `$${Math.round(psm / 10.7639)} psf`;
+}
+
 /**
  * GET /api/seo/sitemap — Generate sitemap URLs
  */
@@ -1735,6 +1747,7 @@ app.get('/api/seo/metadata', (req, res) => {
       og_title: 'WorthIt — Singapore HDB & Condo Resale Price Tracker',
       og_description: 'Check HDB resale prices, condo transaction history, and fair market value for any Singapore property. Free tool powered by data.gov.sg.',
       json_ld: null,
+      content_html: null,
     };
 
     if (!route || route === '/') {
@@ -1813,90 +1826,320 @@ app.get('/api/seo/metadata', (req, res) => {
       if (town && db) {
         const townDisplay = titleCase(town);
         const monthsAgo12 = monthsAgoStr(12);
+        const monthsAgo24 = monthsAgoStr(24);
+
         const summary = db.prepare(`
           SELECT COUNT(*) as tx_count, ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm
           FROM transactions WHERE town = ? AND resale_price IS NOT NULL AND month >= ? AND dataset_source != 'URA_PRIVATE'
         `).get(town, monthsAgo12);
+
+        const byType = db.prepare(`
+          SELECT flat_type, COUNT(*) as cnt, ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm
+          FROM transactions WHERE town = ? AND month >= ? AND dataset_source != 'URA_PRIVATE'
+            AND flat_type IN ('2 ROOM','3 ROOM','4 ROOM','5 ROOM','EXECUTIVE')
+          GROUP BY flat_type ORDER BY flat_type
+        `).all(town, monthsAgo12);
+
+        const prevSummary = db.prepare(`
+          SELECT ROUND(AVG(price_per_sqm), 0) as avg_psm
+          FROM transactions WHERE town = ? AND month >= ? AND month < ? AND dataset_source != 'URA_PRIVATE'
+        `).get(town, monthsAgo24, monthsAgo12);
+
         const txCount = summary?.tx_count || 0;
         const avgPrice = summary?.avg_price || 0;
+        const avgPsm = summary?.avg_psm || 0;
+        const prevAvgPsm = prevSummary?.avg_psm || 0;
+        const yoyDir = avgPsm && prevAvgPsm ? (avgPsm > prevAvgPsm ? 'up' : avgPsm < prevAvgPsm ? 'down' : 'stable') : null;
+        const yoyPct = avgPsm && prevAvgPsm ? Math.round(Math.abs(avgPsm - prevAvgPsm) / prevAvgPsm * 100) : 0;
 
-        meta.title = `${townDisplay} HDB Resale Prices & Transaction History in Singapore | WorthIt`;
-        meta.description = `Check ${townDisplay} HDB resale flat prices, past transaction history, and fair market value. ${txCount.toLocaleString()} recent transactions with average price $${Math.round(avgPrice).toLocaleString()}. Compare Deal Scores from data.gov.sg records for ${townDisplay} Singapore.`;
+        const otherTowns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE' ORDER BY town").all().map(r => r.town).filter(t => t !== town);
+
+        meta.title = `${townDisplay} HDB Resale Price ${new Date().getFullYear()} — ${fmtPsf(avgPsm)} Avg | WorthIt`;
+        meta.description = `${townDisplay} HDB resale prices: ${txCount.toLocaleString()} transactions in the last 12 months, average ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)}). Check prices by flat type, 5-year trends, and Deal Scores from Singapore data.gov.sg records.`;
         meta.canonical = `${SEO_BASE_URL}/hdb/${slug}`;
-        meta.og_title = `${townDisplay} HDB Resale Prices — Singapore Property Tracker`;
-        meta.og_description = `${txCount.toLocaleString()} recent HDB transactions in ${townDisplay}. Check prices, trends, and fair value.`;
+        meta.og_title = `${townDisplay} HDB Resale Prices — ${fmtPsf(avgPsm)} avg psf`;
+        meta.og_description = `${txCount.toLocaleString()} recent HDB transactions in ${townDisplay}.${yoyDir ? ` Prices ${yoyDir} ${yoyPct}% YoY.` : ''}`;
+
+        const faqs = [
+          {
+            '@type': 'Question',
+            name: `What is the average HDB resale price in ${townDisplay}?`,
+            acceptedAnswer: { '@type': 'Answer', text: `The average HDB resale price in ${townDisplay} is ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)}) based on ${txCount.toLocaleString()} transactions in the past 12 months.` },
+          },
+        ];
+
+        for (const t of byType.slice(0, 3)) {
+          const label = t.flat_type.charAt(0) + t.flat_type.slice(1).toLowerCase();
+          faqs.push({
+            '@type': 'Question',
+            name: `What is the resale price of a ${label} flat in ${townDisplay}?`,
+            acceptedAnswer: { '@type': 'Answer', text: `${label} flats in ${townDisplay} averaged ${fmtPrice(t.avg_price)} (${fmtPsf(t.avg_psm)}) over the last 12 months based on ${t.cnt} transactions.` },
+          });
+        }
+
+        if (yoyDir && yoyPct > 0) {
+          faqs.push({
+            '@type': 'Question',
+            name: `Are HDB resale prices in ${townDisplay} going up or down?`,
+            acceptedAnswer: { '@type': 'Answer', text: `HDB resale prices in ${townDisplay} are ${yoyDir} ${yoyPct}% year-on-year based on average price per sqft comparing the past 12 months to the prior 12 months.` },
+          });
+        }
+
         meta.json_ld = JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'WebPage',
-          name: `${townDisplay} HDB Resale Prices`,
-          description: meta.description,
-          url: meta.canonical,
-          breadcrumb: {
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
-              { '@type': 'ListItem', position: 2, name: `${townDisplay} HDB`, item: meta.canonical },
-            ],
-          },
-          mainEntity: {
-            '@type': 'ResidentialProperty',
-            name: `${townDisplay} HDB Estate`,
-            address: { '@type': 'PostalAddress', addressLocality: townDisplay, addressRegion: 'Singapore' },
-          },
+          '@graph': [
+            {
+              '@type': 'WebPage',
+              name: `${townDisplay} HDB Resale Prices`,
+              description: meta.description,
+              url: meta.canonical,
+              breadcrumb: {
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
+                  { '@type': 'ListItem', position: 2, name: `${townDisplay} HDB`, item: meta.canonical },
+                ],
+              },
+            },
+            { '@type': 'FAQPage', mainEntity: faqs },
+          ],
         });
+
+        const typeRows = byType.map(t => `
+          <tr>
+            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">${t.flat_type.charAt(0) + t.flat_type.slice(1).toLowerCase()}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${fmtPrice(t.avg_price)}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${fmtPsf(t.avg_psm)}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${t.cnt}</td>
+          </tr>`).join('');
+
+        const otherTownLinks = otherTowns.map(t =>
+          `<a href="/hdb/${townToSlug(t)}" style="color:#3b82f6;text-decoration:none;white-space:nowrap">${titleCase(t)}</a>`
+        ).join(' &middot; ');
+
+        meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
+  <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${townDisplay} HDB Resale Prices — Market Overview</h2>
+  <p style="color:#4b5563;margin-bottom:1rem">
+    Based on ${txCount.toLocaleString()} transactions in the last 12 months, the average HDB resale price in ${townDisplay} is <strong>${fmtPrice(avgPrice)}</strong> (${fmtPsf(avgPsm)}).${yoyDir && yoyPct > 0 ? ` Prices are <strong>${yoyDir} ${yoyPct}%</strong> year-on-year.` : ''}
+  </p>
+  ${byType.length > 0 ? `<h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Resale Prices by Flat Type in ${townDisplay} (Last 12 Months)</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-bottom:1.5rem">
+    <thead><tr style="background:#f3f4f6">
+      <th style="padding:6px 12px;text-align:left;border-bottom:2px solid #e5e7eb">Flat Type</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Avg Price</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Avg PSF</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Transactions</th>
+    </tr></thead>
+    <tbody>${typeRows}</tbody>
+  </table>` : ''}
+  <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Compare HDB Resale Prices in Other Towns</h3>
+  <p style="font-size:0.875rem;line-height:2">${otherTownLinks}</p>
+</section>`;
       }
     } else if (route.startsWith('/private/')) {
       const slug = route.replace('/private/', '');
       const project = slugToProject(slug);
       if (project && db) {
         const info = db.prepare(`
-          SELECT project, street_name, district, market_segment, COUNT(*) as tx_count, ROUND(AVG(resale_price)) as avg_price
+          SELECT project, street_name, district, market_segment, COUNT(*) as tx_count,
+            ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm,
+            MIN(month) as earliest_month, MAX(month) as latest_month
           FROM transactions WHERE dataset_source = 'URA_PRIVATE' AND project = ?
           GROUP BY project
         `).get(project);
         if (info) {
-          meta.title = `${info.project} Resale Transaction Prices Singapore | WorthIt`;
-          meta.description = `View ${info.project} resale transaction prices and history in Singapore. ${info.tx_count.toLocaleString()} transactions in District ${info.district} (${info.market_segment || 'Singapore'}). Check fair value, price trends, and URA transaction data.`;
+          const typeRow = db.prepare(`
+            SELECT flat_type FROM transactions WHERE dataset_source = 'URA_PRIVATE' AND project = ?
+            GROUP BY flat_type ORDER BY COUNT(*) DESC LIMIT 1
+          `).get(project);
+          const primaryFlatType = typeRow?.flat_type;
+          const isEC = primaryFlatType === 'EXECUTIVE CONDOMINIUM';
+
+          // Detect new launch vs resale-after-MOP for ECs:
+          // High avg monthly velocity = primary sales (new launch); low = resale market
+          const dataMonths = Math.max(1,
+            (parseInt(info.latest_month.substring(0, 4)) - parseInt(info.earliest_month.substring(0, 4))) * 12 +
+            parseInt(info.latest_month.substring(5, 7)) - parseInt(info.earliest_month.substring(5, 7)) + 1
+          );
+          const avgTxPerMonth = info.tx_count / dataMonths;
+          const isNewLaunch = isEC && avgTxPerMonth > 8;
+          const isMOPReached = isEC && !isNewLaunch;
+          // Only show MOP year if project started mid-range (not at our 2017-01 data start)
+          const mopYear = isMOPReached && info.earliest_month > '2017-03'
+            ? parseInt(info.earliest_month.substring(0, 4))
+            : null;
+
+          const propertyLabel = isEC ? 'EC' : 'Condo';
+          let titleTag = '';
+          if (isNewLaunch) titleTag = ' | New EC Launch';
+          else if (isMOPReached && mopYear) titleTag = ` | MOP ${mopYear}`;
+
+          meta.title = `${info.project} ${propertyLabel} Resale Price${titleTag} — ${fmtPsf(info.avg_psm)} | WorthIt`;
+          meta.description = `${info.project} ${isEC ? 'Executive Condominium (EC)' : 'condo'} resale prices in District ${info.district}${info.market_segment ? ` (${info.market_segment})` : ''}. ${info.tx_count.toLocaleString()} transactions, average ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)}). Check URA transaction history and price trends.`;
           meta.canonical = `${SEO_BASE_URL}/private/${slug}`;
-          meta.og_title = `${info.project} — Singapore Condo Price Tracker`;
-          meta.og_description = `${info.tx_count.toLocaleString()} transactions. Check ${info.project} resale prices and trends.`;
+          meta.og_title = `${info.project} — ${propertyLabel} Resale Prices Singapore`;
+          meta.og_description = `${info.tx_count.toLocaleString()} transactions. Average ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)}).`;
+
+          const faqs = [
+            {
+              '@type': 'Question',
+              name: `What is the resale price of ${info.project}?`,
+              acceptedAnswer: { '@type': 'Answer', text: `${info.project} has averaged ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)}) across ${info.tx_count.toLocaleString()} resale transactions in District ${info.district}, Singapore.` },
+            },
+          ];
+
+          if (isNewLaunch) {
+            faqs.push({
+              '@type': 'Question',
+              name: `Is ${info.project} a new EC launch?`,
+              acceptedAnswer: { '@type': 'Answer', text: `Yes, ${info.project} is a new Executive Condominium (EC) launch in District ${info.district}. EC units are subject to a 5-year Minimum Occupation Period (MOP) before they can be sold on the open resale market.` },
+            });
+          } else if (isMOPReached) {
+            faqs.push({
+              '@type': 'Question',
+              name: `Has ${info.project} EC reached its MOP?`,
+              acceptedAnswer: { '@type': 'Answer', text: `Yes, ${info.project} is an Executive Condominium (EC) that has passed its 5-year Minimum Occupation Period (MOP)${mopYear ? ` around ${mopYear}` : ''}. Units are now available for open market resale, with ${info.tx_count.toLocaleString()} transactions on record.` },
+            });
+          }
+
+          if (info.market_segment) {
+            const regionName = info.market_segment === 'CCR' ? 'Core Central Region' : info.market_segment === 'RCR' ? 'Rest of Central Region' : 'Outside Central Region';
+            faqs.push({
+              '@type': 'Question',
+              name: `Which region is ${info.project} in?`,
+              acceptedAnswer: { '@type': 'Answer', text: `${info.project} is in the ${info.market_segment} (${regionName}), District ${info.district}, Singapore.` },
+            });
+          }
+
           meta.json_ld = JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'WebPage',
-            name: `${info.project} Resale Prices`,
-            description: meta.description,
-            url: meta.canonical,
-            breadcrumb: {
-              '@type': 'BreadcrumbList',
-              itemListElement: [
-                { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
-                { '@type': 'ListItem', position: 2, name: info.project, item: meta.canonical },
-              ],
-            },
-            mainEntity: {
-              '@type': 'ResidentialProperty',
-              name: info.project,
-              address: { '@type': 'PostalAddress', streetAddress: info.street_name, addressLocality: 'Singapore' },
-            },
+            '@graph': [
+              {
+                '@type': 'WebPage',
+                name: `${info.project} Resale Prices`,
+                description: meta.description,
+                url: meta.canonical,
+                breadcrumb: {
+                  '@type': 'BreadcrumbList',
+                  itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
+                    { '@type': 'ListItem', position: 2, name: `D${info.district}`, item: `${SEO_BASE_URL}/district/${info.district}` },
+                    { '@type': 'ListItem', position: 3, name: info.project, item: meta.canonical },
+                  ],
+                },
+                mainEntity: {
+                  '@type': 'ResidentialProperty',
+                  name: info.project,
+                  address: { '@type': 'PostalAddress', streetAddress: info.street_name, addressLocality: 'Singapore' },
+                },
+              },
+              { '@type': 'FAQPage', mainEntity: faqs },
+            ],
           });
+
+          const ecBadge = isEC
+            ? `<span style="display:inline-block;padding:2px 8px;background:${isNewLaunch ? '#f59e0b' : '#10b981'};color:white;border-radius:4px;font-size:0.75rem;font-weight:600;margin-left:8px">${isNewLaunch ? 'New EC Launch' : `MOP ${mopYear || 'Reached'}`}</span>`
+            : '';
+
+          meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
+  <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${info.project} — Resale Prices${ecBadge}</h2>
+  <p style="color:#4b5563;margin-bottom:1rem">
+    <strong>${info.project}</strong>${isEC ? ' Executive Condominium (EC)' : ''} in District ${info.district}${info.market_segment ? ` (${info.market_segment})` : ''}.
+    ${info.tx_count.toLocaleString()} transactions recorded, averaging <strong>${fmtPrice(info.avg_price)}</strong> (${fmtPsf(info.avg_psm)}).
+    ${isMOPReached && mopYear ? `MOP was reached around ${mopYear} — units are eligible for open market resale.` : ''}
+    ${isNewLaunch ? 'New EC launch — units are in primary sale phase and subject to a 5-year MOP before open market resale.' : ''}
+  </p>
+  <p style="font-size:0.875rem;color:#6b7280">
+    Data sourced from URA Singapore. <a href="/district/${info.district}" style="color:#3b82f6;text-decoration:none">View all projects in District ${info.district} &rarr;</a>
+  </p>
+</section>`;
         }
       }
     } else if (route.startsWith('/district/')) {
       const dCode = route.replace('/district/', '').padStart(2, '0');
       const label = DISTRICT_LABELS[dCode];
       if (label) {
-        meta.title = `${label} — Private Property Resale Prices Singapore | WorthIt`;
-        meta.description = `Check private property resale prices and transaction history in Singapore ${label}. View top projects, price trends, and URA transaction data for District ${dCode}.`;
+        const topProjects = db ? db.prepare(`
+          SELECT project, flat_type, COUNT(*) as tx_count, ROUND(AVG(price_per_sqm), 0) as avg_psm
+          FROM transactions WHERE district = ? AND dataset_source = 'URA_PRIVATE'
+          GROUP BY project ORDER BY tx_count DESC LIMIT 6
+        `).all(dCode) : [];
+
+        const distSummary = db ? db.prepare(`
+          SELECT COUNT(*) as tx_count, ROUND(AVG(price_per_sqm), 0) as avg_psm
+          FROM transactions WHERE district = ? AND dataset_source = 'URA_PRIVATE' AND month >= ?
+        `).get(dCode, monthsAgoStr(12)) : null;
+
+        const txCount = distSummary?.tx_count || 0;
+        const avgPsm = distSummary?.avg_psm || 0;
+
+        meta.title = `${label} — Private Property Resale Prices${avgPsm ? ` ${fmtPsf(avgPsm)} Avg` : ''} | WorthIt`;
+        meta.description = `Check private property resale prices and transaction history in Singapore ${label}.${txCount > 0 ? ` ${txCount.toLocaleString()} transactions in the last 12 months, average ${fmtPsf(avgPsm)}.` : ''} View top projects, price trends, and URA transaction data for District ${dCode}.`;
         meta.canonical = `${SEO_BASE_URL}/district/${dCode}`;
         meta.og_title = `${label} — Singapore Property Tracker`;
-        meta.og_description = `Private property prices and transactions in ${label}.`;
+        meta.og_description = `Private property prices and transactions in ${label}.${avgPsm ? ` Avg ${fmtPsf(avgPsm)}.` : ''}`;
+
+        const faqs = [];
+        if (avgPsm && txCount > 0) {
+          faqs.push({
+            '@type': 'Question',
+            name: `What is the average private property price in ${label}?`,
+            acceptedAnswer: { '@type': 'Answer', text: `The average private property price in ${label} is ${fmtPsf(avgPsm)} based on ${txCount.toLocaleString()} transactions in the past 12 months.` },
+          });
+        }
+        if (topProjects.length > 0) {
+          const topNames = topProjects.slice(0, 3).map(p => p.project).join(', ');
+          faqs.push({
+            '@type': 'Question',
+            name: `What are the top projects in ${label}?`,
+            acceptedAnswer: { '@type': 'Answer', text: `The most actively transacted projects in ${label} include ${topNames}. Browse full price history and trends for each project on WorthIt.` },
+          });
+        }
+
         meta.json_ld = JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'WebPage',
-          name: `${label} Property Prices`,
-          description: meta.description,
-          url: meta.canonical,
+          '@graph': [
+            {
+              '@type': 'WebPage',
+              name: `${label} Property Prices`,
+              description: meta.description,
+              url: meta.canonical,
+              breadcrumb: {
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
+                  { '@type': 'ListItem', position: 2, name: label, item: meta.canonical },
+                ],
+              },
+            },
+            ...(faqs.length > 0 ? [{ '@type': 'FAQPage', mainEntity: faqs }] : []),
+          ],
         });
+
+        const projectRows = topProjects.map(p => {
+          const isEC = p.flat_type === 'EXECUTIVE CONDOMINIUM';
+          return `<tr>
+            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">
+              <a href="/private/${townToSlug(p.project)}" style="color:#3b82f6;text-decoration:none">${p.project}</a>${isEC ? '<span style="font-size:0.7rem;padding:1px 5px;background:#f3f4f6;border-radius:3px;margin-left:4px">EC</span>' : ''}
+            </td>
+            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${fmtPsf(p.avg_psm)}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${p.tx_count}</td>
+          </tr>`;
+        }).join('');
+
+        meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
+  <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${label} — Private Property Overview</h2>
+  ${txCount > 0 ? `<p style="color:#4b5563;margin-bottom:1rem">${txCount.toLocaleString()} transactions in the last 12 months with an average of <strong>${fmtPsf(avgPsm)}</strong>.</p>` : ''}
+  ${topProjects.length > 0 ? `<h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Top Projects in ${label}</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-bottom:1.5rem">
+    <thead><tr style="background:#f3f4f6">
+      <th style="padding:6px 12px;text-align:left;border-bottom:2px solid #e5e7eb">Project</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Avg PSF</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Transactions</th>
+    </tr></thead>
+    <tbody>${projectRows}</tbody>
+  </table>` : ''}
+</section>`;
       }
     }
 

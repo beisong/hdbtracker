@@ -91,7 +91,9 @@ const TransactionMap = {
         addressGroups[key].push(tx);
       }
 
-      const popupBg = this.cssVar('--popup-border');
+      // Compute overall median price_per_sqm for deal-score coloring
+      const allPsm = markerData.map(m => m.price_per_sqm || 0).sort((a, b) => a - b);
+      const nearbyMedianPsm = allPsm[Math.floor(allPsm.length / 2)] || 0;
 
       // Add markers for each HDB address
       const bounds = [];
@@ -100,12 +102,13 @@ const TransactionMap = {
         txList.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
         const recent = txList[0];
 
+        const style = this.getValueStyle(recent.price_per_sqm || 0, nearbyMedianPsm);
         const marker = L.circleMarker([first.lat, first.lng], {
           radius: Math.min(10, 6 + txList.length * 0.3),
-          fillColor: '#60a5fa',
+          fillColor: style.color,
           color: '#fff',
           weight: 1,
-          opacity: 0.5,
+          opacity: 0.8,
           fillOpacity: 0.75,
         }).addTo(this.map);
 
@@ -153,19 +156,27 @@ const TransactionMap = {
     // Add nearby private project markers (coordinates already known)
     if (!this.map || !projects || projects.length === 0) return;
 
+    // Compute median avg_psm across all nearby projects for deal-score coloring
+    const projectPsm = projects
+      .filter(p => (!currentProject || p.project !== currentProject) && p.latitude && p.longitude && p.avg_psm)
+      .map(p => p.avg_psm)
+      .sort((a, b) => a - b);
+    const nearbyProjectMedianPsm = projectPsm[Math.floor(projectPsm.length / 2)] || 0;
+
     const bounds = [];
     for (const proj of projects) {
       // Skip the currently-viewed project
       if (currentProject && proj.project === currentProject) continue;
       if (!proj.latitude || !proj.longitude) continue;
 
+      const style = this.getValueStyle(proj.avg_psm || 0, nearbyProjectMedianPsm);
       const marker = L.circleMarker([proj.latitude, proj.longitude], {
         radius: Math.min(10, 5 + Math.sqrt(proj.tx_count || 1)),
-        fillColor: '#a855f7',
-        color: '#c084fc',
-        weight: 1.5,
-        opacity: 0.7,
-        fillOpacity: 0.7,
+        fillColor: style.color,
+        color: '#a855f7',
+        weight: 2,
+        opacity: 0.8,
+        fillOpacity: 0.75,
       }).addTo(this.map);
 
       // Build popup with recent transactions
@@ -202,11 +213,11 @@ const TransactionMap = {
         marker,
         originalStyle: {
           radius: Math.min(10, 5 + Math.sqrt(proj.tx_count || 1)),
-          fillColor: '#a855f7',
-          color: '#c084fc',
-          weight: 1.5,
-          opacity: 0.7,
-          fillOpacity: 0.7,
+          fillColor: style.color,
+          color: '#a855f7',
+          weight: 2,
+          opacity: 0.8,
+          fillOpacity: 0.75,
         }
       };
       bounds.push([proj.latitude, proj.longitude]);

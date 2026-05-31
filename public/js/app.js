@@ -6,6 +6,7 @@ const App = {
   selectedFlatTypes: new Set(),
   currentTown: null,
   currentStreet: null,  // street filter for postal code searches
+  pinnedBlock: null,    // block number pinned to top for postal code searches
   allTransactions: [],
   lastResolvedData: null,
   // Autocomplete state
@@ -346,6 +347,7 @@ const App = {
       // Check if input is a district code (e.g., "D01", "D22", "District 22")
       const districtMatch = input.match(/^(?:D(?:ISTRICT)?\s*)(\d{1,2})$/i);
       if (districtMatch) {
+        this.pinnedBlock = null;
         const districtCode = districtMatch[1].padStart(2, '0');
         const data = await API.getDistrictOverview(districtCode);
         if (data.found) {
@@ -380,6 +382,7 @@ const App = {
           const data = await API.getPrivateProjectOverview(privateProject.project);
           if (data.found) {
             this.currentTown = null;
+            this.pinnedBlock = null;
             this.lastResolvedData = {
               lat: data.coordinates?.lat || null,
               lng: data.coordinates?.lng || null,
@@ -455,6 +458,14 @@ const App = {
         }
       }
       this.currentStreet = (isPostalCode && resolved.road) ? resolved.road : null;
+
+      // Parse block number from address so postal-code searches pin that block to top
+      if (isPostalCode && resolved.address) {
+        const m = resolved.address.toUpperCase().match(/^(?:BLK\s+)?(\d+[A-Z]?)\b/);
+        this.pinnedBlock = m ? m[1] : null;
+      } else {
+        this.pinnedBlock = null;
+      }
 
       // Fetch area overview (with nearby streets for postal codes)
       const data = await API.getAreaOverview(resolved.town, this._getFlatTypeParam(), this.currentStreet, nearbyStreets);
@@ -945,6 +956,13 @@ const App = {
         default: return 0;
       }
     });
+
+    // Pin searched block to top for postal code searches
+    if (this.pinnedBlock) {
+      const pinned = filtered.filter(tx => (tx.block || '').toUpperCase() === this.pinnedBlock);
+      const rest = filtered.filter(tx => (tx.block || '').toUpperCase() !== this.pinnedBlock);
+      filtered = [...pinned, ...rest];
+    }
 
     // Update count
     const countEl = document.getElementById('tx-count');

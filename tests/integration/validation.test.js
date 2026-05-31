@@ -12,20 +12,6 @@ describe('Parameter validation — 400 responses', () => {
     expect(res.status).toBe(400);
   });
 
-  it('GET /api/nearby-streets — missing lat → 400', async () => {
-    const res = await request.get('/api/nearby-streets?lng=103.8&town=BEDOK');
-    expect(res.status).toBe(400);
-  });
-
-  it('GET /api/nearby-streets — missing lng → 400', async () => {
-    const res = await request.get('/api/nearby-streets?lat=1.3&town=BEDOK');
-    expect(res.status).toBe(400);
-  });
-
-  it('GET /api/nearby-streets — missing town → 400', async () => {
-    const res = await request.get('/api/nearby-streets?lat=1.3&lng=103.8');
-    expect(res.status).toBe(400);
-  });
 
   it('POST /api/geocode — no body → 400', async () => {
     const res = await request.post('/api/geocode').send({});

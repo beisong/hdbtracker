@@ -5,8 +5,9 @@
 const App = {
   selectedFlatTypes: new Set(),
   currentTown: null,
-  currentStreet: null,  // street filter for postal code searches
-  pinnedBlock: null,    // block number pinned to top for postal code searches
+  currentPostalCode: null, // set when search was a postal code; drives /postal/<code> URL
+  currentStreet: null,     // street filter for postal code searches
+  pinnedBlock: null,       // block number pinned to top for postal code searches
   allTransactions: [],
   lastResolvedData: null,
   // Autocomplete state
@@ -89,6 +90,14 @@ const App = {
       }
     }
 
+    // /postal/<6-digit code>
+    const postalMatch = path.match(/^\/postal\/(\d{6})$/);
+    if (postalMatch) {
+      document.getElementById('search-input').value = postalMatch[1];
+      await this.search();
+      return;
+    }
+
     // /district/<code>
     const distMatch = path.match(/^\/district\/(\d{1,2})$/);
     if (distMatch) {
@@ -126,12 +135,19 @@ const App = {
     let description = 'Check HDB resale prices, property transaction history, and fair value estimates for Singapore flats and condos.';
 
     if (type === 'hdb' && data?.town) {
-      const slug = data.town.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      path = `/hdb/${slug}`;
       const townDisplay = data.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
       const ts = data.town_summary;
-      title = `${townDisplay} HDB Resale Prices & Transaction History | WorthIt`;
-      description = `Check ${townDisplay} HDB resale flat prices and transaction history. ${ts?.total_transactions_12m?.toLocaleString() || 0} recent transactions. Compare Deal Scores from data.gov.sg records.`;
+      if (this.currentPostalCode) {
+        path = `/postal/${this.currentPostalCode}`;
+        const addrDisplay = this.lastResolvedData?.address || this.currentPostalCode;
+        title = `${addrDisplay} HDB Resale Prices | WorthIt`;
+        description = `Check HDB resale prices near ${addrDisplay} in ${townDisplay}. ${ts?.total_transactions_12m?.toLocaleString() || 0} nearby transactions. Compare Deal Scores from data.gov.sg records.`;
+      } else {
+        const slug = data.town.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        path = `/hdb/${slug}`;
+        title = `${townDisplay} HDB Resale Prices & Transaction History | WorthIt`;
+        description = `Check ${townDisplay} HDB resale flat prices and transaction history. ${ts?.total_transactions_12m?.toLocaleString() || 0} recent transactions. Compare Deal Scores from data.gov.sg records.`;
+      }
     } else if (type === 'district' && data?.district) {
       path = `/district/${data.district}`;
       title = `${data.district_label || 'D' + data.district} — Private Property Prices | WorthIt`;
@@ -348,6 +364,7 @@ const App = {
       const districtMatch = input.match(/^(?:D(?:ISTRICT)?\s*)(\d{1,2})$/i);
       if (districtMatch) {
         this.pinnedBlock = null;
+        this.currentPostalCode = null;
         const districtCode = districtMatch[1].padStart(2, '0');
         const data = await API.getDistrictOverview(districtCode);
         if (data.found) {
@@ -383,6 +400,7 @@ const App = {
           if (data.found) {
             this.currentTown = null;
             this.pinnedBlock = null;
+            this.currentPostalCode = null;
             this.lastResolvedData = {
               lat: data.coordinates?.lat || null,
               lng: data.coordinates?.lng || null,
@@ -392,19 +410,6 @@ const App = {
             };
             this.renderPrivateResults(data, '');
             return;
-          }
-        }
-
-        // Also try private project match from building name if postal code resolved partially
-        if (isPostalCode && resolved.building) {
-          const buildingResults = await API.searchPrivateProjects(resolved.building, 3);
-          if (buildingResults.projects && buildingResults.projects.length > 0) {
-            const data = await API.getPrivateProjectOverview(buildingResults.projects[0].project);
-            if (data.found) {
-              this.lastResolvedData = { lat: resolved.lat, lng: resolved.lng, town: null };
-              this.renderPrivateResults(data, ` (${resolved.address})`);
-              return;
-            }
           }
         }
 
@@ -418,7 +423,14 @@ const App = {
           if (buildingResults.projects && buildingResults.projects.length > 0) {
             const data = await API.getPrivateProjectOverview(buildingResults.projects[0].project);
             if (data.found) {
-              this.lastResolvedData = { lat: resolved.lat, lng: resolved.lng, town: null };
+              this.currentTown = null;
+              this.pinnedBlock = null;
+              this.currentPostalCode = null;
+              this.lastResolvedData = {
+                lat: resolved.lat, lng: resolved.lng, town: null,
+                projectName: data.project?.project,
+                isPrivate: true,
+              };
               this.renderPrivateResults(data, ` (${resolved.address})`);
               return;
             }
@@ -432,24 +444,12 @@ const App = {
       this.currentTown = resolved.town;
       this.lastResolvedData = resolved;
 
-      // If postal code search, find nearby streets via Nominatim reverse geocoding
-      let nearbyStreets = null;
       if (isPostalCode && resolved.lat && resolved.lng) {
-        try {
-          const nearby = await API.getNearbyStreets(resolved.lat, resolved.lng, resolved.town);
-          if (nearby.streets && nearby.streets.length > 0) {
-            nearbyStreets = nearby.streets.join(",");
-          }
-        } catch (err) {
-          console.warn("Nearby streets lookup failed, falling back to single street:", err.message);
-        }
-
         // Also try to match building name to private projects
         if (resolved.building && resolved.building !== 'NIL') {
           try {
             const buildingResults = await API.searchPrivateProjects(resolved.building, 3);
             if (buildingResults.projects && buildingResults.projects.length > 0) {
-              // Load HDB data as primary, but note private data is available
               this.nearbyPrivateProject = buildingResults.projects[0];
             }
           } catch (err) {
@@ -458,6 +458,7 @@ const App = {
         }
       }
       this.currentStreet = (isPostalCode && resolved.road) ? resolved.road : null;
+      this.currentPostalCode = isPostalCode ? input : null;
 
       // Parse block number from address so postal-code searches pin that block to top
       if (isPostalCode && resolved.address) {
@@ -467,8 +468,10 @@ const App = {
         this.pinnedBlock = null;
       }
 
-      // Fetch area overview (with nearby streets for postal codes)
-      const data = await API.getAreaOverview(resolved.town, this._getFlatTypeParam(), this.currentStreet, nearbyStreets);
+      // Fetch area overview — pass lat/lng for postal codes (distance-based block filter)
+      const searchLat = isPostalCode ? resolved.lat : null;
+      const searchLng = isPostalCode ? resolved.lng : null;
+      const data = await API.getAreaOverview(resolved.town, this._getFlatTypeParam(), this.currentStreet, searchLat, searchLng);
       const addressInfo = resolved.address ? ` (${resolved.address})` : '';
       this.renderResults(data, addressInfo);
 
@@ -592,12 +595,9 @@ const App = {
     // Update URL and meta for HDB search
     this.updateSeoForSearch('hdb', data);
 
-    // Fetch private property summary for this town's districts
-    this.loadPrivateSummaryForTown(data.town);
-
-    // Also fetch nearby private projects and add them to the map
     const resolved = this.lastResolvedData;
     if (resolved && resolved.lat && resolved.lng) {
+      // Postal code search — use bounded nearby query instead of district-wide summary
       API.getNearbyHDB(resolved.lat, resolved.lng).then(hdbData => {
         if (hdbData.nearby_projects && hdbData.nearby_projects.length > 0) {
           TransactionMap.addNearbyProjects(hdbData.nearby_projects, null);
@@ -605,6 +605,9 @@ const App = {
       }).catch(err => {
         console.warn('Failed to load nearby private projects:', err.message);
       });
+    } else {
+      // Town-name search — load district-wide private summary
+      this.loadPrivateSummaryForTown(data.town);
     }
   },
 
@@ -711,7 +714,6 @@ const App = {
           price_per_sqm: tx.price_per_sqm,
           is_private: true,
           is_freehold: tx.tenure === 'FREEHOLD',
-          // Attach coordinates from project_coords if available
           ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
         };
       });
@@ -720,7 +722,7 @@ const App = {
       this.populateTypeFilter(this.allTransactions);
       this.applyTransactionFilters();
 
-      // Re-load map with combined transactions (HDB + private with coordinates)
+      // Re-load map with combined HDB + private transactions
       TransactionMap.load(this.allTransactions, this.lastResolvedData);
     }
   },

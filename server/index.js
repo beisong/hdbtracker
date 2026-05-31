@@ -50,10 +50,56 @@ try {
   db = new Database(DB_PATH, { readonly: true });
   db.pragma('journal_mode = WAL');
   console.log(`✅ Connected to database: ${DB_PATH}`);
+  seedHdbBlockCoords(DB_PATH);
 } catch (err) {
   console.warn(`⚠️  Database not found at ${DB_PATH}`);
   console.warn(`   Run download scripts via SSH to populate it.`);
   console.warn(`   Server will start but API endpoints will return errors until DB is ready.`);
+}
+
+function seedHdbBlockCoords(dbPath) {
+  const tableExists = db.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='hdb_block_coords'"
+  ).get();
+  if (tableExists) return;
+
+  console.log('⏳ hdb_block_coords missing — seeding from hdb_blocks.csv...');
+  const csvPath = path.join(__dirname, '..', 'scripts', 'hdb_blocks.csv');
+  if (!require('fs').existsSync(csvPath)) {
+    console.warn('⚠️  hdb_blocks.csv not found, skipping seed');
+    return;
+  }
+
+  const writable = new Database(dbPath);
+  try {
+    writable.exec(`
+      CREATE TABLE IF NOT EXISTS hdb_block_coords (
+        block       TEXT NOT NULL,
+        street_name TEXT NOT NULL,
+        lat         REAL NOT NULL,
+        lng         REAL NOT NULL,
+        postal      TEXT,
+        PRIMARY KEY (block, street_name)
+      )
+    `);
+    writable.exec('CREATE INDEX IF NOT EXISTS idx_hdb_coords_latln ON hdb_block_coords(lat, lng)');
+
+    const lines = require('fs').readFileSync(csvPath, 'utf8').trim().split('\n');
+    const insert = writable.prepare(
+      'INSERT OR IGNORE INTO hdb_block_coords (block, street_name, lat, lng, postal) VALUES (?, ?, ?, ?, ?)'
+    );
+    const insertMany = writable.transaction((rows) => { for (const r of rows) insert.run(r); });
+
+    const rows = lines.filter(l => l && !l.startsWith('#') && !l.startsWith('blk_no')).map(line => {
+      const [blk, street, lat, lng, postal] = line.split(',');
+      return [blk.trim().toUpperCase(), street.trim().toUpperCase(), parseFloat(lat), parseFloat(lng), postal.trim()];
+    }).filter(r => r[2] && r[3]);
+
+    insertMany(rows);
+    console.log(`✅ Seeded ${rows.length.toLocaleString()} HDB block coordinates`);
+  } finally {
+    writable.close();
+  }
 }
 
 // Health check (always responds, even without DB — must be before the DB middleware)
@@ -544,37 +590,30 @@ function findDbStreets(roadName, town) {
 }
 
 /**
- * GET /api/nearby-streets — Find nearby DB streets using Nominatim reverse geocoding
+ * Return distinct (block, street_name, lat, lng) rows from hdb_block_coords
+ * within ~radiusM metres of the given point (bounding-box pre-filter).
  */
-app.get('/api/nearby-streets', async (req, res) => {
-  try {
-    const { lat, lng, town } = req.query;
-    if (!lat || !lng || !town) {
-      return res.status(400).json({ error: 'Missing lat, lng, or town parameter' });
-    }
-    const latF = parseFloat(lat);
-    const lngF = parseFloat(lng);
-    if (!isSgCoord(latF, lngF)) {
-      return res.status(400).json({ error: 'Invalid coordinates — must be within Singapore' });
-    }
-    const streets = await findNearbyStreets(latF, lngF, town);
-    res.json({ streets, town, lat: latF, lng: lngF });
-  } catch (err) {
-    console.error('Error in /api/nearby-streets:', err);
-    res.status(500).json({ error: 'Failed to find nearby streets: ' + err.message });
-  }
-});
+function findNearbyHdbBlocks(lat, lng, radiusM = 500) {
+  // 1 degree lat ≈ 111 000 m; 1 degree lng ≈ 111 000 * cos(lat_rad) m
+  const dLat = radiusM / 111000;
+  const dLng = radiusM / (111000 * Math.cos(lat * Math.PI / 180));
+  return db.prepare(`
+    SELECT block, street_name, lat, lng, postal
+    FROM hdb_block_coords
+    WHERE lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?
+  `).all(lat - dLat, lat + dLat, lng - dLng, lng + dLng);
+}
+
 
 /**
  * GET /api/area-overview — Main endpoint for area market overview
  */
 app.get('/api/area-overview', (req, res) => {
   try {
-    const { town, flat_type, street, streets } = req.query;
+    const { town, flat_type, street, lat, lng } = req.query;
     if (!town) return res.status(400).json({ error: 'Missing town parameter' });
     if (town.length > 100) return res.status(400).json({ error: 'town parameter too long' });
     if (street && street.length > 200) return res.status(400).json({ error: 'street parameter too long' });
-    if (streets && streets.length > 5000) return res.status(400).json({ error: 'streets parameter too long' });
 
     const townUpper = town.toUpperCase();
     const flatTypeList = (flat_type && flat_type !== 'ALL')
@@ -589,20 +628,37 @@ app.get('/api/area-overview', (req, res) => {
       return query;
     };
 
-    // Build street filter — support both single street name or pre-resolved list
-    let streetNames = [];
-    if (streets) {
-      // Comma-separated list of DB street names (from nearby-streets)
-      streetNames = streets.split(',').map(s => s.trim()).filter(s => s.length > 0).slice(0, 200);
-      console.log(`[area-overview] pre-resolved streets: ${streetNames.length} streets: ${streetNames.slice(0, 5).join(', ')}`);
-    } else if (street) {
-      streetNames = findDbStreets(street, townUpper);
-      console.log(`[area-overview] street filter: "${street}" → matched ${streetNames.length} streets: ${streetNames.slice(0, 5).join(', ')}`);
+    // Build block filter — distance-based (lat/lng) or single-street fallback
+    let streetClause = '';
+    let streetParams = [];
+    let streetNames = [];  // for response metadata only
+
+    if (lat && lng) {
+      const latF = parseFloat(lat);
+      const lngF = parseFloat(lng);
+      if (isSgCoord(latF, lngF)) {
+        const blocks = findNearbyHdbBlocks(latF, lngF);
+        if (blocks.length > 0) {
+          // Filter by exact (block, street_name) pairs — no cross-street contamination
+          const keys = blocks.map(b => `${b.block}|${b.street_name}`);
+          streetClause = ` AND (block || '|' || street_name) IN (${keys.map(() => '?').join(',')})`;
+          streetParams = keys;
+          streetNames = [...new Set(blocks.map(b => b.street_name))];
+          console.log(`[area-overview] distance filter: ${blocks.length} blocks across ${streetNames.length} streets near (${latF},${lngF})`);
+        }
+      }
     }
 
-    const streetClause = streetNames.length > 0
-      ? ` AND street_name IN (${streetNames.map(() => '?').join(',')})`
-      : '';
+    // Fallback to single street name if no lat/lng or hdb_block_coords returned nothing
+    if (streetClause === '' && street) {
+      const matched = findDbStreets(street, townUpper);
+      if (matched.length > 0) {
+        streetClause = ` AND street_name IN (${matched.map(() => '?').join(',')})`;
+        streetParams = matched;
+        streetNames = matched;
+        console.log(`[area-overview] street fallback: "${street}" → ${matched.length} streets`);
+      }
+    }
 
     const latestMonth = db.prepare('SELECT MAX(month) as m FROM transactions').get().m;
 
@@ -619,7 +675,7 @@ app.get('/api/area-overview', (req, res) => {
     `;
     const pricesByTypeParams = [townUpper, monthsAgo12];
     pricesByTypeQuery = addFlatClause(pricesByTypeQuery, pricesByTypeParams);
-    if (streetClause) { pricesByTypeQuery += streetClause; pricesByTypeParams.push(...streetNames); }
+    if (streetClause) { pricesByTypeQuery += streetClause; pricesByTypeParams.push(...streetParams); }
     pricesByTypeQuery += ' GROUP BY flat_type ORDER BY median_price';
     const pricesByType = db.prepare(pricesByTypeQuery).all(...pricesByTypeParams);
 
@@ -636,7 +692,7 @@ app.get('/api/area-overview', (req, res) => {
     `;
     const townSummaryParams = [townUpper, monthsAgo12];
     townSummaryQuery = addFlatClause(townSummaryQuery, townSummaryParams);
-    if (streetClause) { townSummaryQuery += streetClause; townSummaryParams.push(...streetNames); }
+    if (streetClause) { townSummaryQuery += streetClause; townSummaryParams.push(...streetParams); }
     const townSummary = db.prepare(townSummaryQuery).get(...townSummaryParams);
 
     // Most popular type
@@ -654,7 +710,7 @@ app.get('/api/area-overview', (req, res) => {
     `;
     const priceParams = [townUpper, monthsAgo12];
     priceQuery = addFlatClause(priceQuery, priceParams);
-    if (streetClause) { priceQuery += streetClause; priceParams.push(...streetNames); }
+    if (streetClause) { priceQuery += streetClause; priceParams.push(...streetParams); }
     priceQuery += ' ORDER BY resale_price ASC LIMIT 10000';
     const allPrices = db.prepare(priceQuery).all(...priceParams).map(r => r.resale_price);
 
@@ -743,7 +799,7 @@ app.get('/api/area-overview', (req, res) => {
     `;
     const txParams = [townUpper];
     txQuery = addFlatClause(txQuery, txParams);
-    if (streetClause) { txQuery += streetClause; txParams.push(...streetNames); }
+    if (streetClause) { txQuery += streetClause; txParams.push(...streetParams); }
     txQuery += ' ORDER BY month DESC, resale_price DESC LIMIT 200';
     const recentTransactions = db.prepare(txQuery).all(...txParams);
 
@@ -777,73 +833,6 @@ app.get('/api/area-overview', (req, res) => {
 
 // In-memory caches
 const geocodeCache = new Map();
-const nearbyStreetsCache = new Map(); // "lat,lng" → { streets: [...], timestamp }
-
-// Find nearby streets by reverse-geocoding 8 compass points at ~200m radius via Nominatim
-async function findNearbyStreets(lat, lng, town) {
-  const cacheKey = `${lat},${lng}`;
-  const cached = nearbyStreetsCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < 86400000) { // 24 hour cache
-    return cached.streets;
-  }
-
-  const townUpper = town ? town.toUpperCase() : null;
-  // 200m in degrees: ~0.0018 lat, ~0.00184 lng at Singapore's latitude
-  const offset = 0.0018;
-  const offsetLng = 0.00184;
-  const diagLat = offset / Math.SQRT2;
-  const diagLng = offsetLng / Math.SQRT2;
-
-  const directions = [
-    { label: 'N',  dlat: offset,   dlng: 0 },
-    { label: 'NE', dlat: diagLat,  dlng: diagLng },
-    { label: 'E',  dlat: 0,        dlng: offsetLng },
-    { label: 'SE', dlat: -diagLat, dlng: diagLng },
-    { label: 'S',  dlat: -offset,  dlng: 0 },
-    { label: 'SW', dlat: -diagLat, dlng: -diagLng },
-    { label: 'W',  dlat: 0,        dlng: -offsetLng },
-    { label: 'NW', dlat: diagLat,  dlng: -diagLng },
-  ];
-
-  // Run all 9 reverse geocodes in parallel (8 directions + center)
-  const allPoints = [
-    { label: 'center', dlat: 0, dlng: 0 },
-    ...directions,
-  ];
-  const results = await Promise.all(
-    allPoints.map(async (pt) => {
-      try {
-        const rlat = (lat + pt.dlat).toFixed(6);
-        const rlng = (lng + pt.dlng).toFixed(6);
-        const url = `https://nominatim.openstreetmap.org/reverse?lat=${rlat}&lon=${rlng}&format=json&zoom=18`;
-        const resp = await fetch(url, {
-          timeout: 8000,
-          headers: { 'User-Agent': 'WorthIt/1.0 (HDB resale app)' },
-        });
-        if (!resp.ok) return null;
-        const data = await resp.json();
-        return data.address?.road || null;
-      } catch (err) {
-        return null;
-      }
-    })
-  );
-  const roadNames = new Set(results.filter(Boolean));
-
-  // Match each road name to DB street names
-  const matchedStreets = new Set();
-  for (const road of roadNames) {
-    const dbMatches = findDbStreets(road, townUpper);
-    for (const s of dbMatches) {
-      matchedStreets.add(s);
-    }
-  }
-
-  const result = [...matchedStreets].slice(0, 5);
-  nearbyStreetsCache.set(cacheKey, { streets: result, timestamp: Date.now() });
-  console.log(`[nearby-streets] lat=${lat} lng=${lng} town=${town} → ${roadNames.size} Nominatim roads → ${result.length} DB matches: ${result.join(', ')}`);
-  return result;
-}
 
 // Expand HDB street abbreviations for better OneMap matching
 const streetAbbrevs = {
@@ -1537,15 +1526,17 @@ app.get('/api/nearby-hdb', async (req, res) => {
       return res.status(400).json({ error: 'Invalid coordinates — must be within Singapore' });
     }
 
-    // 1. Reverse geocode to get road names via Nominatim
-    const nearbyStreets = await findNearbyStreets(latF, lngF, null);
+    // 1. Find nearby HDB blocks by distance from hdb_block_coords
+    const nearbyBlocks = findNearbyHdbBlocks(latF, lngF);
 
-    if (!nearbyStreets || nearbyStreets.length === 0) {
+    if (nearbyBlocks.length === 0) {
       return res.json({ transactions: [], streets: [] });
     }
 
-    // 2. Find which town(s) these streets belong to
+    const nearbyStreets = [...new Set(nearbyBlocks.map(b => b.street_name))];
     const streetClause = nearbyStreets.map(() => '?').join(',');
+
+    // 2. Find which town these streets belong to
     const townRow = db.prepare(`
       SELECT DISTINCT town FROM transactions
       WHERE dataset_source != 'URA_PRIVATE'
@@ -1560,7 +1551,7 @@ app.get('/api/nearby-hdb', async (req, res) => {
     const town = townRow.town;
     const monthsAgo12 = monthsAgoStr(12);
 
-    // 3. Get HDB transactions for those streets, last 12 months
+    // 3. Get HDB transactions for nearby blocks, last 12 months
     const transactions = db.prepare(`
       SELECT month, town, flat_type, block, street_name, storey_range,
              floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
@@ -1820,6 +1811,22 @@ app.get('/api/seo/metadata', (req, res) => {
           },
         ],
       });
+    } else if (route.startsWith('/postal/')) {
+      const postal = route.replace('/postal/', '').trim();
+      if (/^\d{6}$/.test(postal) && db) {
+        const block = db.prepare(
+          'SELECT block, street_name FROM hdb_block_coords WHERE postal = ? LIMIT 1'
+        ).get(postal);
+        if (block) {
+          const addr = `Blk ${block.block} ${titleCase(block.street_name)}`;
+          meta.title = `${addr} HDB Resale Prices | WorthIt`;
+          meta.description = `Check HDB resale prices near ${addr}. View recent transactions, deal scores, and price trends for this location.`;
+          meta.canonical = `${SEO_BASE_URL}/postal/${postal}`;
+          meta.og_title = meta.title;
+          meta.og_description = meta.description;
+          meta.og_url = meta.canonical;
+        }
+      }
     } else if (route.startsWith('/hdb/')) {
       const slug = route.replace('/hdb/', '');
       const town = slugToTown(slug);

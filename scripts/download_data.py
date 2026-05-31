@@ -247,6 +247,10 @@ def create_database(records_by_dataset):
     conn.commit()
     print(f"\n   ✅ Total records in database: {total_inserted:,}")
 
+    # Seed HDB block coordinates and geocode any missing blocks
+    seed_hdb_block_coords(conn)
+    geocode_missing_hdb_blocks(conn)
+
     # Pre-compute aggregations
     compute_aggregations(conn)
 
@@ -254,6 +258,111 @@ def create_database(records_by_dataset):
     conn.execute("PRAGMA optimize")
     conn.close()
     print(f"\n   ✅ Database created successfully!")
+
+
+def seed_hdb_block_coords(conn):
+    """Create and seed hdb_block_coords from the bundled hdb_blocks.csv."""
+    import csv
+
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS hdb_block_coords (
+            block       TEXT NOT NULL,
+            street_name TEXT NOT NULL,
+            lat         REAL NOT NULL,
+            lng         REAL NOT NULL,
+            postal      TEXT,
+            PRIMARY KEY (block, street_name)
+        )
+    ''')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_hdb_coords_latln ON hdb_block_coords(lat, lng)')
+
+    csv_path = os.path.join(SCRIPT_DIR, 'hdb_blocks.csv')
+    if not os.path.exists(csv_path):
+        print(f"\n   ⚠️  hdb_blocks.csv not found at {csv_path}, skipping seed")
+        return
+
+    with open(csv_path, newline='') as f:
+        # Skip comment lines before passing to DictReader
+        lines = [l for l in f if not l.startswith('#')]
+    reader = csv.DictReader(lines)
+    rows = [
+        (r['blk_no'].strip().upper(), r['street'].strip().upper(),
+         float(r['lat']), float(r['lng']), r['postal'].strip())
+        for r in reader if r['lat'] and r['lng']
+    ]
+
+    conn.executemany('''
+        INSERT OR IGNORE INTO hdb_block_coords (block, street_name, lat, lng, postal)
+        VALUES (?, ?, ?, ?, ?)
+    ''', rows)
+    conn.commit()
+    print(f"\n   ✅ Seeded {len(rows):,} HDB block coordinates from hdb_blocks.csv")
+
+
+def geocode_missing_hdb_blocks(conn):
+    """Geocode any (block, street_name) pairs in transactions not yet in hdb_block_coords."""
+    rows = conn.execute('''
+        SELECT DISTINCT t.block, t.street_name
+        FROM transactions t
+        LEFT JOIN hdb_block_coords h ON t.block = h.block AND t.street_name = h.street_name
+        WHERE t.dataset_source != 'URA_PRIVATE'
+          AND t.block IS NOT NULL AND t.block != ''
+          AND t.street_name IS NOT NULL AND t.street_name != ''
+          AND h.block IS NULL
+        ORDER BY t.street_name, t.block
+    ''').fetchall()
+
+    if not rows:
+        print("   ✅ No missing HDB block coordinates to geocode")
+        return
+
+    print(f"\n🌍 Geocoding {len(rows)} HDB blocks missing coordinates via OneMap...")
+    ONEMAP_URL = 'https://www.onemap.gov.sg/api/common/elastic/search'
+    geocoded, failed = 0, []
+
+    for i, (block, street) in enumerate(rows):
+        query = f"BLK {block} {street}"
+        for attempt in range(2):
+            try:
+                time.sleep(0.35)
+                resp = requests.get(ONEMAP_URL, params={
+                    'searchVal': query, 'returnGeom': 'Y',
+                    'getAddrDetails': 'Y', 'pageNum': 1,
+                }, headers={'User-Agent': 'WorthIt/1.0'}, timeout=10)
+                resp.raise_for_status()
+                results = resp.json().get('results', [])
+                if results:
+                    r = results[0]
+                    lat = float(r.get('LATITUDE', 0))
+                    lng = float(r.get('LONGITUDE', 0))
+                    postal = r.get('POSTAL', '')
+                    if lat and lng:
+                        conn.execute('''
+                            INSERT OR REPLACE INTO hdb_block_coords (block, street_name, lat, lng, postal)
+                            VALUES (?, ?, ?, ?, ?)
+                        ''', (block, street, round(lat, 7), round(lng, 7), postal))
+                        geocoded += 1
+                        print(f"   [{i+1}/{len(rows)}] ✅ {block} {street}: {lat:.5f}, {lng:.5f}")
+                        break
+                if not results or not lat:
+                    if attempt == 0:
+                        time.sleep(3)
+                    else:
+                        failed.append(f"{block} {street}")
+                        print(f"   [{i+1}/{len(rows)}] ❌ {block} {street}: no results")
+            except Exception as e:
+                if attempt == 0:
+                    time.sleep(3)
+                else:
+                    failed.append(f"{block} {street}")
+                    print(f"   [{i+1}/{len(rows)}] ❌ {block} {street}: {e}")
+
+    conn.commit()
+    print(f"\n   ✅ Geocoded {geocoded}/{len(rows)} missing HDB blocks via OneMap")
+    if failed:
+        print(f"   ⚠️  {len(failed)} blocks could not be geocoded:")
+        for b in failed[:10]:
+            print(f"      - {b}")
 
 
 def compute_aggregations(conn):

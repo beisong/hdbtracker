@@ -111,6 +111,9 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ⚠️ FAQ rich results deprecated by Google as of May 7, 2026 — FAQPage JSON-LD kept (harmless) but won't show rich result cards; BreadcrumbList + content injection still fully valuable
 - 🔲 Submit sitemap to Google Search Console (manual — GSC → Sitemaps → `sitemap.xml`)
 
+## What's Left to Build / Improve (Active)
+- 🔲 **Private project search: distance-based nearby HDB** — when viewing a private project, `addNearbyHDB()` currently geocodes nearby HDB addresses via the `/api/geocode` endpoint (street-name-based). It should instead use `hdb_block_coords` distance query (same approach as postal code searches) to find nearby HDB blocks by lat/lng, then fetch their transactions — no geocoding round-trip needed.
+
 ## What's Left to Build / Improve
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)
 - ✅ SQL injection fix in `/api/private/project-overview` — replaced string-interpolated `property_type` with parameterized `?` + spread pattern across all 5 queries (May 2026)
@@ -127,6 +130,24 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Google Analytics 4 (GA4 tag `G-WGC8D0FRSQ` with SPA pageview tracking)
 - ✅ GA4 custom events: search, view_results, click_outbound, search_failed, select_flat_type, filter_transactions, toggle_mrt, share (8 events via `App.track()` helper)
 
+- ✅ Map color-coded deal score restored (Jun 2026) — `addNearbyHDB()` and `addNearbyProjects()` were using hardcoded blue/purple; now use `getValueStyle()` green→blue→red coloring based on price vs nearby median
+- ✅ Postal code pinned block (Jun 2026) — searched block floated to top of transaction list via `pinnedBlock` in `applyTransactionFilters()`; block number parsed from `resolved.address`
+- ✅ HDB block coordinates table (Jun 2026):
+  - `scripts/hdb_blocks.csv` (739KB) — 12,442 blocks, trimmed from [BlueSkyLT/siteselect_sg](https://github.com/BlueSkyLT/siteselect_sg/blob/main/dataset/hdb.csv); 100% coverage of all 9,709 unique HDB addresses in transactions DB
+  - `hdb_block_coords(block, street_name, lat, lng, postal)` table in SQLite — seeded from CSV in `download_data.py`; index on `(lat, lng)` for bounding-box queries
+  - `seed_hdb_block_coords()` + `geocode_missing_hdb_blocks()` in `download_data.py` — seed on every full rebuild; incrementally geocode any new blocks via OneMap (350ms delay, same pattern as URA script)
+  - Server seeds table on startup if missing via `seedHdbBlockCoords()` — opens writable connection, seeds from CSV, closes; readonly connection then reads it
+  - `findNearbyHdbBlocks(lat, lng, radiusM=500)` in `server/index.js` — synchronous SQLite bounding-box query (no HTTP calls)
+- ✅ Separate `/postal/<code>` URL route (Jun 2026) — postal code searches now push `/postal/523876` instead of `/hdb/tampines`; `handleUrlRoute()` handles direct navigation; `/api/seo/metadata` returns address-specific metadata for bots; sitemap unchanged (postal codes excluded)
+- ✅ Private property postal code fix (Jun 2026) — `lastResolvedData` was missing `isPrivate: true` in the postal→private path, causing project transactions to scatter as circle markers instead of a pin popup; dead code `if (isPostalCode && ...)` inside `else if (!isPostalCode)` removed
+- ✅ Distant private property markers fix (Jun 2026) — postal code searches skip `loadPrivateSummaryForTown` (which was loading all district private data regardless of distance); use `addNearbyProjects` from `/api/nearby-hdb` (550m bounding box) instead; town-name searches keep district-wide summary
+- ✅ Distance-based postal code search (Jun 2026) — replaced entire Nominatim 9-point reverse-geocoding pipeline:
+  - **Before**: postal code → `/api/nearby-streets` (9 async Nominatim HTTP calls + keyword street matching) → street names → `/api/area-overview` (filter by street names, entire streets included regardless of distance)
+  - **After**: postal code → `/api/area-overview?lat=X&lng=Y` → `findNearbyHdbBlocks()` → filter by exact `(block || '|' || street_name)` pairs within 500m
+  - Fixes two-cluster bug (523876): keyword fallback in `findDbStreets` was matching every "HOUGANG*" street across the whole town
+  - Removed `/api/nearby-streets` endpoint, `findNearbyStreets()`, `nearbyStreetsCache`, `strict` param from `findDbStreets`; removed `getNearbyStreets()` from `api.js`; removed extra round-trip from `app.js`
+  - Fallback: if `hdb_block_coords` returns nothing (e.g., edge of table coverage), falls back to single `street` param via `findDbStreets`
+
 ## Known Issues
 1. **Memory leak potential**: Geocode cache (`Map`) has no size limit or eviction policy
 2. **No DB indexes**: Large queries may be slow without proper indexing
@@ -134,6 +155,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 ## Evolution of Project Decisions
 - Started as HDB-only tool, later expanded to include URA private property data
 - Street matching evolved from simple prefix matching to multi-strategy system
-- Geocoding: OneMap primary + Nominatim fallback
+- Nearby-block lookup evolved: simple street names → Nominatim 9-point reverse geocoding → `hdb_block_coords` distance query (no external API)
+- Geocoding: OneMap primary + Nominatim fallback (for map display); `hdb_block_coords` for postal search radius
 - npm scripts use cross-platform `scripts/run-python.js` wrapper
 - DB seeding: tried SSH + Python on Fly.io → OOM kill → switched to local build + SFTP upload

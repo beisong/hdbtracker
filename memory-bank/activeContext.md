@@ -7,6 +7,27 @@ The project is fully deployed and functional:
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
+## Recent Changes (Jun 2026)
+
+- **Map deal score coloring** — `addNearbyHDB()` and `addNearbyProjects()` were hardcoded blue/purple; now use `getValueStyle()` relative to nearby median
+- **Postal code pinned block** — `pinnedBlock` parsed from `resolved.address` (e.g. "BLK 876C..." → "876C"); `applyTransactionFilters()` floats that block to top after sort
+- **HDB block coordinates + distance-based postal search** — full pipeline replaced:
+  - `scripts/hdb_blocks.csv` seeds `hdb_block_coords` table (12,442 blocks, 100% coverage)
+  - `download_data.py` seeds on rebuild + incrementally geocodes new blocks via OneMap
+  - Server seeds table on startup if missing (`seedHdbBlockCoords()`)
+  - `findNearbyHdbBlocks(lat, lng)` — synchronous SQLite bounding-box query
+  - `/api/area-overview` accepts `lat`/`lng`; filters by exact `(block|street_name)` pairs within 500m
+  - Removed: `/api/nearby-streets` endpoint, `findNearbyStreets()`, `nearbyStreetsCache`, `getNearbyStreets()` in `api.js`, extra frontend round-trip
+  - Test count: 158 → 155 (removed 3 obsolete `/api/nearby-streets` validation tests)
+- **Distant private property markers fix** — root cause: postal code search resolved to town (e.g. TAMPINES), then `loadPrivateSummaryForTown` loaded ALL District 18 private transactions and rendered them on the map regardless of distance. Fix: postal code searches (where `lastResolvedData.lat/lng` is set) skip `loadPrivateSummaryForTown` entirely and use `addNearbyProjects` (bounded 550m bounding box via `/api/nearby-hdb`) instead; town-name searches keep the district-wide summary as before
+- **Separate URL for postal code searches** — postal code searches now use `/postal/<code>` instead of `/hdb/<town>`, fixing the ambiguity where bookmarking/reloading `/hdb/tampines` would run a town search instead of the specific block search:
+  - `app.js`: added `currentPostalCode` state; `updateSeoForSearch` pushes `/postal/<code>` with address-specific title when set; `handleUrlRoute()` handles `/postal/<6-digit>` by setting search input and calling `search()`
+  - `server/index.js`: `/api/seo/metadata` handles `/postal/<code>` — looks up block+street from `hdb_block_coords`, returns address-specific title/description/canonical
+  - Sitemap unchanged — postal codes not included (too many, not useful SEO targets)
+- **Private property postal code fix** — two bugs fixed when a postal code resolves to a private property (not HDB):
+  - `lastResolvedData` was missing `isPrivate: true`, causing project transactions to render as scattered circle markers instead of collapsing into the pin popup; fixed by setting full `{ lat, lng, projectName, isPrivate: true }` in the `else` branch
+  - Dead code removed: `if (isPostalCode && resolved.building)` was inside `else if (!isPostalCode)` — could never fire; removed the unreachable block
+
 ## Deployment Architecture
 - **Frontend**: Cloudflare Pages (`npx wrangler pages deploy public --project-name=worthit`) — ✅ LIVE
 - **Backend API**: Fly.io (`worthit-api`) with 1GB persistent volume

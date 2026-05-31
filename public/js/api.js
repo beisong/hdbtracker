@@ -26,19 +26,12 @@ const API = {
     return resp.json();
   },
 
-  async getAreaOverview(town, flatType = 'ALL', street = null, streets = null) {
+  async getAreaOverview(town, flatType = 'ALL', street = null, lat = null, lng = null) {
     const params = new URLSearchParams({ town, flat_type: flatType });
-    if (streets) params.set('streets', streets);
+    if (lat != null && lng != null) { params.set('lat', lat); params.set('lng', lng); }
     else if (street) params.set('street', street);
     const resp = await fetch(`${this.baseUrl}/api/area-overview?${params}`);
     if (!resp.ok) throw new Error('Failed to get area overview');
-    return resp.json();
-  },
-
-  async getNearbyStreets(lat, lng, town) {
-    const params = new URLSearchParams({ lat: String(lat), lng: String(lng), town });
-    const resp = await fetch(`${this.baseUrl}/api/nearby-streets?${params}`);
-    if (!resp.ok) throw new Error('Failed to get nearby streets');
     return resp.json();
   },
 

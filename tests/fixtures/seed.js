@@ -41,6 +41,15 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
       street_name TEXT,
       market_segment TEXT
     );
+    CREATE TABLE hdb_block_coords (
+      block       TEXT NOT NULL,
+      street_name TEXT NOT NULL,
+      lat         REAL NOT NULL,
+      lng         REAL NOT NULL,
+      postal      TEXT,
+      PRIMARY KEY (block, street_name)
+    );
+    CREATE INDEX idx_hdb_coords_latln ON hdb_block_coords(lat, lng);
   `);
 
   const insertTx = db.prepare(`
@@ -109,6 +118,19 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   `);
   insertCoord.run('SKY HABITAT', '11', 1.3521, 103.8198, 'BISHAN ST 21', 'RCR');
   insertCoord.run('THE CANOPY', '11', 1.3400, 103.8450, 'TOA PAYOH RISE', 'RCR');
+
+  // HDB block coords — covers BEDOK fixture addresses
+  const insertBlock = db.prepare(`
+    INSERT INTO hdb_block_coords (block, street_name, lat, lng, postal) VALUES (?,?,?,?,?)
+  `);
+  insertBlock.run('100', 'BEDOK NORTH ST 1', 1.3250, 103.9300, '460100');
+  insertBlock.run('200', 'BEDOK NORTH ST 1', 1.3252, 103.9302, '460200');
+  insertBlock.run('500', 'BEDOK NORTH ST 1', 1.3254, 103.9304, '460500');
+  insertBlock.run('700', 'BEDOK NORTH ST 1', 1.3256, 103.9306, '460700');
+  insertBlock.run('900', 'BEDOK NORTH ST 1', 1.3258, 103.9308, '460900');
+  // BEDOK SOUTH AVE 1 blocks — ~2km away from BEDOK NORTH ST 1
+  insertBlock.run('300', 'BEDOK SOUTH AVE 1', 1.3100, 103.9200, '460300');
+  insertBlock.run('400', 'BEDOK SOUTH AVE 1', 1.3102, 103.9202, '460400');
 
   db.close();
 

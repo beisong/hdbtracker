@@ -28,8 +28,8 @@
 - **Map**: Leaflet.js
 
 ### External APIs
-- **OneMap SG API**: Postal code → address/coordinates lookup, geocoding
-- **Nominatim (OpenStreetMap)**: Reverse geocoding, fallback geocoding, nearby street discovery
+- **OneMap SG API**: Postal code → address/coordinates lookup, geocoding. Use 0.4s delay between requests in batch geocoding scripts
+- **Nominatim (OpenStreetMap)**: Reverse geocoding, fallback geocoding (map display only — no longer used for postal search radius)
 - **data.gov.sg**: HDB resale transaction data download
 - **URA API**: Private property transaction data
 

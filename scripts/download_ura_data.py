@@ -360,7 +360,7 @@ def geocode_missing_projects(conn):
         query = f"{project} {street}".strip()
         for attempt in range(2):
             try:
-                time.sleep(0.35)
+                time.sleep(0.4)
                 resp = requests.get(ONEMAP_URL, params={
                     'searchVal': query,
                     'returnGeom': 'Y',

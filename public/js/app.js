@@ -6,7 +6,7 @@ const App = {
   selectedFlatTypes: new Set(),
   currentTown: null,
   currentPostalCode: null, // set when search was a postal code; drives /postal/<code> URL
-  currentStreet: null,     // street filter for postal code searches
+  currentStreet: null,     // road name fallback for area-overview when no lat/lng available
   pinnedBlock: null,       // block number pinned to top for postal code searches
   allTransactions: [],
   lastResolvedData: null,
@@ -344,10 +344,11 @@ const App = {
     const input = document.getElementById('search-input').value.trim();
     if (!input) { this.showAlert('Please enter a town name, postal code, or project name.'); return; }
 
-    // GA4 Event 1: search — determine search type for tracking
-    const _isPostal = /^\d{6}$/.test(input);
-    const _isDistrict = /^(?:D(?:ISTRICT)?\s*)(\d{1,2})$/i.test(input);
-    const _searchType = _isPostal ? 'postal' : _isDistrict ? 'district' : 'town';
+    const isPostalCode = /^\d{6}$/.test(input);
+    const districtMatch = input.match(/^(?:D(?:ISTRICT)?\s*)(\d{1,2})$/i);
+
+    // GA4 Event 1: search
+    const _searchType = isPostalCode ? 'postal' : districtMatch ? 'district' : 'town';
     this.track('search', { search_type: _searchType, query: input });
 
     const btn = document.getElementById('search-btn');
@@ -358,10 +359,7 @@ const App = {
     btnLoading.classList.remove('hidden');
 
     try {
-      const isPostalCode = /^\d{6}$/.test(input);
-
       // Check if input is a district code (e.g., "D01", "D22", "District 22")
-      const districtMatch = input.match(/^(?:D(?:ISTRICT)?\s*)(\d{1,2})$/i);
       if (districtMatch) {
         this.pinnedBlock = null;
         this.currentPostalCode = null;
@@ -444,19 +442,6 @@ const App = {
       this.currentTown = resolved.town;
       this.lastResolvedData = resolved;
 
-      if (isPostalCode && resolved.lat && resolved.lng) {
-        // Also try to match building name to private projects
-        if (resolved.building && resolved.building !== 'NIL') {
-          try {
-            const buildingResults = await API.searchPrivateProjects(resolved.building, 3);
-            if (buildingResults.projects && buildingResults.projects.length > 0) {
-              this.nearbyPrivateProject = buildingResults.projects[0];
-            }
-          } catch (err) {
-            // Ignore private project search errors
-          }
-        }
-      }
       this.currentStreet = (isPostalCode && resolved.road) ? resolved.road : null;
       this.currentPostalCode = isPostalCode ? input : null;
 

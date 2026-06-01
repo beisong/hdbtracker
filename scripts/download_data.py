@@ -324,7 +324,7 @@ def geocode_missing_hdb_blocks(conn):
         query = f"BLK {block} {street}"
         for attempt in range(2):
             try:
-                time.sleep(0.35)
+                time.sleep(0.4)
                 resp = requests.get(ONEMAP_URL, params={
                     'searchVal': query, 'returnGeom': 'Y',
                     'getAddrDetails': 'Y', 'pageNum': 1,

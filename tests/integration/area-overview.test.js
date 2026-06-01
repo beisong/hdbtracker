@@ -96,12 +96,25 @@ describe('GET /api/area-overview', () => {
     }
   });
 
-  // Street filter path — used by postal code searches via the nearby-streets pipeline.
+  // Street filter path — fallback when no lat/lng is available (e.g. server-side resolve).
   it('street filter returns only transactions for that street', async () => {
     const res = await request.get('/api/area-overview?town=BEDOK&street=BEDOK+NORTH+ST+1');
     expect(res.status).toBe(200);
     expect(res.body.street_filtered).toBe(true);
     // Fixture: BEDOK NORTH ST 1 has only 3 ROOM (not 4 ROOM)
+    const types = res.body.prices_by_type.map(t => t.flat_type);
+    expect(types).toContain('3 ROOM');
+    expect(types).not.toContain('4 ROOM');
+  });
+
+  // Distance-based filter — lat/lng postal code path using hdb_block_coords
+  it('lat/lng filter returns only nearby blocks (not distant ones on same town)', async () => {
+    // Fixture: BEDOK NORTH ST 1 blocks are at ~1.325, 103.930
+    //          BEDOK SOUTH AVE 1 blocks are at ~1.310, 103.920 (~2km away)
+    const res = await request.get('/api/area-overview?town=BEDOK&lat=1.3251&lng=103.9301');
+    expect(res.status).toBe(200);
+    expect(res.body.street_filtered).toBe(true);
+    // Should only include BEDOK NORTH ST 1 (3 ROOM), not BEDOK SOUTH AVE 1 (4 ROOM)
     const types = res.body.prices_by_type.map(t => t.flat_type);
     expect(types).toContain('3 ROOM');
     expect(types).not.toContain('4 ROOM');

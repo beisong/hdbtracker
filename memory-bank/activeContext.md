@@ -7,6 +7,16 @@ The project is fully deployed and functional:
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
+## Recent Changes (Jun 2026 — UI & Infra)
+
+- **Navbar share button** — `#nav-share-btn` added beside dark mode toggle; reuses `.theme-toggle` CSS class; always visible (not hidden behind results section)
+- **Share icon** — both share buttons updated to upload-arrow icon (`path d="M4 12v8..." + polyline + line`)
+- **Share function simplified** — removed `title`/`text` from `navigator.share()`; was showing `-- — Singapore property prices on WorthIt` on homepage; now passes `{ url }` only so OS/browser uses OG metadata for preview
+- **`deploy:data` script hardened**:
+  - Added `fly machines start e7845746c2d918 && sleep 5` prefix — Fly.io free tier auto-stops idle machines; SSH doesn't trigger wake-up like HTTP does
+  - `mv + rm -f resale.db-wal resale.db-shm` in single SSH command — deletes stale WAL/SHM atomically before server restart to prevent corrupted reads
+- **Production DB fixed** — live DB was missing all 138K URA_PRIVATE rows; stale WAL from old DB was making `COUNT(*) = 371`; re-uploaded local DB (107MB, 370,340 rows), deleted WAL/SHM, restarted — private project autocomplete now works on production
+
 ## Recent Changes (Jun 2026 — SEO / GSC fixes)
 
 - **GSC "Alternate page with proper canonical tag" fix** — bot handler catch block now injects correct canonical from URL path (`SITE_URL + pathname`) when Fly.io is unreachable, instead of serving raw `index.html` with root canonical

@@ -98,6 +98,16 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Private project search routing bug fixed — 55 projects containing town names (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES") were incorrectly routed to HDB town pages; fixed in `/api/resolve` by removing `inputUpper.includes(t)` and adding word-boundary check to `t.includes(inputUpper)` (May 2026)
 - ✅ psm→psf internal variable and ID renaming — magic number `10.7639` consolidated to helpers only; sort values, HTML IDs, and JS variable names all renamed to match display unit (May 2026)
 
+## UI & Infra Fixes — Jun 2026
+
+- ✅ Share button added to navbar (beside dark mode toggle) — `#nav-share-btn` reuses `.theme-toggle` CSS; always visible at top of page (Jun 2026)
+- ✅ Share icon updated — both navbar and results-section share buttons now use upload-arrow icon (`M4 12v8...` / `polyline 16 6 12 2 8 6`) (Jun 2026)
+- ✅ Share function fixed — removed `title` + `text` fields from `navigator.share()` call; was leaking `--` placeholder text when no search had been done; now passes `{ url }` only (Jun 2026)
+- ✅ `deploy:data` script hardened (Jun 2026):
+  - Added `fly machines start e7845746c2d918 && sleep 5` at start — handles Fly.io free-tier auto-stop (machine sleeps when idle; SSH doesn't trigger auto-start like HTTP does)
+  - Combined `mv` + `rm -f resale.db-wal resale.db-shm` in single SSH command — prevents stale WAL from corrupting reads after DB swap
+- ✅ Live DB re-uploaded (Jun 2026) — production DB was missing all URA_PRIVATE data (138K rows); stale WAL caused `COUNT(*) = 371` instead of 370K; fixed by deleting WAL/SHM and restarting; autocomplete now works for private project names
+
 ## SEO / GSC Fixes — Jun 2026
 
 - ✅ GSC "Alternate page with proper canonical" fix — bot fallback now injects correct path-based canonical when Fly.io unreachable

@@ -68,7 +68,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css?v=10">
+  <link rel="stylesheet" href="/css/styles.css?v=12">
 </head>
 <body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white font-sans min-h-screen transition-colors duration-300">
 
@@ -97,6 +97,10 @@
           <span class="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">HDB Market Overview</span>
         </div>
         <div class="flex items-center gap-3">
+          <!-- Share -->
+          <button id="nav-share-btn" class="theme-toggle" aria-label="Share" title="Share this page">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </button>
           <!-- Theme Toggle -->
           <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
             <svg id="theme-icon-sun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -175,7 +179,7 @@
               <span class="w-2 h-2 rounded-full bg-brand-400"></span> --
             </div>
             <button id="share-btn" class="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-brand-500/50 hover:text-brand-500 transition-all" aria-label="Share" title="Share this page">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
             </button>
           </div>
         </div>
@@ -478,10 +482,10 @@
   <!-- Toast notification -->
   <div id="toast" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium shadow-lg pointer-events-none" style="bottom: calc(5rem + env(safe-area-inset-bottom, 0px));"></div>
 
-  <script src="/config.js?v=10"></script>
-  <script src="/js/api.js?v=10"></script>
-  <script src="/js/charts.js?v=10"></script>
-  <script src="/js/map.js?v=10"></script>
-  <script src="/js/app.js?v=10"></script>
+  <script src="/config.js?v=12"></script>
+  <script src="/js/api.js?v=12"></script>
+  <script src="/js/charts.js?v=12"></script>
+  <script src="/js/map.js?v=12"></script>
+  <script src="/js/app.js?v=12"></script>
 </body>
 </html>

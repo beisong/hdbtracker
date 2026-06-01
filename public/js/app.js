@@ -231,8 +231,9 @@ const App = {
     // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
 
-    // Share button
+    // Share buttons
     document.getElementById('share-btn').addEventListener('click', () => this.share());
+    document.getElementById('nav-share-btn').addEventListener('click', () => this.share());
 
     // GA4 Event 3: click_outbound — event delegation for Google Maps links in transactions
     document.getElementById('results-section').addEventListener('click', (e) => {
@@ -282,12 +283,10 @@ const App = {
 
   share() {
     const url = window.location.href;
-    const title = document.getElementById('town-title')?.textContent?.trim() || 'WorthIt';
-    const text = `${title} — Singapore property prices on WorthIt`;
     // GA4 Event 8: share
     if (navigator.share) {
       this.track('share', { method: 'web_share_api', page_path: window.location.pathname });
-      navigator.share({ title, text, url }).catch(() => {});
+      navigator.share({ url }).catch(() => {});
     } else {
       this.track('share', { method: 'clipboard', page_path: window.location.pathname });
       navigator.clipboard.writeText(url).then(() => this.showToast('Link copied!')).catch(() => this.showToast('Copy failed'));

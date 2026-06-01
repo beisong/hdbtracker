@@ -124,7 +124,7 @@ const TransactionMap = {
         marker.bindPopup(`
           <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:160px; max-height:250px; overflow-y:auto;">
             <div style="font-weight:700; font-size:12px; margin-bottom:2px;">🏠 ${addrKey}</div>
-            <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">HDB · ${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
+            <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">HDB · ${txList.length} transaction${txList.length > 1 ? 's' : ''}${recent.remaining_lease_years ? ` · ${Math.round(recent.remaining_lease_years)}y lease` : ''}</div>
             ${txRows}
           </div>
         `, { maxHeight: 250 });
@@ -183,7 +183,7 @@ const TransactionMap = {
       let popupHtml = `
         <div style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; min-width:180px; max-height:280px; overflow-y:auto;">
           <div style="font-weight:700; font-size:12px; margin-bottom:2px; color:#a855f7;">🏢 ${proj.project}</div>
-          <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">${proj.street_name} · D${proj.district} · ${proj.market_segment}</div>
+          <div style="color:var(--popup-muted); font-size:10px; margin-bottom:4px;">${proj.street_name} · D${proj.district} · ${proj.market_segment}${proj.recent_transactions && proj.recent_transactions[0] && proj.recent_transactions[0].remaining_lease_years ? ` · ${Math.round(proj.recent_transactions[0].remaining_lease_years)}y lease` : ''}</div>
           <div style="display:flex; justify-content:space-between;">
             <span style="font-size:11px;">${proj.tx_count} transactions</span>
             <span style="font-weight:600; font-size:11px; color:#a855f7;">$${App.formatNumber(App.psmToPsf(proj.avg_psm))}/sqft</span>
@@ -413,7 +413,7 @@ const TransactionMap = {
       const popupContent = `
         <div style="font-family:Inter,system-ui,sans-serif; font-size:12px; line-height:1.5; min-width:180px; max-height:300px; overflow-y:auto;">
           <div style="font-weight:700; font-size:13px; margin-bottom:2px;">${addrKey}</div>
-          <div style="color:var(--popup-muted); font-size:11px; margin-bottom:6px;">${txList.length} transaction${txList.length > 1 ? 's' : ''}</div>
+          <div style="color:var(--popup-muted); font-size:11px; margin-bottom:6px;">${txList.length} transaction${txList.length > 1 ? 's' : ''}${recent.remaining_lease_years ? ` · ${Math.round(recent.remaining_lease_years)}y lease` : ''}</div>
           ${txRows}
         </div>
       `;
@@ -458,7 +458,7 @@ const TransactionMap = {
       // If we saved private project transactions, show them in the pin popup
       if (privateProjectTxs && privateProjectTxs.length > 0) {
         pinPopupHtml += `
-          <div style="color:var(--popup-muted); font-size:11px; margin-top:4px; margin-bottom:6px;">${privateProjectTxs.length} transaction${privateProjectTxs.length > 1 ? 's' : ''}</div>`;
+          <div style="color:var(--popup-muted); font-size:11px; margin-top:4px; margin-bottom:6px;">${privateProjectTxs.length} transaction${privateProjectTxs.length > 1 ? 's' : ''}${privateProjectTxs[0].remaining_lease_years ? ` · ${Math.round(privateProjectTxs[0].remaining_lease_years)}y lease` : ''}</div>`;
         privateProjectTxs.slice(0, 10).forEach((tx, i) => {
           const priceColor = i === 0 ? '#a855f7' : 'var(--popup-price-secondary)';
           pinPopupHtml += `

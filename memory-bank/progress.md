@@ -98,6 +98,16 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Private project search routing bug fixed — 55 projects containing town names (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES") were incorrectly routed to HDB town pages; fixed in `/api/resolve` by removing `inputUpper.includes(t)` and adding word-boundary check to `t.includes(inputUpper)` (May 2026)
 - ✅ psm→psf internal variable and ID renaming — magic number `10.7639` consolidated to helpers only; sort values, HTML IDs, and JS variable names all renamed to match display unit (May 2026)
 
+## SEO / GSC Fixes — Jun 2026
+
+- ✅ GSC "Alternate page with proper canonical" fix — bot fallback now injects correct path-based canonical when Fly.io unreachable
+- ✅ GSC "Server error 5xx" fix — sitemap 500 → 503 with `Retry-After: 3600`
+- ✅ 5s AbortController timeout on edge function metadata fetch — fast fail on Fly.io cold starts
+- ✅ Sitemap `lastmod` — derived from `MAX(month)` in DB, added to all sitemap entries
+- ✅ Homepage SEO town list → crawlable `<a>` links (was plain text)
+- ✅ Twitter card image dimensions added (1200×630)
+- ✅ og-image.png updated
+
 ## SEO Enhancement — COMPLETE (2026-05-29)
 
 - ✅ HDB pages: FAQ JSON-LD with real prices by flat type + YoY direction; content_html with prices table + internal links to all 25 other towns

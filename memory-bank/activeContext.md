@@ -7,6 +7,16 @@ The project is fully deployed and functional:
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
+## Recent Changes (Jun 2026 — SEO / GSC fixes)
+
+- **GSC "Alternate page with proper canonical tag" fix** — bot handler catch block now injects correct canonical from URL path (`SITE_URL + pathname`) when Fly.io is unreachable, instead of serving raw `index.html` with root canonical
+- **GSC "Server error 5xx" fix** — sitemap fetch failure now returns 503 + `Retry-After: 3600` instead of 500; tells Google to retry rather than treating it as a hard error
+- **AbortController 5s timeout on metadata fetch** — edge function aborts Fly.io call after 5s; prevents Googlebot from waiting 30s on cold starts before the fallback fires
+- **Sitemap `lastmod` added** — server derives `MAX(month)` from DB and sets as `lastmod` on every sitemap entry; signals freshness to Google; cache TTL is 24h
+- **Homepage town list → internal links** — 26 HDB town names in `index.html` SEO section converted from plain text to `<a href="/hdb/...">` links; improves crawl discovery and PageRank distribution
+- **Twitter card image dimensions** — added `twitter:image:width/height` (1200×630) to `index.html` matching OG tags
+- **og-image.png updated** — new OG image deployed; social platform caches need manual refresh via Facebook Sharing Debugger / LinkedIn Post Inspector
+
 ## Recent Changes (Jun 2026)
 
 - **Map deal score coloring** — `addNearbyHDB()` and `addNearbyProjects()` were hardcoded blue/purple; now use `getValueStyle()` relative to nearby median

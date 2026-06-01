@@ -38,7 +38,7 @@ Singapore street names have many abbreviation variants (e.g., "ST" vs "STREET", 
 ### Geocoding Pipeline
 1. **Primary**: OneMap SG API (block + expanded street name)
 2. **Fallback**: Nominatim OpenStreetMap (for addresses OneMap can't find)
-3. **Nearby streets**: Reverse-geocode 9 points (center + 8 compass at ~200m) via Nominatim
+3. **Postal radius search**: `hdb_block_coords` SQLite bounding-box query — no external API; replaces old 9-point Nominatim reverse-geocoding approach
 
 ### SEO Architecture (Edge-Side Rendering for Bots)
 Since WorthIt is a client-side SPA, search engines can't execute JS. The solution uses Cloudflare Pages Functions for edge-side meta injection:
@@ -59,25 +59,27 @@ User Request → Cloudflare Edge
 - **JSON-LD**: WebSite + SearchAction + FAQPage on homepage; BreadcrumbList + ResidentialProperty on detail pages
 
 ### Caching
-- In-memory `Map` for geocode results (no TTL, grows indefinitely)
-- In-memory nearby streets cache with 24-hour TTL
+- In-memory `Map` for geocode results (no TTL, grows indefinitely — known memory leak risk)
 - Sitemap cache with 24-hour TTL on server
 - No external cache (Redis, etc.)
+- Nearby streets cache removed (replaced by `hdb_block_coords` synchronous DB query)
 
 ### Frontend Cache Busting
 No build step means no content-hashed filenames. Strategy:
 - `public/_headers`: sets `index.html` to `Cache-Control: no-cache, must-revalidate` so browsers always fetch fresh HTML; JS/CSS set to `max-age=31536000, immutable`
 - `?v=N` query strings on all local asset `<script>`/`<link>` tags in `index.html` — increment N on every deploy where JS or CSS changes
-- Current version: `v=2` (May 2026)
+- Current version: `v=9` (Jun 2026)
 
 ## Component Relationships
 
-### Server (`server/index.js` — monolithic ~1164 lines)
+### Server (`server/index.js` — monolithic ~2200+ lines)
 All routes and helpers in a single file:
-- **Helpers**: `median()`, `percentile()`, `monthsAgoStr()`, `resolvePostalCode()`, `matchRoadToTown()`, `matchRoadToTownViaDB()`, `findDbStreets()`, `findNearbyStreets()`, `compressStreetName()`, `expandStreetName()`
-- **HDB Routes**: `/api/towns`, `/api/flat-types`, `/api/resolve`, `/api/nearby-streets`, `/api/area-overview`
+- **Helpers**: `median()`, `percentile()`, `monthsAgoStr()`, `resolvePostalCode()`, `matchRoadToTown()`, `findDbStreets()`, `compressStreetName()`, `expandStreetName()`, `findNearbyHdbBlocks()`, `seedHdbBlockCoords()`, `fmtPrice()`, `fmtPsf()`, `trendPct()`
+- **HDB Routes**: `/api/towns`, `/api/flat-types`, `/api/resolve`, `/api/area-overview`, `/api/nearby-hdb`
 - **Geocoding**: `POST /api/geocode`
-- **Private Property Routes**: `/api/private/projects`, `/api/private/project-overview`
+- **Private Property Routes**: `/api/private/projects`, `/api/private/project-overview`, `/api/private/district-overview`, `/api/private/district-summary`
+- **SEO Routes**: `/api/seo/metadata`, `/api/seo/sitemap`
+- **Removed**: `/api/nearby-streets` (replaced by `hdb_block_coords` approach)
 
 ### Frontend Files
 - `public/js/api.js` — API client functions
@@ -94,6 +96,5 @@ All routes and helpers in a single file:
 3. **Map markers**: `transactions → /api/geocode → lat/lng → map markers`
 
 ## Known Issues
-- SQL injection vulnerability in `/api/private/project-overview` (string interpolation for property type filter)
-- No database indexes mentioned — performance may degrade with large result sets
-- Geocode cache has no size limit (potential memory leak)
+- Geocode cache has no size limit (potential memory leak on long-running server)
+- No database indexes — performance may degrade on large result sets

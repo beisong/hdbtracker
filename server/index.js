@@ -1678,7 +1678,10 @@ app.get('/api/seo/sitemap', (req, res) => {
       return res.json(sitemapCache.data);
     }
 
-    const urls = [{ url: SEO_BASE_URL + '/', changefreq: 'weekly', priority: '1.0' }];
+    const latestMonth = db.prepare("SELECT MAX(month) as m FROM transactions").get()?.m;
+    const lastmod = latestMonth ? latestMonth + '-01' : new Date().toISOString().slice(0, 10);
+
+    const urls = [{ url: SEO_BASE_URL + '/', changefreq: 'weekly', priority: '1.0', lastmod }];
 
     // HDB towns
     const towns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE' ORDER BY town").all();
@@ -1687,6 +1690,7 @@ app.get('/api/seo/sitemap', (req, res) => {
         url: `${SEO_BASE_URL}/hdb/${townToSlug(t.town)}`,
         changefreq: 'weekly',
         priority: '0.9',
+        lastmod,
       });
     }
 
@@ -1696,6 +1700,7 @@ app.get('/api/seo/sitemap', (req, res) => {
         url: `${SEO_BASE_URL}/district/${d}`,
         changefreq: 'weekly',
         priority: '0.8',
+        lastmod,
       });
     }
 
@@ -1710,6 +1715,7 @@ app.get('/api/seo/sitemap', (req, res) => {
         url: `${SEO_BASE_URL}/private/${townToSlug(p.project)}`,
         changefreq: 'monthly',
         priority: '0.7',
+        lastmod,
       });
     }
 

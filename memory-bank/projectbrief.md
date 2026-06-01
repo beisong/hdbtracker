@@ -1,7 +1,7 @@
 # Project Brief: WorthIt (HDB Tracker)
 
 ## Overview
-WorthIt is a Singapore HDB resale flat value assessment tool. It downloads ~230,000 HDB resale transaction records from data.gov.sg's open API, stores them in a local SQLite database, and provides a web-based UI for users to evaluate whether a specific flat is fairly priced.
+WorthIt is a Singapore property resale price tracker. It downloads 370,000+ HDB resale transaction records from data.gov.sg and URA private property records, stores them in a SQLite database, and provides a web-based UI for users to explore prices, trends, and deal quality for any HDB town, postal code, or private project.
 
 ## Core Goals
 1. **Data Pipeline**: Fetch all HDB resale flat price data from data.gov.sg and URA private property data, storing in SQLite with pre-computed aggregations

@@ -20,12 +20,14 @@
   - URA private property data: URA API
 
 ### Frontend
-- **HTML**: Single `index.html` page
-- **CSS**: Tailwind CSS (CDN) + custom `styles.css`
+- **HTML**: Single `index.html` SPA
+- **CSS**: Tailwind CSS (Play CDN) + custom `styles.css`
 - **JS**: Vanilla JavaScript (no framework)
-- **Charts**: Chart.js
+- **Charts**: Chart.js 4
 - **Fonts**: Inter (Google Fonts)
-- **Map**: Leaflet.js
+- **Map**: Leaflet.js 1.9.4
+- **Analytics**: Google Analytics 4 (`G-WGC8D0FRSQ`) with SPA pageview tracking + 8 custom events
+- **Edge functions**: `functions/[[path]].js` — Cloudflare Pages Function for bot SEO injection
 
 ### External APIs
 - **OneMap SG API**: Postal code → address/coordinates lookup, geocoding. Use 0.4s delay between requests in batch geocoding scripts
@@ -37,7 +39,7 @@
 
 ### Hosting
 - **API**: Fly.io (`worthit-api.fly.dev`) — Docker container with persistent volume
-- **Frontend**: Cloudflare Pages (`worthit.canlah.app`) — static files from `public/`, deployed via `npx wrangler pages deploy public --project-name=worthit`, DNS on Cloudflare (domain from Porkbun)
+- **Frontend**: Cloudflare Pages (`worthit.canlah.app`) — static files from `public/` + `functions/`, deployed via `node scripts/deploy-frontend.js` (loads `.env` cross-platform, then runs wrangler), DNS on Cloudflare (domain from Porkbun)
 - **Cost**: $0/month on free tiers
 
 ### Fly.io Configuration
@@ -73,6 +75,7 @@ npm run dev              # Start with --watch for auto-reload
 - `DB_PATH` — SQLite database path (default: `server/db/resale.db`)
 - `ONEMAP_TOKEN` — OneMap API bearer token
 - `URA_API_ACCESS_KEY` — URA API access key
+- `CLOUDFLARE_API_TOKEN` — Wrangler auth token for frontend deploys (avoids `wrangler login` expiry; works cross-platform via `scripts/deploy-frontend.js`)
 
 ## Database Schema
 
@@ -107,10 +110,21 @@ npm run dev              # Start with --watch for auto-reload
 | street_name | Street name |
 | market_segment | CCR/RCR/OCR |
 
+### Table: `hdb_block_coords`
+| Column | Description |
+|--------|-------------|
+| block | Block number |
+| street_name | Street name |
+| lat | Latitude |
+| lng | Longitude |
+| postal | Postal code |
+
+12,442 rows covering 100% of HDB addresses in the transactions DB. Seeded from `scripts/hdb_blocks.csv`. Used for postal code radius search — replaces old Nominatim 9-point reverse geocoding. Index on `(lat, lng)` for bounding-box queries.
+
 ## Technical Constraints
-- **Cross-platform npm scripts**: `scripts/run-python.js` detects OS and uses correct venv path
-- **No build step**: Vanilla JS served directly
-- **No tests**: No test framework configured
-- **Single server file**: All routes in `server/index.js` (~900+ lines)
+- **Cross-platform npm scripts**: `scripts/run-python.js` detects OS and uses correct venv path; `scripts/deploy-frontend.js` loads `.env` before wrangler for cross-platform auth
+- **No build step**: Vanilla JS served directly; asset versioning via `?v=N` query strings
+- **Test suite**: 156 unit + integration tests (Vitest + supertest + fixture SQLite); 19 smoke tests against live API; all deploy scripts gate on `npm test`
+- **Single server file**: All routes in `server/index.js` (~2200+ lines) — refactor into modules is a known backlog item
 - **SQLite limitations**: Not suitable for concurrent writes (acceptable since DB is readonly from server)
-- **Fly.io RAM**: 256MB free tier — can't run Python data scripts on the machine
+- **Fly.io RAM**: 256MB free tier — can't run Python data scripts on the machine; build DB locally, upload via SFTP

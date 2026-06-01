@@ -145,6 +145,7 @@ export async function onRequest(context) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${(data.urls || []).map(u => `  <url>
     <loc>${u.url}</loc>
+    <lastmod>${u.lastmod}</lastmod>
     <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
   </url>`).join('\n')}
@@ -156,17 +157,31 @@ ${(data.urls || []).map(u => `  <url>
         },
       });
     } catch (err) {
-      return new Response('<!-- sitemap generation failed -->', { status: 500 });
+      // 503 tells Google to retry later rather than treating it as a hard failure
+      return new Response('Service temporarily unavailable', {
+        status: 503,
+        headers: { 'Retry-After': '3600' },
+      });
     }
+  }
+
+  // Static assets (images, fonts, etc.) must bypass bot detection — bots fetching
+  // og:image or favicon would otherwise receive HTML instead of the actual file.
+  if (/\.[a-z0-9]{2,5}$/i.test(url.pathname)) {
+    return env.ASSETS.fetch(request);
   }
 
   // For bots: inject SEO metadata
   if (isBot(userAgent)) {
     try {
       const route = url.pathname === '/' ? '/' : url.pathname;
+      const controller = new AbortController();
+      const abortTimer = setTimeout(() => controller.abort(), 5000);
       const metaResp = await fetch(`${API_BASE}/api/seo/metadata?route=${encodeURIComponent(route)}`, {
         headers: { 'User-Agent': 'WorthIt-Edge/1.0' },
+        signal: controller.signal,
       });
+      clearTimeout(abortTimer);
       const meta = await metaResp.json();
 
       // Fetch the static index.html
@@ -184,9 +199,13 @@ ${(data.urls || []).map(u => `  <url>
         },
       });
     } catch (err) {
-      // Fallback: serve index.html (SPA handles routing client-side)
+      // API unreachable (e.g. Fly.io cold start) — still inject the correct canonical
+      // from the URL path so Google doesn't mark this page as "Alternate with proper canonical"
       console.error('SEO injection failed:', err.message);
-      return env.ASSETS.fetch(new Request(new URL('/', url.toString())));
+      const assetResp = await env.ASSETS.fetch(new Request(new URL('/', url.toString())));
+      let html = await assetResp.text();
+      html = injectMeta(html, { canonical: `${SITE_URL}${url.pathname}` });
+      return new Response(html, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
     }
   }
 

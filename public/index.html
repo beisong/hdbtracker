@@ -26,6 +26,8 @@
   <meta name="twitter:title" content="WorthIt — Singapore HDB & Condo Resale Price Tracker">
   <meta name="twitter:description" content="Check HDB resale prices, condo transaction history, and fair market value for any Singapore property.">
   <meta name="twitter:image" content="https://worthit.canlah.app/og-image.png">
+  <meta name="twitter:image:width" content="1200">
+  <meta name="twitter:image:height" content="630">
   <!-- JSON-LD (replaced by edge function for bots, fallback for direct visits) -->
   <script type="application/ld+json" id="seo-jsonld">{"@context":"https://schema.org","@type":"WebSite","name":"WorthIt","url":"https://worthit.canlah.app/","description":"Singapore HDB & Property Resale Price Tracker"}</script>
   <!-- Anti-FOUC: apply dark class before render -->
@@ -66,7 +68,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css?v=6">
+  <link rel="stylesheet" href="/css/styles.css?v=10">
 </head>
 <body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white font-sans min-h-screen transition-colors duration-300">
 
@@ -415,11 +417,34 @@
         <li><strong class="seo-bold">Analyze</strong> private property (condo, apartment) resale data by district with URA transaction records</li>
       </ul>
       <h3 class="seo-subheading" style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">Covered HDB Towns</h3>
-      <p class="seo-text" style="font-size:0.875rem;line-height:1.75;margin-bottom:1rem;">
-        Ang Mo Kio, Bedok, Bishan, Bukit Batok, Bukit Merah, Bukit Panjang, Bukit Timah, Central Area,
-        Choa Chu Kang, Clementi, Geylang, Hougang, Jurong East, Jurong West, Kallang/Whampoa,
-        Marine Parade, Pasir Ris, Punggol, Queenstown, Sembawang, Sengkang, Serangoon, Tampines,
-        Toa Payoh, Woodlands, Yishun — plus private properties across all 28 Singapore districts (D01–D28).
+      <p class="seo-text" style="font-size:0.875rem;line-height:2;margin-bottom:1rem;">
+        <a href="/hdb/ang-mo-kio" class="seo-link" style="text-decoration:underline;">Ang Mo Kio</a>,
+        <a href="/hdb/bedok" class="seo-link" style="text-decoration:underline;">Bedok</a>,
+        <a href="/hdb/bishan" class="seo-link" style="text-decoration:underline;">Bishan</a>,
+        <a href="/hdb/bukit-batok" class="seo-link" style="text-decoration:underline;">Bukit Batok</a>,
+        <a href="/hdb/bukit-merah" class="seo-link" style="text-decoration:underline;">Bukit Merah</a>,
+        <a href="/hdb/bukit-panjang" class="seo-link" style="text-decoration:underline;">Bukit Panjang</a>,
+        <a href="/hdb/bukit-timah" class="seo-link" style="text-decoration:underline;">Bukit Timah</a>,
+        <a href="/hdb/central-area" class="seo-link" style="text-decoration:underline;">Central Area</a>,
+        <a href="/hdb/choa-chu-kang" class="seo-link" style="text-decoration:underline;">Choa Chu Kang</a>,
+        <a href="/hdb/clementi" class="seo-link" style="text-decoration:underline;">Clementi</a>,
+        <a href="/hdb/geylang" class="seo-link" style="text-decoration:underline;">Geylang</a>,
+        <a href="/hdb/hougang" class="seo-link" style="text-decoration:underline;">Hougang</a>,
+        <a href="/hdb/jurong-east" class="seo-link" style="text-decoration:underline;">Jurong East</a>,
+        <a href="/hdb/jurong-west" class="seo-link" style="text-decoration:underline;">Jurong West</a>,
+        <a href="/hdb/kallang-whampoa" class="seo-link" style="text-decoration:underline;">Kallang/Whampoa</a>,
+        <a href="/hdb/marine-parade" class="seo-link" style="text-decoration:underline;">Marine Parade</a>,
+        <a href="/hdb/pasir-ris" class="seo-link" style="text-decoration:underline;">Pasir Ris</a>,
+        <a href="/hdb/punggol" class="seo-link" style="text-decoration:underline;">Punggol</a>,
+        <a href="/hdb/queenstown" class="seo-link" style="text-decoration:underline;">Queenstown</a>,
+        <a href="/hdb/sembawang" class="seo-link" style="text-decoration:underline;">Sembawang</a>,
+        <a href="/hdb/sengkang" class="seo-link" style="text-decoration:underline;">Sengkang</a>,
+        <a href="/hdb/serangoon" class="seo-link" style="text-decoration:underline;">Serangoon</a>,
+        <a href="/hdb/tampines" class="seo-link" style="text-decoration:underline;">Tampines</a>,
+        <a href="/hdb/toa-payoh" class="seo-link" style="text-decoration:underline;">Toa Payoh</a>,
+        <a href="/hdb/woodlands" class="seo-link" style="text-decoration:underline;">Woodlands</a>,
+        <a href="/hdb/yishun" class="seo-link" style="text-decoration:underline;">Yishun</a>
+        — plus private properties across all 28 Singapore districts (D01–D28).
       </p>
       <h3 class="seo-subheading" style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">Data Sources</h3>
       <p class="seo-text" style="font-size:0.875rem;line-height:1.625;">
@@ -453,10 +478,10 @@
   <!-- Toast notification -->
   <div id="toast" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium shadow-lg pointer-events-none" style="bottom: calc(5rem + env(safe-area-inset-bottom, 0px));"></div>
 
-  <script src="/config.js?v=6"></script>
-  <script src="/js/api.js?v=6"></script>
-  <script src="/js/charts.js?v=6"></script>
-  <script src="/js/map.js?v=6"></script>
-  <script src="/js/app.js?v=6"></script>
+  <script src="/config.js?v=10"></script>
+  <script src="/js/api.js?v=10"></script>
+  <script src="/js/charts.js?v=10"></script>
+  <script src="/js/map.js?v=10"></script>
+  <script src="/js/app.js?v=10"></script>
 </body>
 </html>

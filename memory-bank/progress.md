@@ -139,8 +139,16 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ⚠️ FAQ rich results deprecated by Google as of May 7, 2026 — FAQPage JSON-LD kept (harmless) but won't show rich result cards; BreadcrumbList + content injection still fully valuable
 - 🔲 Submit sitemap to Google Search Console (manual — GSC → Sitemaps → `sitemap.xml`)
 
+## Automation — Jun 2026
+
+- ✅ GitHub Actions workflow for automated data refresh (Jun 2026):
+  - `.github/workflows/refresh-data.yml` — daily 04:00 SGT cron + `workflow_dispatch` manual trigger
+  - Reuses existing `npm run download` + `npm run deploy:data` scripts verbatim; no changes to Python scripts or package.json
+  - Requires two repo secrets to be added by user: `URA_API_ACCESS_KEY` + `FLY_API_TOKEN` (scoped deploy token)
+  - To switch to weekly: change cron from `0 20 * * *` to `0 20 * * 0`
+
 ## What's Left to Build / Improve (Active)
-- (no active items)
+- 🔲 Add two GitHub repo secrets (`URA_API_ACCESS_KEY`, `FLY_API_TOKEN`) and trigger first manual test run
 
 ## What's Left to Build / Improve
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)

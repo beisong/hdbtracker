@@ -306,6 +306,20 @@ Google deprecated FAQ rich results — they no longer appear in SERPs. FAQPage J
 - Fixed server crash on missing database (graceful startup)
 - DB middleware rejects other API calls with 503 when DB is missing
 
+## Automated Data Refresh — Jun 2026
+
+- **GitHub Actions workflow added**: `.github/workflows/refresh-data.yml`
+- Runs `npm run download` (full HDB + URA rebuild) → `npm run deploy:data` (WAL checkpoint + SFTP to Fly + atomic swap + machine restart)
+- Schedule: **daily 04:00 SGT** (cron `0 20 * * *` UTC); change to `0 20 * * 0` to switch to weekly (Mondays)
+- `workflow_dispatch` trigger allows manual on-demand runs from the Actions tab
+- Concurrency group `refresh-data` with `cancel-in-progress: false` prevents overlapping uploads
+- Timeout: 30 minutes
+- **Required repo secrets** (Settings → Secrets → Actions → Repository secrets):
+  - `URA_API_ACCESS_KEY` — from local `.env`
+  - `FLY_API_TOKEN` — scoped deploy token: `fly tokens create deploy -a worthit-api` (default expiry ~1 year — set calendar reminder)
+- **Limitations accepted**: full DB rebuild + Fly restart every run even if source data unchanged; GitHub cron auto-disables after 60 days repo inactivity; failure alerts via GitHub's default email only
+- DB is never committed — built on runner disk, shipped straight to Fly; GitHub's 100MB file limit does not apply
+
 ## Active Decisions & Considerations
 - Database is opened in `readonly: true` mode — data only changes via Python scripts
 - In-memory caches for geocoding and nearby streets (no persistence)

@@ -18,7 +18,7 @@
     "download-ura": "node scripts/run-python.js scripts/download_ura_data.py",
     "deploy:frontend": "npm test && node scripts/bump-version.js && node scripts/deploy-frontend.js",
     "deploy:api": "npm test && fly deploy",
-    "deploy:data": "fly machines start e7845746c2d918 && sleep 5 && python3 -c \"import sqlite3; db=sqlite3.connect('server/db/resale.db'); db.execute('PRAGMA wal_checkpoint(TRUNCATE)'); db.close(); print('WAL checkpointed')\" && fly ssh sftp put server/db/resale.db /data/resale.db.new && fly ssh console --command \"mv /data/resale.db.new /data/resale.db && rm -f /data/resale.db-wal /data/resale.db-shm\" && fly machines restart e7845746c2d918",
+    "deploy:data": "fly machines start e7845746c2d918 && sleep 10 && python3 -c \"import sqlite3; db=sqlite3.connect('server/db/resale.db'); db.execute('PRAGMA wal_checkpoint(TRUNCATE)'); db.close(); print('WAL checkpointed')\" && fly ssh sftp put server/db/resale.db /data/resale.db.new && fly ssh console --command \"mv /data/resale.db.new /data/resale.db && rm -f /data/resale.db-wal /data/resale.db-shm\" && fly machines restart e7845746c2d918",
     "deploy": "npm test && node scripts/bump-version.js && fly deploy && node scripts/deploy-frontend.js"
   },
   "dependencies": {

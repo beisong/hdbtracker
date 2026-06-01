@@ -1,7 +1,7 @@
 # Automated daily data refresh — HDB + URA
 #
-# Runs at 04:00 Singapore time (SGT = UTC+8) every day.
-# To switch to weekly (Monday 04:00 SGT), change the cron to: '0 20 * * 0'
+# Runs at 03:00 Singapore time (SGT = UTC+8) every day.
+# To switch to weekly (Monday 03:00 SGT), change the cron to: '0 19 * * 0'
 #
 # Required repo secrets (Settings → Secrets and variables → Actions):
 #   URA_API_ACCESS_KEY  — URA API access key (copy from .env)
@@ -13,7 +13,7 @@ name: Refresh Data
 
 on:
   schedule:
-    - cron: '0 20 * * *'   # 20:00 UTC = 04:00 SGT daily
+    - cron: '0 19 * * *'   # 19:00 UTC = 03:00 SGT daily
   workflow_dispatch:         # allow manual trigger from the Actions tab
 
 # Prevent two runs overlapping and corrupting a concurrent DB upload
@@ -44,16 +44,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
-
-      # run-python.js creates the venv and pip-installs requirements.txt itself,
-      # but pre-warming the pip cache here speeds up cold runs.
-      - name: Pre-install Python dependencies
-        run: pip install -r requirements.txt
 
       - name: Install flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@v1
+
+      - name: Alias flyctl as fly
+        run: sudo ln -sf $(which flyctl) /usr/local/bin/fly
 
       # ── Build ─────────────────────────────────────────────────────────────
       # Runs download_data.py (HDB) then download_ura_data.py (URA).

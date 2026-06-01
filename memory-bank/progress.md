@@ -98,6 +98,14 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Private project search routing bug fixed — 55 projects containing town names (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES") were incorrectly routed to HDB town pages; fixed in `/api/resolve` by removing `inputUpper.includes(t)` and adding word-boundary check to `t.includes(inputUpper)` (May 2026)
 - ✅ psm→psf internal variable and ID renaming — magic number `10.7639` consolidated to helpers only; sort values, HTML IDs, and JS variable names all renamed to match display unit (May 2026)
 
+## Map & Performance — Jun 2026
+
+- ✅ Lease shown at top of all map popups (Jun 2026) — all 4 popup types display `Xy lease` in the subtitle line using most recent transaction's `remaining_lease_years`; null-safe (omitted if absent)
+- ✅ Distance-based nearby HDB for private project map (Jun 2026):
+  - Server (`/api/nearby-hdb`): replaced `street_name IN (...)` (radius-leaking) with exact `(block || '|' || street_name) IN (...)` pairs from `findNearbyHdbBlocks()`; dropped redundant `town` lookup; attaches `lat`/`lng` to each transaction from `hdb_block_coords` via `coordByKey`
+  - Client (`addNearbyHDB()` in `map.js`): now synchronous; dropped `API.geocodeAddresses()` call entirely; uses pre-attached coords from server
+  - New integration test file `tests/integration/nearby-hdb.test.js` (5 tests); updated unit tests — removed stale geocode-cap test, added 2 new tests; total: 163 tests
+
 ## UI & Infra Fixes — Jun 2026
 
 - ✅ Share button added to navbar (beside dark mode toggle) — `#nav-share-btn` reuses `.theme-toggle` CSS; always visible at top of page (Jun 2026)
@@ -132,7 +140,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - 🔲 Submit sitemap to Google Search Console (manual — GSC → Sitemaps → `sitemap.xml`)
 
 ## What's Left to Build / Improve (Active)
-- 🔲 **Private project search: distance-based nearby HDB** — when viewing a private project, `addNearbyHDB()` currently geocodes nearby HDB addresses via the `/api/geocode` endpoint (street-name-based). It should instead use `hdb_block_coords` distance query (same approach as postal code searches) to find nearby HDB blocks by lat/lng, then fetch their transactions — no geocoding round-trip needed.
+- (no active items)
 
 ## What's Left to Build / Improve
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)

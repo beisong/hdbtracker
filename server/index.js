@@ -1533,37 +1533,36 @@ app.get('/api/nearby-hdb', async (req, res) => {
       return res.json({ transactions: [], streets: [] });
     }
 
-    const nearbyStreets = [...new Set(nearbyBlocks.map(b => b.street_name))];
-    const streetClause = nearbyStreets.map(() => '?').join(',');
-
-    // 2. Find which town these streets belong to
-    const townRow = db.prepare(`
-      SELECT DISTINCT town FROM transactions
-      WHERE dataset_source != 'URA_PRIVATE'
-        AND street_name IN (${streetClause})
-      LIMIT 1
-    `).get(...nearbyStreets);
-
-    if (!townRow) {
-      return res.json({ transactions: [], streets: nearbyStreets });
+    // Build coord lookup and exact block-pair keys (same pattern as /api/area-overview)
+    const coordByKey = {};
+    for (const b of nearbyBlocks) {
+      coordByKey[`${b.block}|${b.street_name}`] = { lat: b.lat, lng: b.lng };
     }
+    const blockKeys = Object.keys(coordByKey);
+    const blockClause = blockKeys.map(() => '?').join(',');
+    const nearbyStreets = [...new Set(nearbyBlocks.map(b => b.street_name))];
 
-    const town = townRow.town;
     const monthsAgo12 = monthsAgoStr(12);
 
-    // 3. Get HDB transactions for nearby blocks, last 12 months
-    const transactions = db.prepare(`
+    // 2. Get HDB transactions for exact nearby blocks, last 12 months
+    const rawTransactions = db.prepare(`
       SELECT month, town, flat_type, block, street_name, storey_range,
              floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
       FROM transactions
       WHERE dataset_source != 'URA_PRIVATE'
-        AND town = ?
-        AND street_name IN (${streetClause})
+        AND (block || '|' || street_name) IN (${blockClause})
         AND resale_price IS NOT NULL
         AND month >= ?
       ORDER BY month DESC, resale_price DESC
       LIMIT 200
-    `).all(town, ...nearbyStreets, monthsAgo12);
+    `).all(...blockKeys, monthsAgo12);
+
+    // Attach lat/lng from hdb_block_coords — no geocoding needed on the client
+    const transactions = rawTransactions.map(tx => {
+      const key = `${tx.block}|${tx.street_name}`;
+      const coords = coordByKey[key] || {};
+      return { ...tx, lat: coords.lat ?? null, lng: coords.lng ?? null };
+    });
 
     // 4. Also get nearby private projects from project_coords
     const nearbyProjects = db.prepare(`
@@ -1610,7 +1609,7 @@ app.get('/api/nearby-hdb', async (req, res) => {
       }
     }
 
-    res.json({ transactions, streets: nearbyStreets, town, nearby_projects: nearbyProjects });
+    res.json({ transactions, streets: nearbyStreets, nearby_projects: nearbyProjects });
   } catch (err) {
     console.error('Error in /api/nearby-hdb:', err);
     res.status(500).json({ error: 'Failed to get nearby HDB: ' + err.message });

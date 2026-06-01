@@ -227,21 +227,44 @@ describe('TransactionMap.load — geocode address cap', () => {
   });
 });
 
-describe('TransactionMap.addNearbyHDB — geocode address cap', () => {
+describe('TransactionMap.addNearbyHDB — pre-attached coords (no geocoding)', () => {
+  // Transactions now carry lat/lng from the server; addNearbyHDB must not call geocodeAddresses.
   function makeTx(i) {
-    return { block: String(i + 1), street_name: `STREET ${i + 1}`, month: '2025-01', resale_price: 500000, price_per_sqm: 5000, flat_type: '4 ROOM', floor_area_sqm: 90, storey_range: '07 TO 09' };
+    return {
+      block: String(i + 1), street_name: `STREET ${Math.floor(i / 5) + 1}`,
+      month: '2025-01', resale_price: 500000, price_per_sqm: 5000,
+      flat_type: '4 ROOM', floor_area_sqm: 90, storey_range: '07 TO 09',
+      lat: 1.3 + i * 0.0001, lng: 103.8 + i * 0.0001,
+    };
   }
 
-  it('sends ≤ 100 addresses even when given 150 unique-address transactions', async () => {
-    let capturedAddresses = null;
-    ctx.API.geocodeAddresses = (addresses) => {
-      capturedAddresses = addresses;
-      throw new Error('spy stop');
-    };
+  it('does not call geocodeAddresses — uses coords attached to transactions', () => {
+    let geocodeCalled = false;
+    ctx.API.geocodeAddresses = () => { geocodeCalled = true; return Promise.resolve({ results: [] }); };
     TransactionMap.map = { on: () => {}, setView: () => {}, addLayer: () => {}, getBounds: () => ({ extend: () => {} }), fitBounds: () => {} };
-    const transactions = Array.from({ length: 150 }, (_, i) => makeTx(i));
-    await TransactionMap.addNearbyHDB(transactions);
-    expect(capturedAddresses).not.toBeNull();
-    expect(capturedAddresses.length).toBeLessThanOrEqual(100);
+    const transactions = Array.from({ length: 10 }, (_, i) => makeTx(i));
+    TransactionMap.addNearbyHDB(transactions);
+    expect(geocodeCalled).toBe(false);
+  });
+
+  it('caps at 200 transactions even when given more', () => {
+    const addedMarkers = [];
+    TransactionMap.map = {
+      on: () => {}, setView: () => {}, addLayer: () => {},
+      getBounds: () => ({ extend: () => {} }), fitBounds: () => {},
+    };
+    // Patch circleMarker to count how many markers are created
+    const origCircleMarker = ctx.L.circleMarker;
+    ctx.L.circleMarker = (...args) => {
+      const m = origCircleMarker(...args);
+      addedMarkers.push(m);
+      return m;
+    };
+    // 250 transactions, all with coords
+    const transactions = Array.from({ length: 250 }, (_, i) => makeTx(i));
+    TransactionMap.addNearbyHDB(transactions);
+    ctx.L.circleMarker = origCircleMarker;
+    // At most 200 transactions fed into address groups → at most 200 markers
+    expect(addedMarkers.length).toBeLessThanOrEqual(200);
   });
 });

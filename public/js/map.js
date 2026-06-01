@@ -51,37 +51,14 @@ const TransactionMap = {
     this.render(markerData, resolvedData);
   },
 
-  async addNearbyHDB(transactions) {
-    // Add nearby HDB transactions to an existing map (after private project render)
+  addNearbyHDB(transactions) {
+    // Add nearby HDB transactions to an existing map (after private project render).
+    // Transactions already carry lat/lng from the server — no geocoding needed.
     if (!this.map || !transactions || transactions.length === 0) return;
 
-    // Geocode HDB addresses
-    const seen = new Set();
-    const uniqueAddresses = [];
-    for (const tx of transactions) {
-      const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniqueAddresses.push({ block: tx.block, street_name: tx.street_name });
-        if (uniqueAddresses.length >= 100) break;
-      }
-    }
+    const markerData = transactions.filter(tx => tx.lat != null && tx.lng != null).slice(0, 200);
 
     try {
-      const geoResult = await API.geocodeAddresses(uniqueAddresses);
-      const geoMap = {};
-      for (const r of geoResult.results) {
-        if (r.lat && r.lng) geoMap[r.query] = { lat: r.lat, lng: r.lng };
-      }
-
-      const markerData = [];
-      for (const tx of transactions) {
-        const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
-        if (geoMap[key]) {
-          markerData.push({ ...tx, lat: geoMap[key].lat, lng: geoMap[key].lng });
-        }
-        if (markerData.length >= 200) break;
-      }
 
       // Group by address
       const addressGroups = {};

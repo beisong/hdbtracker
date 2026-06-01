@@ -7,6 +7,17 @@ The project is fully deployed and functional:
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
+## Recent Changes (Jun 2026 — Map & Performance)
+
+- **Lease shown at top of all map popups** — all 4 popup types now display `Xy lease` in the subtitle line (most recent transaction's `remaining_lease_years`): `addNearbyHDB` markers, main search markers, private project nearby markers (`addNearbyProjects`), and the private project pin popup
+- **Distance-based nearby HDB for private project searches** — eliminated geocoding round-trip when viewing a private project's map:
+  - **Before**: `addNearbyHDB()` collected unique addresses, posted to `/api/geocode` (OneMap/Nominatim HTTP calls), built `geoMap`, then placed markers
+  - **After**: `/api/nearby-hdb` now attaches `lat`/`lng` from `hdb_block_coords` to each returned transaction; `addNearbyHDB()` is now synchronous and places markers directly from the pre-attached coords
+  - **Server fix** (`/api/nearby-hdb`): replaced `street_name IN (...)` filter (whole streets, radius leak) with exact `(block || '|' || street_name) IN (...)` pairs — mirrors `/api/area-overview` pattern; dropped redundant `town` lookup query; attaches `lat`/`lng` to every returned transaction from `hdb_block_coords` via `coordByKey` map
+  - **Client fix** (`map.js` `addNearbyHDB()`): removed `async`, removed all geocoding code; builds `markerData` from `transactions.filter(tx => tx.lat != null && tx.lng != null).slice(0, 200)` directly
+  - **Tests**: added `tests/integration/nearby-hdb.test.js` (5 happy-path tests: 200 response, lat/lng on every tx, radius exclusion of BEDOK SOUTH AVE 1, nearby_projects array, empty result for no-HDB area); updated frontend unit test — removed stale geocode-cap test, added 2 new tests (no geocodeAddresses called, 200-tx cap)
+  - **Test count**: 162 → 163 (net +1 after removing obsolete geocode-cap test)
+
 ## Recent Changes (Jun 2026 — UI & Infra)
 
 - **Navbar share button** — `#nav-share-btn` added beside dark mode toggle; reuses `.theme-toggle` CSS class; always visible (not hidden behind results section)

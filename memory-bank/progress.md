@@ -139,16 +139,18 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ⚠️ FAQ rich results deprecated by Google as of May 7, 2026 — FAQPage JSON-LD kept (harmless) but won't show rich result cards; BreadcrumbList + content injection still fully valuable
 - 🔲 Submit sitemap to Google Search Console (manual — GSC → Sitemaps → `sitemap.xml`)
 
-## Automation — Jun 2026
+## Automation — Jun 2026 (WORKING)
 
-- ✅ GitHub Actions workflow for automated data refresh (Jun 2026):
-  - `.github/workflows/refresh-data.yml` — daily 04:00 SGT cron + `workflow_dispatch` manual trigger
-  - Reuses existing `npm run download` + `npm run deploy:data` scripts verbatim; no changes to Python scripts or package.json
-  - Requires two repo secrets to be added by user: `URA_API_ACCESS_KEY` + `FLY_API_TOKEN` (scoped deploy token)
-  - To switch to weekly: change cron from `0 20 * * *` to `0 20 * * 0`
+- ✅ GitHub Actions workflow for automated data refresh — verified end-to-end (Jun 2026):
+  - `.github/workflows/refresh-data.yml` — daily **03:00 SGT** cron (`0 19 * * *`) + `workflow_dispatch` manual trigger
+  - Node 24; flyctl installed via `setup-flyctl@v1` + aliased to `fly`
+  - Repo secrets: `URA_API_ACCESS_KEY` + `FLY_API_TOKEN` (**org token** via `fly tokens create org` — deploy tokens can't issue SSH certs)
+  - To switch to weekly: change cron to `0 19 * * 0`
+  - `deploy:data` updated: gzip-compress DB before SFTP (107MB→~21MB to avoid connection drops), `gunzip` on server, remote multi-step command wrapped in `sh -c '...'` (flyctl `--command` doesn't run a shell), `sleep` 5→10s
+  - See activeContext.md "Automated Data Refresh" for full gotcha list
 
 ## What's Left to Build / Improve (Active)
-- 🔲 Add two GitHub repo secrets (`URA_API_ACCESS_KEY`, `FLY_API_TOKEN`) and trigger first manual test run
+- (no active items)
 
 ## What's Left to Build / Improve
 - ✅ Automated tests — 127 tests, 9 test files (unit + integration) using Vitest + supertest (May 2026)

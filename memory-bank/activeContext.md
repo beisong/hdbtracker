@@ -306,19 +306,32 @@ Google deprecated FAQ rich results — they no longer appear in SERPs. FAQPage J
 - Fixed server crash on missing database (graceful startup)
 - DB middleware rejects other API calls with 503 when DB is missing
 
-## Automated Data Refresh — Jun 2026
+## Automated Data Refresh — Jun 2026 (WORKING)
 
-- **GitHub Actions workflow added**: `.github/workflows/refresh-data.yml`
-- Runs `npm run download` (full HDB + URA rebuild) → `npm run deploy:data` (WAL checkpoint + SFTP to Fly + atomic swap + machine restart)
-- Schedule: **daily 04:00 SGT** (cron `0 20 * * *` UTC); change to `0 20 * * 0` to switch to weekly (Mondays)
+- **GitHub Actions workflow**: `.github/workflows/refresh-data.yml` — verified working end-to-end
+- Runs `npm run download` (full HDB + URA rebuild) → `npm run deploy:data` (WAL checkpoint + gzip + SFTP to Fly + gunzip + atomic swap + machine restart)
+- Schedule: **daily 03:00 SGT** (cron `0 19 * * *` UTC); change to `0 19 * * 0` to switch to weekly (Mondays)
 - `workflow_dispatch` trigger allows manual on-demand runs from the Actions tab
 - Concurrency group `refresh-data` with `cancel-in-progress: false` prevents overlapping uploads
-- Timeout: 30 minutes
-- **Required repo secrets** (Settings → Secrets → Actions → Repository secrets):
-  - `URA_API_ACCESS_KEY` — from local `.env`
-  - `FLY_API_TOKEN` — scoped deploy token: `fly tokens create deploy -a worthit-api` (default expiry ~1 year — set calendar reminder)
-- **Limitations accepted**: full DB rebuild + Fly restart every run even if source data unchanged; GitHub cron auto-disables after 60 days repo inactivity; failure alerts via GitHub's default email only
-- DB is never committed — built on runner disk, shipped straight to Fly; GitHub's 100MB file limit does not apply
+- Node 24, Python 3.x (venv created by `run-python.js`), timeout 30 min
+- `superfly/flyctl-actions/setup-flyctl@v1` installs `flyctl`; workflow has an **"Alias flyctl as fly"** step (`ln -sf` to `/usr/local/bin/fly`) because npm scripts call `fly`, not `flyctl`
+
+### Required repo secrets (Settings → Secrets → Actions → Repository secrets)
+- `URA_API_ACCESS_KEY` — from local `.env`
+- `FLY_API_TOKEN` — **must be an ORG token** (`fly tokens create org`), NOT a deploy token. A scoped deploy token CANNOT issue SSH certificates, so `fly ssh sftp`/`fly ssh console` fail with `create ssh certificate: ... 500`. Org token has SSH access. (Expiry ~1 year — set calendar reminder.)
+
+### Gotchas hit while setting this up (don't re-debug these)
+- **Pushing workflow files** requires the `workflow` OAuth scope (`gh auth refresh -s workflow`) AND `gh auth setup-git` so git uses gh's token. VS Code git widget caches its own token and may still fail — push from CLI.
+- **`npm ci` requires `package-lock.json` in sync** — regenerate with `npm install` if it errors on missing transitive deps (e.g. `@emnapi/*` under better-sqlite3).
+- **`fly ssh console --command` does NOT run a shell** — it shlex-splits and execs directly, so `&&` is passed as a literal arg. Multi-step remote commands MUST be wrapped in `sh -c '...'` for `&&` chaining to work. This is now in `deploy:data`.
+- **Large DB SFTP drops mid-transfer** (`connection lost` at ~67MB on the 107MB file). Fixed by gzip-compressing before upload (107MB → ~21MB): `gzip -kf` locally, upload `.gz`, `gunzip -f` on server inside the `sh -c`.
+- `sleep` after `fly machines start` bumped 5→10s for cold-start reliability.
+
+### Limitations accepted
+- Full DB rebuild + Fly restart every run even if source data unchanged (no skip-guard)
+- GitHub cron auto-disables after 60 days repo inactivity
+- Failure alerts via GitHub's default email only
+- DB never committed — built on runner disk, shipped straight to Fly; GitHub's 100MB file limit does not apply
 
 ## Active Decisions & Considerations
 - Database is opened in `readonly: true` mode — data only changes via Python scripts

@@ -6,6 +6,7 @@ server/db/*.db
 server/db/*.db-shm
 server/db/*.db-wal
 .history/
+.claude/
 fly.ssh
 fly.ssh-cert.pub
 .wrangler/

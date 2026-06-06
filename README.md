@@ -2,6 +2,10 @@
 
 Instantly check if a Singapore HDB resale flat or private property is fairly priced based on real transaction data from data.gov.sg and URA.
 
+### 🔗 Live site: **[worthit.canlah.app](https://worthit.canlah.app)**
+
+A free tool for Singapore homeowners and buyers — check HDB resale prices, condo transaction history, price trends, and fair-value estimates for any town, district, or project.
+
 ## Architecture
 
 WorthIt uses a **split architecture**:

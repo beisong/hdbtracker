@@ -102,6 +102,44 @@ function seedHdbBlockCoords(dbPath) {
   }
 }
 
+// ------------------------------------------------------------
+// Feedback store — SEPARATE writable DB, NOT resale.db.
+// resale.db is opened read-only and is replaced wholesale on every
+// data refresh (mv resale.db.new resale.db), which would wipe feedback.
+// feedback.db lives on the same volume but survives those refreshes.
+// ------------------------------------------------------------
+const FEEDBACK_DB_PATH = process.env.FEEDBACK_DB_PATH || path.join(path.dirname(DB_PATH), 'feedback.db');
+let feedbackDb = null;
+try {
+  feedbackDb = new Database(FEEDBACK_DB_PATH);
+  feedbackDb.pragma('journal_mode = WAL');
+  feedbackDb.exec(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      message    TEXT NOT NULL,
+      email      TEXT,
+      route      TEXT,
+      user_agent TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  console.log(`✅ Feedback DB ready: ${FEEDBACK_DB_PATH}`);
+} catch (err) {
+  console.warn(`⚠️  Could not open feedback DB at ${FEEDBACK_DB_PATH}: ${err.message}`);
+}
+
+// Simple in-memory rate limit: max 5 feedback submissions per IP per hour
+const feedbackRate = new Map();
+function feedbackRateLimited(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000;
+  const hits = (feedbackRate.get(ip) || []).filter((t) => now - t < windowMs);
+  if (hits.length >= 5) { feedbackRate.set(ip, hits); return true; }
+  hits.push(now);
+  feedbackRate.set(ip, hits);
+  return false;
+}
+
 // Health check (always responds, even without DB — must be before the DB middleware)
 app.get('/api/status', (req, res) => {
   if (db) {
@@ -114,6 +152,39 @@ app.get('/api/status', (req, res) => {
     }
   } else {
     res.json({ status: 'no_database', db_path: DB_PATH, message: 'Run download scripts via SSH' });
+  }
+});
+
+// Feedback submission — writes to the separate feedback.db (registered before
+// the DB-guard middleware so it works even while resale.db is missing/refreshing).
+app.post('/api/feedback', (req, res) => {
+  if (!feedbackDb) return res.status(503).json({ error: 'Feedback store unavailable' });
+
+  const body = req.body || {};
+  // Honeypot: a hidden field humans never see — bots fill it. Pretend success.
+  if (body.website) return res.json({ ok: true });
+
+  const message = String(body.message || '').trim();
+  if (!message) return res.status(400).json({ error: 'Message is required' });
+  if (message.length > 4000) return res.status(400).json({ error: 'Message too long' });
+
+  const email = String(body.email || '').trim().slice(0, 200) || null;
+  const route = String(body.route || '').trim().slice(0, 300) || null;
+  const userAgent = String(req.headers['user-agent'] || '').slice(0, 400) || null;
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'unknown';
+  if (feedbackRateLimited(ip)) {
+    return res.status(429).json({ error: 'Too many submissions — please try again later.' });
+  }
+
+  try {
+    feedbackDb
+      .prepare('INSERT INTO feedback (message, email, route, user_agent) VALUES (?, ?, ?, ?)')
+      .run(message, email, route, userAgent);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Feedback insert failed:', err.message);
+    res.status(500).json({ error: 'Failed to save feedback' });
   }
 });
 

@@ -14,6 +14,16 @@ const API = {
     return resp.json();
   },
 
+  async sendFeedback(payload) {
+    const resp = await fetch(`${this.baseUrl}/api/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) throw new Error('Failed to send feedback');
+    return resp.json();
+  },
+
   async getTowns() {
     const resp = await fetch(`${this.baseUrl}/api/towns`);
     if (!resp.ok) throw new Error('Failed to fetch towns');

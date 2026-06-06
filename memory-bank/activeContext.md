@@ -7,6 +7,14 @@ The project is fully deployed and functional:
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
+## Recent Changes (Jun 2026 — In-app feedback)
+
+- **Feedback button + modal** — `#feedback-btn` in navbar (reuses `.theme-toggle` CSS, beside dark-mode toggle); opens `#feedback-modal` (one textarea + optional email + hidden honeypot field). Submit reuses `showToast('Thanks for the feedback 🙏')`. GA4 events `feedback_open` / `feedback_submit`. Auto-attaches `route` (`pathname + search`) as context; server also records `user_agent`.
+- **`POST /api/feedback`** (`server/index.js`) — validates (message required, ≤4000 chars), honeypot (`website` field → silent `{ok:true}`, no write), per-IP rate limit (5/hour, in-memory `feedbackRate` Map). Registered **before** the `/api/` DB-guard middleware so it works even while `resale.db` is missing/refreshing.
+- **Separate `feedback.db`** — feedback is written to its OWN SQLite file (`FEEDBACK_DB_PATH`, default `path.dirname(DB_PATH)/feedback.db` → `/data/feedback.db` in prod), opened read-write. **NOT inside `resale.db`** because resale.db is read-only AND replaced wholesale on every data refresh (`mv resale.db.new resale.db`), which would wipe a table inside it. Auto-created on boot; already covered by `.gitignore` (`server/db/*.db`).
+- **Cache-bust** bumped `v=12` → `v=13` (HTML/JS changed).
+- **Read feedback**: `node -e "const D=require('better-sqlite3');const db=new D('/data/feedback.db',{readonly:true});console.log(db.prepare('SELECT * FROM feedback ORDER BY id DESC').all())"` (run via `fly ssh console` in prod).
+
 ## Recent Changes (Jun 2026 — Map & Performance)
 
 - **Lease shown at top of all map popups** — all 4 popup types now display `Xy lease` in the subtitle line (most recent transaction's `remaining_lease_years`): `addNearbyHDB` markers, main search markers, private project nearby markers (`addNearbyProjects`), and the private project pin popup

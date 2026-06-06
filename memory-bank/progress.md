@@ -16,6 +16,7 @@
 - ✅ Map visualization with transaction markers
 - ✅ SPA frontend with Tailwind CSS + Chart.js
 - ✅ Mobile-responsive design
+- ✅ In-app feedback (navbar button → modal → `POST /api/feedback` → separate writable `feedback.db`; honeypot + 5/hr per-IP rate limit; captures route + user_agent)
 - ✅ District code search with private property overview
 - ✅ Town ↔ district mapping
 - ✅ Server graceful startup without database

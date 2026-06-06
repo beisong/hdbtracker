@@ -256,6 +256,16 @@ const App = {
       input.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setTimeout(() => input.focus(), 400);
     });
+
+    // Feedback modal
+    document.getElementById('feedback-btn').addEventListener('click', () => this.openFeedback());
+    document.getElementById('feedback-close').addEventListener('click', () => this.closeFeedback());
+    document.getElementById('feedback-cancel').addEventListener('click', () => this.closeFeedback());
+    document.getElementById('feedback-backdrop').addEventListener('click', () => this.closeFeedback());
+    document.getElementById('feedback-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitFeedback();
+    });
   },
 
   _updateFlatTypeUI() {
@@ -290,6 +300,43 @@ const App = {
     } else {
       this.track('share', { method: 'clipboard', page_path: window.location.pathname });
       navigator.clipboard.writeText(url).then(() => this.showToast('Link copied!')).catch(() => this.showToast('Copy failed'));
+    }
+  },
+
+  openFeedback() {
+    const modal = document.getElementById('feedback-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    this.track('feedback_open', { page_path: window.location.pathname });
+    setTimeout(() => document.getElementById('feedback-message')?.focus(), 50);
+  },
+
+  closeFeedback() {
+    document.getElementById('feedback-modal')?.classList.add('hidden');
+  },
+
+  async submitFeedback() {
+    const message = document.getElementById('feedback-message').value.trim();
+    if (!message) { this.showToast('Please enter some feedback'); return; }
+    const email = document.getElementById('feedback-email').value.trim();
+    const website = document.getElementById('feedback-website').value; // honeypot
+    const submitBtn = document.getElementById('feedback-submit');
+    submitBtn.disabled = true;
+    try {
+      await API.sendFeedback({
+        message,
+        email,
+        website,
+        route: window.location.pathname + window.location.search,
+      });
+      this.track('feedback_submit', { page_path: window.location.pathname });
+      this.closeFeedback();
+      document.getElementById('feedback-form').reset();
+      this.showToast('Thanks for the feedback 🙏');
+    } catch (err) {
+      this.showToast('Could not send — please try again');
+    } finally {
+      submitBtn.disabled = false;
     }
   },
 

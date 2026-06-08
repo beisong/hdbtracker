@@ -1,9 +1,12 @@
 'use strict';
 const Database = require('better-sqlite3');
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
-// Must match vitest.config.js test.env.DB_PATH
-const FIXTURE_DB_PATH = '/tmp/worthornot-test.db';
+// Cross-platform temp path (Windows has no /tmp). vitest.config.js imports this
+// so the fixture DB and the server's DB_PATH always agree.
+const FIXTURE_DB_PATH = path.join(os.tmpdir(), 'worthornot-test.db');
 
 function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   // Remove existing file so we get a clean slate each test run

@@ -7,6 +7,44 @@ The project is fully deployed and functional:
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
+## DEPLOYED (Jun 2026) + Cloudflare AI-bot block finding
+
+- **Deployed** the full SEO batch via `npm run deploy` (API to Fly + frontend to Cloudflare Pages); cache bumped to **v=19**; live `latest_month` now **2026-06**. Verified live: town×flat-type bot injection works (Googlebot gets correct title + FAQ prose on `/hdb/tampines/4-room`), E-E-A-T pages serve 200.
+- **Bugfix during deploy**: E-E-A-T pages first 308-looped — the edge requested `/about.html` from ASSETS, which Cloudflare Pages 308-redirects to the clean `/about` (re-entering the function → loop). Fixed by fetching the **original clean URL** (`env.ASSETS.fetch(request)`) for `STATIC_PAGES`; redeployed frontend. Now 200.
+- **✅ RESOLVED — Cloudflare was blocking ClaudeBot + PerplexityBot (403)** via AI Crawl Control's "Block AI Bots" managed rule. User set **AI Crawl Control → Block AI Bots Scope → "Do not block (allow crawlers)"** on the `canlah.app` zone. Now verified live: ClaudeBot, PerplexityBot, GPTBot, OAI-SearchBot, Googlebot, bingbot all → 200, and ClaudeBot receives the full injected title + FAQ prose on `/hdb/tampines/4-room`. The `BOT_PATTERNS` + robots.txt AI-bot work is now effective end-to-end. (If AI crawlers ever need re-blocking, that's the dashboard setting to revisit.)
+
+## Recent Changes (Jun 2026 — E-E-A-T content pages: About / Methodology / Data Sources)
+
+Three standalone static trust pages (important for a YMYL/financial topic). 171 tests pass (2 new in `tests/integration/seo.test.js`).
+
+- **New files**: `public/about.html`, `public/methodology.html`, `public/data-sources.html` — self-contained (own head/meta/canonical/OG/JSON-LD, Tailwind CDN + brand config, anti-FOUC dark mode, GA4, minimal nav + footer; no app.js dependency). Honest copy — does NOT fabricate owner/credentials; methodology accurately describes the real Deal Score (ratio = sale $/sqm ÷ nearby comparable median; green ≤0.70, blue ≈1.0, red ≥1.30), $/sqm trend with 3-month rolling avg, percentiles, sqft conversion (×10.7639). data-sources has the **"Not financial advice" disclaimer** + source provenance (data.gov.sg/URA/OneMap) + refresh cadence + limitations. JSON-LD: AboutPage+Organization, TechArticle+BreadcrumbList, Dataset+BreadcrumbList.
+- **URL = `/data-sources`, NOT `/data`** — `public/data/` already exists (holds `mrt_stations.json` used by `map.js`); `express.static` 301-redirects `/data`→`/data/`, so the page would never serve. Used `/data-sources` (also a better slug). Filename `data-sources.html`.
+- **Serving**: Cloudflare edge (`functions/[[path]].js`) — added `STATIC_PAGES` map short-circuit (BEFORE bot detection + the extension check) → serves the page HTML to bots AND humans, bypassing SPA/index.html injection. Local dev / Fly origin — Express routes added for `/about`, `/methodology`, `/data-sources` just before the `app.get('*')` catch-all.
+- **Discovery**: added to sitemap (priority 0.5, monthly); footer nav links on `index.html` (About · Methodology · Data Sources); the three pages cross-link each other + home.
+- **Deployed** Jun 2026 (v=19) — verified live.
+
+## Recent Changes (Jun 2026 — SEO micro quick-wins: H1, meta length, soft-404)
+
+- **Homepage H1** (`public/index.html`) — changed generic "HDB Area Market Overview" → keyword-aligned **"Singapore HDB & Condo Resale Prices"** (h1 is a strong on-page signal; now matches the title/OG).
+- **Meta description length** — trimmed all dynamic `/api/seo/metadata` descriptions (town, town×flat-type, private, district) from 189–236 chars to **108–134** (Google truncates ~155). Same data, terser phrasing ("X sales in 12 months, avg $Y (Z psf)…").
+- **Soft-404 guard** — `/api/seo/metadata` now sets `meta.robots = 'noindex, follow'` for deep routes (`/hdb|/private|/district|/postal`) that don't resolve (detected via canonical still == homepage), but only when `db` is present (never deindex valid pages mid-refresh). Edge `injectMeta()` (`functions/[[path]].js`) now honors `meta.robots` by replacing the `<meta name="robots">` tag. Prevents indexing of junk URLs like `/hdb/notarealtown` (was 200 + homepage canonical, no noindex).
+- 169 tests pass (3 new in `tests/integration/seo.test.js`: description ≤160, noindex on unresolved, no-noindex on valid/homepage). Deployed Jun 2026 (v=19).
+
+## Recent Changes (Jun 2026 — SEO content expansion: town×flat-type, freshness, Q&A, cross-links)
+
+Second SEO batch (items 1/5/6/7 from the audit follow-up). All in `server/index.js` `/api/seo/metadata` + `/api/seo/sitemap` and `public/js/app.js` routing; 166 tests pass (5 new in `tests/integration/seo.test.js`).
+
+- **Town × flat-type pages** `/hdb/<town>/<flat-type>` (e.g. `/hdb/tampines/4-room`) — biggest new organic-traffic surface (long-tail "4 room resale price tampines" queries):
+  - New helpers near slug helpers: `FLAT_TYPE_SLUGS` / `SLUG_TO_FLAT_TYPE` (`2 ROOM`↔`2-room` … `EXECUTIVE`↔`executive`), `flatTypeLabel()` (titleCase), `fmtMonthYear()`, `faqsToHtml()`.
+  - New metadata branch (matched BEFORE the single-segment `/hdb/` branch via `/^\/hdb\/[^/]+\/[^/]+$/`): per-type median/psf/range/avg-area + YoY, unique title (`4 Room HDB Resale Price in Tampines 2026 — $X psf`), WebPage+BreadcrumbList(3-level)+FAQPage JSON-LD, content_html with sibling-type links + back-to-town + nearby-district links + FAQ prose. If `cnt===0`, canonical consolidates to the town page (no thin pages).
+  - Sitemap: adds town×flat-type URLs but only combos with `cnt>=5` over a 24-month window (HAVING filter) — ~123 extra URLs on prod.
+  - Client (`app.js`): `handleUrlRoute()` regex now `/^\/hdb\/([^/]+)(?:\/([^/]+))?$/` and pre-selects the flat type; `updateSeoForSearch()` emits `/hdb/<town>/<ft>` when exactly ONE flat type is selected (so toggling a single flat-type button changes the URL + is shareable/indexable). Multi-select or All → plain `/hdb/<town>`.
+- **Freshness signals (#5)** — `dateModified` (= `MAX(month)+'-01'`) added to every WebPage JSON-LD node (town, town×type, private, district); visible `freshnessNote` ("Data updated through <Month Year>…") appended to each content_html. Computed once near the top of the metadata handler (`latestMonth`/`dateModified`/`dataThrough`).
+- **Q&A prose for featured snippets / AI Overviews (#6)** — `faqsToHtml(faqs)` renders the existing FAQ arrays as visible `<h3>`+prose (FAQ rich results are dead, but prose still wins snippets + AI citations); appended to town, town×type, private, district content_html.
+- **Cross-linking (#7)** — town pages now: flat-type table rows link to `/hdb/<town>/<ft>`, plus a "Private Property Near <town>" block linking overlapping `TOWN_TO_DISTRICTS` districts. District pages add an "HDB Towns in <label>" block linking `DISTRICT_TO_TOWNS`. (Private already linked to its district.)
+- **Backlog tasks tracked** (not done this batch): ranking/best-of pages, comparison pages, About/methodology/data (E-E-A-T) pages, Tailwind CDN→static CSS + font-weight trim, off-site backlinks.
+- **Note**: app.js changed → `?v=` must bump on deploy; `scripts/bump-version.js` (run by `deploy`/`deploy:frontend`) handles it automatically. Deployed Jun 2026 (v=19).
+
 ## Recent Changes (Jun 2026 — SEO quick-wins pass)
 
 Differential SEO audit + safe, zero-regression fixes (Tailwind Play CDN migration was audited as the biggest CWV item but intentionally deferred — left in place by user choice):
@@ -155,7 +193,7 @@ Google deprecated FAQ rich results — they no longer appear in SERPs. FAQPage J
 - ❌ `FAQPage` JSON-LD — deprecated, no rich result cards
 
 ### Remaining steps
-- 🔲 Submit sitemap to Google Search Console (manual — go to GSC → Sitemaps → enter `sitemap.xml`)
+- ✅ Sitemap submitted to Google Search Console (Jun 2026)
 
 ## Recent Changes
 - **Test suite expanded: 130 → 158 tests** (May 2026):

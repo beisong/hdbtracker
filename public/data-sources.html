@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f9fafb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+  <title>Data Sources & Freshness — WorthIt Singapore Property Data</title>
+  <meta name="description" content="Where WorthIt's Singapore property data comes from: official HDB resale records via data.gov.sg and URA private transaction data, updated regularly. Sources, coverage, and limitations.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://worthit.canlah.app/data-sources">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/logo.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Data Sources & Freshness — WorthIt">
+  <meta property="og:description" content="Official HDB (data.gov.sg) and URA transaction data behind WorthIt — sources, update frequency, coverage, and limitations.">
+  <meta property="og:url" content="https://worthit.canlah.app/data-sources">
+  <meta property="og:site_name" content="WorthIt">
+  <meta property="og:locale" content="en_SG">
+  <meta property="og:image" content="https://worthit.canlah.app/og-image.png">
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Dataset","name":"Singapore HDB & Private Property Resale Transactions","description":"Aggregated Singapore HDB resale transactions (data.gov.sg) and URA private property transactions used by WorthIt to compute resale prices, trends, and Deal Scores.","url":"https://worthit.canlah.app/data-sources","creator":{"@type":"Organization","name":"WorthIt"},"isBasedOn":["https://data.gov.sg","https://www.ura.gov.sg"],"spatialCoverage":"Singapore","license":"https://data.gov.sg/open-data-licence"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://worthit.canlah.app/"},{"@type":"ListItem","position":2,"name":"Data Sources","item":"https://worthit.canlah.app/data-sources"}]}]}</script>
+  <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');})();</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-WGC8D0FRSQ"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-WGC8D0FRSQ');</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','system-ui','sans-serif']},colors:{brand:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a5f'},dark:{900:'#0f172a',800:'#1e293b',700:'#334155',600:'#475569'}}}}}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white font-sans min-h-screen">
+  <nav class="border-b border-gray-200 dark:border-white/5">
+    <div class="max-w-3xl mx-auto px-4 h-14 flex items-center">
+      <a href="/" class="flex items-center" style="gap:0;">
+        <img src="/logo.png" alt="WorthIt" class="w-8 h-8 rounded-lg">
+        <span class="text-lg font-bold" style="margin-left:-2px;">orthIt</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-4 py-10 sm:py-14">
+    <nav aria-label="Breadcrumb" class="text-sm text-gray-400 dark:text-gray-500 mb-4">
+      <a href="/" class="hover:underline">Home</a> <span aria-hidden="true">/</span> Data Sources
+    </nav>
+
+    <article>
+      <h1 class="text-3xl sm:text-4xl font-black mb-4">Data Sources &amp; Freshness</h1>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-6">
+        WorthIt is built entirely on official, publicly available transaction records. We do not create,
+        estimate, or adjust prices — every figure traces back to a recorded sale.
+      </p>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">Where the data comes from</h2>
+      <ul class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4 list-disc pl-6 space-y-2">
+        <li>
+          <strong>HDB resale transactions</strong> — published by the
+          <a href="https://data.gov.sg" target="_blank" rel="noopener" class="text-brand-600 dark:text-brand-400 hover:underline">Housing &amp; Development Board via data.gov.sg</a>,
+          covering completed resale flat sales across all HDB towns.
+        </li>
+        <li>
+          <strong>Private property transactions</strong> — from the
+          <a href="https://www.ura.gov.sg" target="_blank" rel="noopener" class="text-brand-600 dark:text-brand-400 hover:underline">Urban Redevelopment Authority (URA)</a>,
+          covering condominium, apartment, and executive condominium (EC) sales by district and market segment (CCR / RCR / OCR).
+        </li>
+        <li>
+          <strong>Location &amp; postal-code lookup</strong> — by
+          <a href="https://www.onemap.gov.sg" target="_blank" rel="noopener" class="text-brand-600 dark:text-brand-400 hover:underline">OneMap Singapore</a>,
+          used to place transactions on the map and power postal-code search.
+        </li>
+      </ul>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">How often it's updated</h2>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+        WorthIt refreshes its dataset automatically on a regular schedule, re-downloading the latest HDB and
+        URA records. The "Data as of …" note in the site footer always reflects the most recent transaction
+        month currently loaded. Note that the official sources themselves publish with a lag — newly
+        completed sales typically appear about a month after they happen — so the latest available month
+        will usually trail the present month.
+      </p>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">Coverage</h2>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+        The dataset spans <strong>370,000+ resale transactions</strong> across every HDB town and all 28
+        Singapore postal districts (D01–D28). Prices are shown net of any furniture, renovation, or
+        cash-over-valuation arrangements that are not part of the recorded transaction value.
+      </p>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">Limitations</h2>
+      <ul class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4 list-disc pl-6 space-y-2">
+        <li>WorthIt shows <strong>completed transactions only</strong>, not current listings or asking prices.</li>
+        <li>Figures lag the market by the source publication delay described above.</li>
+        <li>Individual prices depend on factors not always captured here — exact unit, condition, and renovation.</li>
+        <li>Data is provided "as is" from the official sources; occasional source errors or omissions may carry through.</li>
+      </ul>
+
+      <div class="rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-4 text-sm text-amber-900 dark:text-amber-200 mt-6">
+        <strong>Not financial advice.</strong> WorthIt is an informational tool. The prices, trends, and
+        Deal Scores shown are for general reference only and are not financial, investment, valuation, or
+        property advice. Always conduct your own due diligence and consult qualified professionals before
+        making a property decision.
+      </div>
+
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-8 border-t border-gray-200 dark:border-white/5 pt-4">
+        Learn how these figures are calculated on the
+        <a href="/methodology" class="text-brand-600 dark:text-brand-400 hover:underline">methodology page</a>,
+        or read more <a href="/about" class="text-brand-600 dark:text-brand-400 hover:underline">about WorthIt</a>.
+      </p>
+    </article>
+  </main>
+
+  <footer class="border-t border-gray-200 dark:border-white/5 py-6 px-4">
+    <div class="max-w-3xl mx-auto text-center text-sm text-gray-400 dark:text-gray-500 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+      <a href="/" class="hover:underline">Home</a>
+      <a href="/about" class="hover:underline">About</a>
+      <a href="/methodology" class="hover:underline">Methodology</a>
+      <a href="/data-sources" class="hover:underline">Data Sources</a>
+    </div>
+  </footer>
+</body>
+</html>

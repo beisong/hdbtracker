@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f9fafb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+  <title>Methodology — How WorthIt Calculates Prices & Deal Scores</title>
+  <meta name="description" content="How WorthIt computes Deal Scores, price-per-sqft, multi-year trends, and percentiles for Singapore HDB and condo resale prices — fully from official transaction data.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://worthit.canlah.app/methodology">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/logo.png">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Methodology — How WorthIt Calculates Prices & Deal Scores">
+  <meta property="og:description" content="A transparent explanation of how WorthIt turns official HDB and URA transaction records into Deal Scores, trends, and percentiles.">
+  <meta property="og:url" content="https://worthit.canlah.app/methodology">
+  <meta property="og:site_name" content="WorthIt">
+  <meta property="og:locale" content="en_SG">
+  <meta property="og:image" content="https://worthit.canlah.app/og-image.png">
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"How WorthIt Calculates Prices and Deal Scores","description":"A transparent explanation of how WorthIt turns official HDB and URA transaction records into Deal Scores, price trends, and percentiles.","author":{"@type":"Organization","name":"WorthIt"},"publisher":{"@type":"Organization","name":"WorthIt","logo":{"@type":"ImageObject","url":"https://worthit.canlah.app/logo.png"}},"mainEntityOfPage":"https://worthit.canlah.app/methodology"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://worthit.canlah.app/"},{"@type":"ListItem","position":2,"name":"Methodology","item":"https://worthit.canlah.app/methodology"}]}]}</script>
+  <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');})();</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-WGC8D0FRSQ"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-WGC8D0FRSQ');</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','system-ui','sans-serif']},colors:{brand:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a5f'},dark:{900:'#0f172a',800:'#1e293b',700:'#334155',600:'#475569'}}}}}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white font-sans min-h-screen">
+  <nav class="border-b border-gray-200 dark:border-white/5">
+    <div class="max-w-3xl mx-auto px-4 h-14 flex items-center">
+      <a href="/" class="flex items-center" style="gap:0;">
+        <img src="/logo.png" alt="WorthIt" class="w-8 h-8 rounded-lg">
+        <span class="text-lg font-bold" style="margin-left:-2px;">orthIt</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-4 py-10 sm:py-14">
+    <nav aria-label="Breadcrumb" class="text-sm text-gray-400 dark:text-gray-500 mb-4">
+      <a href="/" class="hover:underline">Home</a> <span aria-hidden="true">/</span> Methodology
+    </nav>
+
+    <article>
+      <h1 class="text-3xl sm:text-4xl font-black mb-4">Methodology</h1>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-6">
+        Every number on WorthIt is calculated directly from recorded resale transactions. Nothing is
+        estimated or modelled. This page explains exactly how each figure is produced so you can interpret
+        it correctly — and verify it against the underlying
+        <a href="/data-sources" class="text-brand-600 dark:text-brand-400 hover:underline">official data</a>.
+      </p>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">Deal Score (the colour-coded markers)</h2>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-3">
+        The Deal Score compares a transaction's <strong>price per square metre</strong> against the
+        <strong>median price per square metre of comparable nearby sales</strong> — same flat or property
+        type, in the same area. We use the ratio <em>(this sale's $/sqm) ÷ (nearby median $/sqm)</em> and
+        map it to a colour:
+      </p>
+      <ul class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-3 list-disc pl-6 space-y-1">
+        <li><span style="color:#22c55e;font-weight:700">Green</span> — ratio around 0.70 or below: notably below the local median (good value).</li>
+        <li><span style="color:#60a5fa;font-weight:700">Blue</span> — ratio around 1.0: roughly in line with comparable sales (fair price).</li>
+        <li><span style="color:#ef4444;font-weight:700">Red</span> — ratio around 1.30 or above: a premium to the local median.</li>
+      </ul>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+        Colours interpolate smoothly between these anchors. Because it is benchmarked to <em>comparable</em>
+        sales, the Deal Score is a relative indicator of value, not a valuation or an appraisal.
+      </p>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">Price trends</h2>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+        Trend charts plot <strong>average price per square metre</strong> over time rather than raw price.
+        This is deliberate: raw average price swings month to month simply because the mix of flat sizes
+        sold changes. Price per square metre is size-neutral, so the trend reflects genuine price movement.
+        The 6-month, 1-year, 3-year, and 5-year change figures compare a <strong>3-month rolling average</strong>
+        at each end of the window, which smooths out the noise of thin-volume months.
+      </p>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">Percentiles</h2>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+        The 10th to 90th percentile figures describe the spread of transaction prices for your search: the
+        10th percentile means 10% of sales were below that price, the 90th means only 10% were above it.
+        The 50th percentile is the median. Percentiles give a fairer picture than a single average because
+        they are not skewed by a few unusually high or low sales.
+      </p>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">Units</h2>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+        Floor areas and price rates are displayed in <strong>square feet</strong> and
+        <strong>price per square foot ($/sqft)</strong>, converted from the square-metre values in the
+        source data using the standard factor of 1&nbsp;sqm = 10.7639&nbsp;sqft.
+      </p>
+
+      <h2 class="text-xl font-bold mt-8 mb-3">Nearby &amp; postal-code search</h2>
+      <p class="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+        Searching a postal code finds transactions within a fixed radius of that location using mapped
+        block and project coordinates, so results reflect the immediate area rather than a whole town.
+      </p>
+
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-8 border-t border-gray-200 dark:border-white/5 pt-4">
+        WorthIt is informational only and is not financial, investment, or property advice. Always do your
+        own due diligence. See <a href="/data-sources" class="text-brand-600 dark:text-brand-400 hover:underline">data sources &amp; limitations</a>.
+      </p>
+    </article>
+  </main>
+
+  <footer class="border-t border-gray-200 dark:border-white/5 py-6 px-4">
+    <div class="max-w-3xl mx-auto text-center text-sm text-gray-400 dark:text-gray-500 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+      <a href="/" class="hover:underline">Home</a>
+      <a href="/about" class="hover:underline">About</a>
+      <a href="/methodology" class="hover:underline">Methodology</a>
+      <a href="/data-sources" class="hover:underline">Data Sources</a>
+    </div>
+  </footer>
+</body>
+</html>

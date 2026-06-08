@@ -72,10 +72,11 @@ const App = {
   async handleUrlRoute() {
     const path = window.location.pathname;
 
-    // /hdb/<town-slug>
-    const hdbMatch = path.match(/^\/hdb\/(.+)$/);
+    // /hdb/<town-slug> and /hdb/<town-slug>/<flat-type>
+    const hdbMatch = path.match(/^\/hdb\/([^/]+)(?:\/([^/]+))?$/);
     if (hdbMatch) {
       const slug = hdbMatch[1];
+      const ftSlug = hdbMatch[2];
       // Try to match slug to a known town
       const townSlug = slug.toUpperCase().replace(/-/g, ' ');
       const town = this._towns.find(t =>
@@ -84,6 +85,11 @@ const App = {
         t.toLowerCase().replace(/[^a-z0-9]+/g, '-') === slug
       );
       if (town) {
+        // Pre-select a flat type if the URL specifies one (drives /hdb/<town>/<flat-type>)
+        const FT_BY_SLUG = { '2-room': '2 ROOM', '3-room': '3 ROOM', '4-room': '4 ROOM', '5-room': '5 ROOM', 'executive': 'EXECUTIVE' };
+        this.selectedFlatTypes.clear();
+        if (ftSlug && FT_BY_SLUG[ftSlug]) this.selectedFlatTypes.add(FT_BY_SLUG[ftSlug]);
+        this._updateFlatTypeUI();
         document.getElementById('search-input').value = town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
         await this.search();
         return;
@@ -144,9 +150,20 @@ const App = {
         description = `Check HDB resale prices near ${addrDisplay} in ${townDisplay}. ${ts?.total_transactions_12m?.toLocaleString() || 0} nearby transactions. Compare Deal Scores from data.gov.sg records.`;
       } else {
         const slug = data.town.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        path = `/hdb/${slug}`;
-        title = `${townDisplay} HDB Resale Prices & Transaction History | WorthIt`;
-        description = `Check ${townDisplay} HDB resale flat prices and transaction history. ${ts?.total_transactions_12m?.toLocaleString() || 0} recent transactions. Compare Deal Scores from data.gov.sg records.`;
+        // Single flat-type selection → dedicated /hdb/<town>/<flat-type> URL (indexable + shareable)
+        const FT_SLUG = { '2 ROOM': '2-room', '3 ROOM': '3-room', '4 ROOM': '4-room', '5 ROOM': '5-room', 'EXECUTIVE': 'executive' };
+        const ftSlug = this.selectedFlatTypes.size === 1 ? FT_SLUG[[...this.selectedFlatTypes][0]] : null;
+        if (ftSlug) {
+          const ft = [...this.selectedFlatTypes][0];
+          const ftLabel = ft.charAt(0) + ft.slice(1).toLowerCase();
+          path = `/hdb/${slug}/${ftSlug}`;
+          title = `${ftLabel} HDB Resale Prices in ${townDisplay} | WorthIt`;
+          description = `Check ${ftLabel} HDB resale flat prices in ${townDisplay}. ${ts?.total_transactions_12m?.toLocaleString() || 0} recent transactions. Compare Deal Scores from data.gov.sg records.`;
+        } else {
+          path = `/hdb/${slug}`;
+          title = `${townDisplay} HDB Resale Prices & Transaction History | WorthIt`;
+          description = `Check ${townDisplay} HDB resale flat prices and transaction history. ${ts?.total_transactions_12m?.toLocaleString() || 0} recent transactions. Compare Deal Scores from data.gov.sg records.`;
+        }
       }
     } else if (type === 'district' && data?.district) {
       path = `/district/${data.district}`;

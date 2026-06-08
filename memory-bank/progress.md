@@ -127,6 +127,29 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Twitter card image dimensions added (1200×630)
 - ✅ og-image.png updated
 
+## DEPLOYED — Jun 2026 (full SEO batch live)
+
+- ✅ All Jun 2026 SEO work below is **deployed** (`npm run deploy` → Fly API + Cloudflare Pages); cache **v=19**; live `latest_month` **2026-06**. Verified: town×flat-type bot injection (Googlebot), E-E-A-T pages 200, sitemap has 123 town×flat-type URLs + data-sources.
+- ✅ Fixed E-E-A-T 308 redirect loop during deploy — edge now fetches the clean URL (`env.ASSETS.fetch(request)`) for `STATIC_PAGES` instead of `/x.html`.
+- ⚠️ **Cloudflare blocks `ClaudeBot` + `PerplexityBot` at the zone level (403)** before the Pages Function runs (Bot Fight Mode / "Block AI bots"); `GPTBot`, `OAI-SearchBot`, `Googlebot`, `bingbot` pass (200). `BOT_PATTERNS`/robots.txt can't override this — **user action in Cloudflare dashboard** (Security → Bots / AI Crawl Control) if Claude/Perplexity access is wanted.
+
+## E-E-A-T Content Pages — Jun 2026
+
+- ✅ `/about`, `/methodology`, `/data-sources` — standalone static HTML trust pages (own meta/canonical/OG/JSON-LD; AboutPage+Org, TechArticle, Dataset). Honest, non-fabricated copy; accurate Deal Score / trend / percentile methodology; "Not financial advice" disclaimer + data provenance/limitations
+- ✅ URL `/data-sources` (not `/data` — collides with existing `public/data/mrt_stations.json` via express.static)
+- ✅ Served via edge `STATIC_PAGES` short-circuit (bots + humans) + Express routes for local/Fly; added to sitemap + footer nav; pages cross-link each other
+- ✅ 171 tests pass (2 new); MRT asset `/data/*` unaffected; deployed Jun 2026 (v=19)
+- Backlog remaining: ranking/best-of pages, comparison pages, Tailwind CDN→static CSS, off-site backlinks
+
+## SEO Content Expansion — Jun 2026 (town×flat-type, freshness, Q&A, cross-links)
+
+- ✅ Town × flat-type programmatic pages `/hdb/<town>/<flat-type>` — server metadata branch (per-type price/psf/range/YoY, unique title, WebPage+Breadcrumb+FAQ JSON-LD, content_html), ~123 sitemap URLs (cnt≥5 / 24mo), client routing + URL emission on single flat-type select; thin combos canonicalize to town page
+- ✅ Freshness — `dateModified` on all WebPage nodes + visible "Data updated through <Month Year>" note
+- ✅ Q&A prose (`faqsToHtml`) on town/town×type/private/district content_html — featured-snippet / AI-Overview bait (FAQ rich results deprecated but prose still works)
+- ✅ Cross-linking — town→flat-type pages + overlapping districts; district→HDB towns
+- ✅ 166 tests pass (5 new in `tests/integration/seo.test.js`); validated live; deployed Jun 2026 (v=19)
+- 🔲 Backlog: ranking/best-of pages, comparison pages, About/methodology/data (E-E-A-T), Tailwind CDN→static CSS + font trim, off-site backlinks
+
 ## SEO Quick-Wins Pass — Jun 2026
 
 Audit-driven, zero-regression fixes (Tailwind Play CDN migration deferred by user choice):
@@ -137,7 +160,7 @@ Audit-driven, zero-regression fixes (Tailwind Play CDN migration deferred by use
 - ✅ `defer` on Chart.js + Leaflet (verified safe vs DOMContentLoaded init order)
 - ✅ Structured data — homepage `Organization.logo` + `SoftwareApplication` node; richer static fallback JSON-LD (WebSite + Organization)
 - ✅ Meta polish — `og:image:alt`, light/dark `theme-color`
-- ✅ 162 tests pass; JSON-LD + bot metadata validated locally; not yet deployed
+- ✅ 162 tests pass; JSON-LD + bot metadata validated; deployed Jun 2026 (v=19)
 - ⏭️ Deferred: replace Tailwind Play CDN with prebuilt static CSS (biggest CWV win, higher regression risk)
 
 ## SEO Enhancement — COMPLETE (2026-05-29)
@@ -151,7 +174,7 @@ Audit-driven, zero-regression fixes (Tailwind Play CDN migration deferred by use
 - ✅ Added `Google-InspectionTool` to bot patterns — Rich Results Test now correctly gets injected JSON-LD
 - ✅ Validated with Google Rich Results Test — FAQPage detected
 - ⚠️ FAQ rich results deprecated by Google as of May 7, 2026 — FAQPage JSON-LD kept (harmless) but won't show rich result cards; BreadcrumbList + content injection still fully valuable
-- 🔲 Submit sitemap to Google Search Console (manual — GSC → Sitemaps → `sitemap.xml`)
+- ✅ Submitted sitemap to Google Search Console (Jun 2026)
 
 ## Automation — Jun 2026 (WORKING)
 
@@ -175,7 +198,7 @@ Audit-driven, zero-regression fixes (Tailwind Play CDN migration deferred by use
 - 🔲 Database indexes for query performance
 - 🔲 Server refactor (split monolithic `server/index.js` into modules)
 - 🔲 Rate limiting on API endpoints
-- 🔲 Google Search Console verification & submission
+- ✅ Google Search Console verification & sitemap submission (Jun 2026)
 - ✅ Open Graph image (`og-image.png`) for social sharing
 - 🔲 Cloudflare Cache API for sitemap caching at edge
 - 🔲 Structured data testing & rich results validation

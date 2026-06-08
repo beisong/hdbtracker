@@ -1719,6 +1719,39 @@ function slugToProject(slug) {
   `).get(searchPattern)?.project || null;
 }
 
+// Flat-type slug helpers — power /hdb/<town>/<flat-type> programmatic pages
+const FLAT_TYPE_SLUGS = {
+  '2 ROOM': '2-room',
+  '3 ROOM': '3-room',
+  '4 ROOM': '4-room',
+  '5 ROOM': '5-room',
+  'EXECUTIVE': 'executive',
+};
+const SLUG_TO_FLAT_TYPE = Object.fromEntries(Object.entries(FLAT_TYPE_SLUGS).map(([k, v]) => [v, k]));
+// '4 ROOM' -> '4 Room', 'EXECUTIVE' -> 'Executive'
+function flatTypeLabel(ft) {
+  return titleCase(ft);
+}
+
+// 'YYYY-MM' -> 'Month YYYY' (freshness display)
+function fmtMonthYear(ym) {
+  if (!ym) return '';
+  const [y, m] = ym.split('-');
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  return `${months[parseInt(m, 10) - 1]} ${y}`;
+}
+
+// Render a FAQ array (same shape used for FAQPage JSON-LD) as visible prose Q&A.
+// FAQ rich results are deprecated, but the prose still wins featured snippets / AI Overviews.
+function faqsToHtml(faqs) {
+  if (!faqs || !faqs.length) return '';
+  return `<h3 style="font-size:1rem;font-weight:600;margin:1.5rem 0 0.5rem">Frequently Asked Questions</h3>` +
+    faqs.map(f => `<div style="margin-bottom:0.75rem">
+    <p style="font-weight:600;margin-bottom:0.25rem">${f.name}</p>
+    <p style="color:#4b5563;margin:0">${f.acceptedAnswer.text}</p>
+  </div>`).join('');
+}
+
 function titleCase(str) {
   return str.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
 }
@@ -1753,6 +1786,11 @@ app.get('/api/seo/sitemap', (req, res) => {
 
     const urls = [{ url: SEO_BASE_URL + '/', changefreq: 'weekly', priority: '1.0', lastmod }];
 
+    // Static content pages (About / Methodology / Data Sources — E-E-A-T)
+    for (const page of ['about', 'methodology', 'data-sources']) {
+      urls.push({ url: `${SEO_BASE_URL}/${page}`, changefreq: 'monthly', priority: '0.5', lastmod });
+    }
+
     // HDB towns
     const towns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE' ORDER BY town").all();
     for (const t of towns) {
@@ -1760,6 +1798,24 @@ app.get('/api/seo/sitemap', (req, res) => {
         url: `${SEO_BASE_URL}/hdb/${townToSlug(t.town)}`,
         changefreq: 'weekly',
         priority: '0.9',
+        lastmod,
+      });
+    }
+
+    // Town × flat-type pages — only combos with enough recent data to avoid thin pages
+    const townTypes = db.prepare(`
+      SELECT town, flat_type, COUNT(*) as cnt
+      FROM transactions
+      WHERE dataset_source != 'URA_PRIVATE'
+        AND flat_type IN ('2 ROOM','3 ROOM','4 ROOM','5 ROOM','EXECUTIVE')
+        AND month >= ?
+      GROUP BY town, flat_type HAVING cnt >= 5
+    `).all(monthsAgoStr(24));
+    for (const tt of townTypes) {
+      urls.push({
+        url: `${SEO_BASE_URL}/hdb/${townToSlug(tt.town)}/${FLAT_TYPE_SLUGS[tt.flat_type]}`,
+        changefreq: 'weekly',
+        priority: '0.6',
         lastmod,
       });
     }
@@ -1815,7 +1871,16 @@ app.get('/api/seo/metadata', (req, res) => {
       og_description: 'Check HDB resale prices, condo transaction history, and fair market value for any Singapore property. Free tool powered by data.gov.sg.',
       json_ld: null,
       content_html: null,
+      robots: null,
     };
+
+    // Freshness signals (data refreshes daily; surface the data currency)
+    const latestMonth = db ? db.prepare('SELECT MAX(month) as m FROM transactions').get()?.m : null;
+    const dateModified = latestMonth ? latestMonth + '-01' : new Date().toISOString().slice(0, 10);
+    const dataThrough = fmtMonthYear(latestMonth);
+    const freshnessNote = dataThrough
+      ? `<p style="font-size:0.8rem;color:#9ca3af;margin-top:1rem">Data updated through ${dataThrough}, sourced from HDB &amp; URA via data.gov.sg.</p>`
+      : '';
 
     if (!route || route === '/') {
       // Homepage
@@ -1913,6 +1978,125 @@ app.get('/api/seo/metadata', (req, res) => {
           meta.og_url = meta.canonical;
         }
       }
+    } else if (/^\/hdb\/[^/]+\/[^/]+$/.test(route)) {
+      // Town × flat-type page, e.g. /hdb/tampines/4-room
+      const [, townSlug, ftSlug] = route.match(/^\/hdb\/([^/]+)\/([^/]+)$/);
+      const town = slugToTown(townSlug);
+      const flatType = SLUG_TO_FLAT_TYPE[ftSlug];
+      if (town && flatType && db) {
+        const townDisplay = titleCase(town);
+        const ftLabel = flatTypeLabel(flatType);
+        const year = new Date().getFullYear();
+        const m12 = monthsAgoStr(12);
+        const m24 = monthsAgoStr(24);
+
+        const cur = db.prepare(`
+          SELECT COUNT(*) as cnt, ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm,
+            ROUND(MIN(resale_price)) as min_price, ROUND(MAX(resale_price)) as max_price, ROUND(AVG(floor_area_sqm)) as avg_area
+          FROM transactions WHERE town = ? AND flat_type = ? AND resale_price IS NOT NULL AND month >= ? AND dataset_source != 'URA_PRIVATE'
+        `).get(town, flatType, m12);
+
+        const prev = db.prepare(`
+          SELECT ROUND(AVG(price_per_sqm), 0) as avg_psm
+          FROM transactions WHERE town = ? AND flat_type = ? AND month >= ? AND month < ? AND dataset_source != 'URA_PRIVATE'
+        `).get(town, flatType, m24, m12);
+
+        const cnt = cur?.cnt || 0;
+        const avgPrice = cur?.avg_price || 0;
+        const avgPsm = cur?.avg_psm || 0;
+        const prevPsm = prev?.avg_psm || 0;
+        const yoyDir = avgPsm && prevPsm ? (avgPsm > prevPsm ? 'up' : avgPsm < prevPsm ? 'down' : 'stable') : null;
+        const yoyPct = avgPsm && prevPsm ? Math.round(Math.abs(avgPsm - prevPsm) / prevPsm * 100) : 0;
+
+        meta.canonical = `${SEO_BASE_URL}/hdb/${townSlug}/${ftSlug}`;
+
+        if (cnt > 0) {
+          meta.title = `${ftLabel} HDB Resale Price in ${townDisplay} ${year} — ${fmtPsf(avgPsm)} | WorthIt`;
+          meta.description = `${ftLabel} HDB flats in ${townDisplay}: ${cnt.toLocaleString()} sales in 12 months, avg ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)})${yoyDir ? `, ${yoyDir} ${yoyPct}% YoY` : ''}. See trends & recent sales.`;
+          meta.og_title = `${ftLabel} HDB Resale Prices in ${townDisplay} — ${fmtPsf(avgPsm)} avg`;
+          meta.og_description = `${cnt.toLocaleString()} ${ftLabel} transactions in ${townDisplay}.${yoyDir ? ` Prices ${yoyDir} ${yoyPct}% YoY.` : ''}`;
+
+          // Sibling flat types in this town (cross-links)
+          const siblings = db.prepare(`
+            SELECT flat_type, COUNT(*) as cnt FROM transactions
+            WHERE town = ? AND month >= ? AND dataset_source != 'URA_PRIVATE'
+              AND flat_type IN ('2 ROOM','3 ROOM','4 ROOM','5 ROOM','EXECUTIVE')
+            GROUP BY flat_type HAVING cnt >= 5 ORDER BY flat_type
+          `).all(town, m24);
+
+          const faqs = [
+            {
+              '@type': 'Question',
+              name: `What is the average resale price of a ${ftLabel} HDB flat in ${townDisplay}?`,
+              acceptedAnswer: { '@type': 'Answer', text: `${ftLabel} HDB flats in ${townDisplay} averaged ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)}) over the last 12 months, based on ${cnt.toLocaleString()} resale transactions${cur?.avg_area ? ` with an average floor area of ${Math.round(cur.avg_area * 10.7639)} sqft` : ''}.` },
+            },
+          ];
+          if (cur?.min_price && cur?.max_price) {
+            faqs.push({
+              '@type': 'Question',
+              name: `What is the price range for ${ftLabel} flats in ${townDisplay}?`,
+              acceptedAnswer: { '@type': 'Answer', text: `In the past 12 months, ${ftLabel} resale flats in ${townDisplay} transacted between ${fmtPrice(cur.min_price)} and ${fmtPrice(cur.max_price)}, depending on floor level, remaining lease, and exact location.` },
+            });
+          }
+          if (yoyDir && yoyPct > 0) {
+            faqs.push({
+              '@type': 'Question',
+              name: `Are ${ftLabel} HDB prices in ${townDisplay} rising?`,
+              acceptedAnswer: { '@type': 'Answer', text: `${ftLabel} HDB resale prices in ${townDisplay} are ${yoyDir} ${yoyPct}% year-on-year, comparing average price per sqft over the past 12 months to the prior 12 months.` },
+            });
+          }
+
+          meta.json_ld = JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'WebPage',
+                name: `${ftLabel} HDB Resale Prices in ${townDisplay}`,
+                description: meta.description,
+                url: meta.canonical,
+                dateModified,
+                breadcrumb: {
+                  '@type': 'BreadcrumbList',
+                  itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
+                    { '@type': 'ListItem', position: 2, name: `${townDisplay} HDB`, item: `${SEO_BASE_URL}/hdb/${townSlug}` },
+                    { '@type': 'ListItem', position: 3, name: `${ftLabel}`, item: meta.canonical },
+                  ],
+                },
+              },
+              { '@type': 'FAQPage', mainEntity: faqs },
+            ],
+          });
+
+          const siblingLinks = siblings
+            .filter(s => s.flat_type !== flatType)
+            .map(s => `<a href="/hdb/${townSlug}/${FLAT_TYPE_SLUGS[s.flat_type]}" style="color:#3b82f6;text-decoration:none;white-space:nowrap">${flatTypeLabel(s.flat_type)}</a>`)
+            .join(' &middot; ');
+
+          const relatedDistricts = (TOWN_TO_DISTRICTS[town] || [])
+            .map(d => DISTRICT_LABELS[d] ? `<a href="/district/${d}" style="color:#3b82f6;text-decoration:none">${DISTRICT_LABELS[d]}</a>` : null)
+            .filter(Boolean).join(' &middot; ');
+
+          meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
+  <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${ftLabel} HDB Resale Prices in ${townDisplay}</h2>
+  <p style="color:#4b5563;margin-bottom:1rem">
+    Over the last 12 months, ${cnt.toLocaleString()} <strong>${ftLabel}</strong> HDB flats were resold in ${townDisplay} at an average of <strong>${fmtPrice(avgPrice)}</strong> (${fmtPsf(avgPsm)}).${cur?.min_price && cur?.max_price ? ` Prices ranged from ${fmtPrice(cur.min_price)} to ${fmtPrice(cur.max_price)}.` : ''}${yoyDir && yoyPct > 0 ? ` Prices are <strong>${yoyDir} ${yoyPct}%</strong> year-on-year.` : ''}
+  </p>
+  ${siblingLinks ? `<h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Other Flat Types in ${townDisplay}</h3>
+  <p style="font-size:0.9rem;line-height:2;margin-bottom:1rem">${siblingLinks}</p>` : ''}
+  <p style="font-size:0.9rem;margin-bottom:1rem"><a href="/hdb/${townSlug}" style="color:#3b82f6;text-decoration:none">&larr; All ${townDisplay} HDB resale prices</a></p>
+  ${relatedDistricts ? `<h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Private Property Nearby</h3>
+  <p style="font-size:0.9rem;line-height:1.9;margin-bottom:1rem">${relatedDistricts}</p>` : ''}
+  ${faqsToHtml(faqs)}
+  ${freshnessNote}
+</section>`;
+        } else {
+          // No data for this combo — consolidate to the town page to avoid a thin/empty page
+          meta.canonical = `${SEO_BASE_URL}/hdb/${townSlug}`;
+          meta.title = `${ftLabel} HDB Resale Prices in ${townDisplay} | WorthIt`;
+          meta.description = `Browse ${ftLabel} HDB resale prices and transaction history in ${townDisplay}, Singapore.`;
+        }
+      }
     } else if (route.startsWith('/hdb/')) {
       const slug = route.replace('/hdb/', '');
       const town = slugToTown(slug);
@@ -1948,7 +2132,7 @@ app.get('/api/seo/metadata', (req, res) => {
         const otherTowns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE' ORDER BY town").all().map(r => r.town).filter(t => t !== town);
 
         meta.title = `${townDisplay} HDB Resale Price ${new Date().getFullYear()} — ${fmtPsf(avgPsm)} Avg | WorthIt`;
-        meta.description = `${townDisplay} HDB resale prices: ${txCount.toLocaleString()} transactions in the last 12 months, average ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)}). Check prices by flat type, 5-year trends, and Deal Scores from Singapore data.gov.sg records.`;
+        meta.description = `${townDisplay} HDB resale prices: ${txCount.toLocaleString()} sales in 12 months, avg ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)}). Compare flat types, trends & Deal Scores.`;
         meta.canonical = `${SEO_BASE_URL}/hdb/${slug}`;
         meta.og_title = `${townDisplay} HDB Resale Prices — ${fmtPsf(avgPsm)} avg psf`;
         meta.og_description = `${txCount.toLocaleString()} recent HDB transactions in ${townDisplay}.${yoyDir ? ` Prices ${yoyDir} ${yoyPct}% YoY.` : ''}`;
@@ -1986,6 +2170,7 @@ app.get('/api/seo/metadata', (req, res) => {
               name: `${townDisplay} HDB Resale Prices`,
               description: meta.description,
               url: meta.canonical,
+              dateModified,
               breadcrumb: {
                 '@type': 'BreadcrumbList',
                 itemListElement: [
@@ -1998,17 +2183,30 @@ app.get('/api/seo/metadata', (req, res) => {
           ],
         });
 
-        const typeRows = byType.map(t => `
+        // Flat-type rows link to the dedicated /hdb/<town>/<flat-type> page (programmatic SEO + crawl path)
+        const typeRows = byType.map(t => {
+          const label = t.flat_type.charAt(0) + t.flat_type.slice(1).toLowerCase();
+          const ftSlug = FLAT_TYPE_SLUGS[t.flat_type];
+          const nameCell = ftSlug
+            ? `<a href="/hdb/${slug}/${ftSlug}" style="color:#3b82f6;text-decoration:none">${label}</a>`
+            : label;
+          return `
           <tr>
-            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">${t.flat_type.charAt(0) + t.flat_type.slice(1).toLowerCase()}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">${nameCell}</td>
             <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${fmtPrice(t.avg_price)}</td>
             <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${fmtPsf(t.avg_psm)}</td>
             <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${t.cnt}</td>
-          </tr>`).join('');
+          </tr>`;
+        }).join('');
 
         const otherTownLinks = otherTowns.map(t =>
           `<a href="/hdb/${townToSlug(t)}" style="color:#3b82f6;text-decoration:none;white-space:nowrap">${titleCase(t)}</a>`
         ).join(' &middot; ');
+
+        // Cross-link to the private-property districts that overlap this town
+        const relatedDistricts = (TOWN_TO_DISTRICTS[town] || [])
+          .map(d => DISTRICT_LABELS[d] ? `<a href="/district/${d}" style="color:#3b82f6;text-decoration:none">${DISTRICT_LABELS[d]}</a>` : null)
+          .filter(Boolean).join(' &middot; ');
 
         meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
   <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${townDisplay} HDB Resale Prices — Market Overview</h2>
@@ -2025,8 +2223,12 @@ app.get('/api/seo/metadata', (req, res) => {
     </tr></thead>
     <tbody>${typeRows}</tbody>
   </table>` : ''}
+  ${relatedDistricts ? `<h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Private Property Near ${townDisplay}</h3>
+  <p style="font-size:0.9rem;line-height:1.9;margin-bottom:1.5rem">${relatedDistricts}</p>` : ''}
   <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Compare HDB Resale Prices in Other Towns</h3>
   <p style="font-size:0.875rem;line-height:2">${otherTownLinks}</p>
+  ${faqsToHtml(faqs)}
+  ${freshnessNote}
 </section>`;
       }
     } else if (route.startsWith('/private/')) {
@@ -2068,7 +2270,7 @@ app.get('/api/seo/metadata', (req, res) => {
           else if (isMOPReached && mopYear) titleTag = ` | MOP ${mopYear}`;
 
           meta.title = `${info.project} ${propertyLabel} Resale Price${titleTag} — ${fmtPsf(info.avg_psm)} | WorthIt`;
-          meta.description = `${info.project} ${isEC ? 'Executive Condominium (EC)' : 'condo'} resale prices in District ${info.district}${info.market_segment ? ` (${info.market_segment})` : ''}. ${info.tx_count.toLocaleString()} transactions, average ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)}). Check URA transaction history and price trends.`;
+          meta.description = `${info.project} ${isEC ? 'EC' : 'condo'} resale prices, District ${info.district}${info.market_segment ? ` (${info.market_segment})` : ''}: ${info.tx_count.toLocaleString()} sales, avg ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)}). URA history & trends.`;
           meta.canonical = `${SEO_BASE_URL}/private/${slug}`;
           meta.og_title = `${info.project} — ${propertyLabel} Resale Prices Singapore`;
           meta.og_description = `${info.tx_count.toLocaleString()} transactions. Average ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)}).`;
@@ -2112,6 +2314,7 @@ app.get('/api/seo/metadata', (req, res) => {
                 name: `${info.project} Resale Prices`,
                 description: meta.description,
                 url: meta.canonical,
+                dateModified,
                 breadcrumb: {
                   '@type': 'BreadcrumbList',
                   itemListElement: [
@@ -2145,6 +2348,8 @@ app.get('/api/seo/metadata', (req, res) => {
   <p style="font-size:0.875rem;color:#6b7280">
     Data sourced from URA Singapore. <a href="/district/${info.district}" style="color:#3b82f6;text-decoration:none">View all projects in District ${info.district} &rarr;</a>
   </p>
+  ${faqsToHtml(faqs)}
+  ${freshnessNote}
 </section>`;
         }
       }
@@ -2167,7 +2372,7 @@ app.get('/api/seo/metadata', (req, res) => {
         const avgPsm = distSummary?.avg_psm || 0;
 
         meta.title = `${label} — Private Property Resale Prices${avgPsm ? ` ${fmtPsf(avgPsm)} Avg` : ''} | WorthIt`;
-        meta.description = `Check private property resale prices and transaction history in Singapore ${label}.${txCount > 0 ? ` ${txCount.toLocaleString()} transactions in the last 12 months, average ${fmtPsf(avgPsm)}.` : ''} View top projects, price trends, and URA transaction data for District ${dCode}.`;
+        meta.description = `Private property resale prices in ${label}.${txCount > 0 ? ` ${txCount.toLocaleString()} sales in 12 months, avg ${fmtPsf(avgPsm)}.` : ''} Top projects, trends & URA data.`;
         meta.canonical = `${SEO_BASE_URL}/district/${dCode}`;
         meta.og_title = `${label} — Singapore Property Tracker`;
         meta.og_description = `Private property prices and transactions in ${label}.${avgPsm ? ` Avg ${fmtPsf(avgPsm)}.` : ''}`;
@@ -2197,6 +2402,7 @@ app.get('/api/seo/metadata', (req, res) => {
               name: `${label} Property Prices`,
               description: meta.description,
               url: meta.canonical,
+              dateModified,
               breadcrumb: {
                 '@type': 'BreadcrumbList',
                 itemListElement: [
@@ -2208,6 +2414,11 @@ app.get('/api/seo/metadata', (req, res) => {
             ...(faqs.length > 0 ? [{ '@type': 'FAQPage', mainEntity: faqs }] : []),
           ],
         });
+
+        // Cross-link to the HDB towns that overlap this district
+        const relatedTownLinks = (DISTRICT_TO_TOWNS[dCode] || [])
+          .map(t => `<a href="/hdb/${townToSlug(t)}" style="color:#3b82f6;text-decoration:none;white-space:nowrap">${titleCase(t)}</a>`)
+          .join(' &middot; ');
 
         const projectRows = topProjects.map(p => {
           const isEC = p.flat_type === 'EXECUTIVE CONDOMINIUM';
@@ -2232,8 +2443,20 @@ app.get('/api/seo/metadata', (req, res) => {
     </tr></thead>
     <tbody>${projectRows}</tbody>
   </table>` : ''}
+  ${relatedTownLinks ? `<h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">HDB Towns in ${label}</h3>
+  <p style="font-size:0.9rem;line-height:1.9;margin-bottom:1.5rem">${relatedTownLinks}</p>` : ''}
+  ${faqsToHtml(faqs)}
+  ${freshnessNote}
 </section>`;
       }
+    }
+
+    // Soft-404 guard: a deep route that didn't resolve to real data still has the default
+    // homepage canonical. Tell crawlers not to index these junk URLs. Only when the DB is
+    // available (never deindex valid pages while the DB is mid-refresh).
+    const isDeepRoute = /^\/(hdb|private|district|postal)(\/|$)/.test(route);
+    if (isDeepRoute && db && meta.canonical === SEO_BASE_URL + '/') {
+      meta.robots = 'noindex, follow';
     }
 
     res.json(meta);
@@ -2242,6 +2465,14 @@ app.get('/api/seo/metadata', (req, res) => {
     res.status(500).json({ error: 'Failed to generate metadata' });
   }
 });
+
+// Standalone E-E-A-T content pages (extensionless URLs) — served on Cloudflare via the edge
+// function in production; handled here for local dev and the Fly origin.
+for (const page of ['about', 'methodology', 'data-sources']) {
+  app.get(`/${page}`, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', `${page}.html`));
+  });
+}
 
 // Catch-all: serve index.html for SPA
 app.get('*', (req, res) => {

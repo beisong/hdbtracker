@@ -56,6 +56,21 @@ function injectMeta(html, meta) {
     }
   }
 
+  // Override robots directive (e.g. noindex for unresolved deep routes / soft-404s)
+  if (meta.robots) {
+    if (/<meta\s+name=["']robots["']/i.test(html)) {
+      html = html.replace(
+        /<meta\s+name=["']robots["'][^>]*>/i,
+        `<meta name="robots" content="${meta.robots}">`
+      );
+    } else {
+      html = html.replace(
+        '</head>',
+        `<meta name="robots" content="${meta.robots}">\n</head>`
+      );
+    }
+  }
+
   // Update canonical
   if (meta.canonical) {
     if (/<link\s+rel=["']canonical["']/i.test(html)) {
@@ -175,6 +190,15 @@ ${(data.urls || []).map(u => `  <url>
         headers: { 'Retry-After': '3600' },
       });
     }
+  }
+
+  // Standalone static content pages (E-E-A-T): serve their own HTML to everyone — bots and
+  // humans alike — bypassing the SPA/index.html injection so crawlers get the real content.
+  // Fetch the original clean URL (/about) from ASSETS — Pages resolves it to about.html.
+  // (Requesting /about.html instead triggers Pages' .html→clean-URL 308 and loops.)
+  const STATIC_PAGES = new Set(['/about', '/methodology', '/data-sources']);
+  if (STATIC_PAGES.has(url.pathname.replace(/\/$/, ''))) {
+    return env.ASSETS.fetch(request);
   }
 
   // Static assets (images, fonts, etc.) must bypass bot detection — bots fetching

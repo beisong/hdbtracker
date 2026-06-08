@@ -1839,6 +1839,16 @@ app.get('/api/seo/metadata', (req, res) => {
             '@id': SEO_BASE_URL + '/#organization',
             name: 'WorthIt',
             url: SEO_BASE_URL + '/',
+            logo: SEO_BASE_URL + '/logo.png',
+          },
+          {
+            '@type': 'SoftwareApplication',
+            name: 'WorthIt',
+            url: SEO_BASE_URL + '/',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description: 'Free Singapore HDB & private property resale price checker — search any town, postal code, or project to view transaction history, price trends, and Deal Scores from data.gov.sg and URA records.',
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'SGD' },
           },
           {
             '@type': 'FAQPage',

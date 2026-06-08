@@ -7,6 +7,19 @@ The project is fully deployed and functional:
 - **Database**: SQLite on Fly.io persistent volume (`/data/resale.db`), built locally and uploaded via SFTP
 - **Local dev**: `node server/index.js` serves both frontend and API on port 3000
 
+## Recent Changes (Jun 2026 — SEO quick-wins pass)
+
+Differential SEO audit + safe, zero-regression fixes (Tailwind Play CDN migration was audited as the biggest CWV item but intentionally deferred — left in place by user choice):
+
+- **AI/LLM crawler rendering** (`functions/[[path]].js`) — added AI/extended crawlers to `BOT_PATTERNS` (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, claude-web, anthropic-ai, PerplexityBot, Google-Extended, CCBot, Bytespider, Amazonbot, Applebot-Extended, cohere-ai, diffbot, meta-externalagent, youbot, petalbot). Previously they hit deep routes (`/hdb/*`, `/private/*`, `/district/*`), couldn't run JS, and got the empty SPA shell — now they receive the same server-injected metadata + `content_html` as Googlebot.
+- **De-orphaned district pages** (`public/index.html` `#seo-content`) — added a "Singapore Property Districts" block with 28 crawlable `<a href="/district/NN">` links (real `DISTRICT_LABELS`). D01–D28 were in the sitemap but had zero internal links. Mirrors the existing town-links pattern.
+- **robots.txt** — edge function (`functions/[[path]].js`, which shadows the static file) and `public/robots.txt` both updated with explicit `Allow: /` blocks for major AI crawlers (kept `User-agent: *` + Sitemap).
+- **Resource hints** (`index.html` head) — `preconnect` to `worthit-api.fly.dev` (first data fetch); `dns-prefetch` to jsdelivr/unpkg/tailwindcss CDNs.
+- **Deferred non-critical libs** — added `defer` to Chart.js + Leaflet `<script>` (head). Verified safe: `Chart` is first used in `App.init()`→`Charts.initDefaults()` on `DOMContentLoaded` (deferred scripts finish before it); `L` only on search. Leaflet CSS left blocking (avoids unstyled-map flash). Tailwind CDN unchanged.
+- **Structured data** — homepage `@graph` (`server/index.js` `/api/seo/metadata`): added `Organization.logo` + a `SoftwareApplication` node (free `offers`, no fabricated rating). Static fallback JSON-LD in `index.html` upgraded from a bare `WebSite` stub to `WebSite` + `Organization` (with logo) `@graph`.
+- **Meta polish** — added `og:image:alt`, two `theme-color` tags (light/dark). (`twitter:site` omitted — no real handle.)
+- **Verification**: 162 tests pass; local server confirmed valid JSON-LD (homepage types: WebSite/Organization/SoftwareApplication/FAQPage; org.logo present) and bot metadata for `/hdb/bedok` (title + 6KB content_html). No `?v=` bump needed — only `index.html` (no-cache) markup, edge function, and API changed; JS/CSS untouched.
+
 ## Recent Changes (Jun 2026 — In-app feedback)
 
 - **Feedback button + modal** — `#feedback-btn` in navbar (reuses `.theme-toggle` CSS, beside dark-mode toggle); opens `#feedback-modal` (one textarea + optional email + hidden honeypot field). Submit reuses `showToast('Thanks for the feedback 🙏')`. GA4 events `feedback_open` / `feedback_submit`. Auto-attaches `route` (`pathname + search`) as context; server also records `user_agent`.

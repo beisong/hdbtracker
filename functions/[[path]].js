@@ -20,6 +20,12 @@ const BOT_PATTERNS = [
   /developers\.google\.com\/\+\/web\/snippet/i, /pinterest/i,
   /embedly/i, /skypeuripreview/i, /outbrain/i, /vkshare/i,
   /discordapp/i,
+  // AI / LLM crawlers — without these, deep routes (/hdb/*, /private/*, /district/*) serve the
+  // empty SPA shell (no JS execution), so these bots index nothing. Listing them gives the same
+  // server-rendered metadata + content_html as Googlebot.
+  /gptbot/i, /oai-searchbot/i, /chatgpt-user/i, /claudebot/i, /claude-web/i, /anthropic-ai/i,
+  /perplexitybot/i, /google-extended/i, /ccbot/i, /bytespider/i, /amazonbot/i,
+  /applebot-extended/i, /cohere-ai/i, /diffbot/i, /meta-externalagent/i, /youbot/i, /petalbot/i,
 ];
 
 function isBot(userAgent) {
@@ -128,12 +134,18 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
 
-  // Handle robots.txt
+  // Handle robots.txt — keep in sync with public/robots.txt
   if (url.pathname === '/robots.txt') {
-    return new Response(
-      `User-agent: *\nAllow: /\nSitemap: ${SITE_URL}/sitemap.xml\n`,
-      { headers: { 'Content-Type': 'text/plain' } }
-    );
+    const aiBots = [
+      'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'anthropic-ai',
+      'PerplexityBot', 'Google-Extended', 'CCBot', 'Amazonbot', 'Applebot-Extended',
+      'cohere-ai', 'meta-externalagent', 'Bytespider',
+    ];
+    const body =
+      `User-agent: *\nAllow: /\n\n` +
+      aiBots.map(b => `User-agent: ${b}\nAllow: /\n`).join('\n') +
+      `\nSitemap: ${SITE_URL}/sitemap.xml\n`;
+    return new Response(body, { headers: { 'Content-Type': 'text/plain' } });
   }
 
   // Handle sitemap.xml

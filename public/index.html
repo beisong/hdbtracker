@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f9fafb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
   <title>WorthIt — Singapore HDB Resale Prices & Property Transaction Checker</title>
   <meta name="description" content="Check HDB resale prices, property transaction history, and fair value estimates for Singapore flats and condos. Analyze 370K+ transactions from data.gov.sg with price trends, distributions, and Deal Scores.">
   <meta name="keywords" content="HDB resale prices, Singapore property, HDB transaction history, HDB resale checker, Singapore flat prices, condo resale prices, URA transaction data, property fair value, HDB price trend, Deal Score">
@@ -21,6 +23,7 @@
   <meta property="og:image" content="https://worthit.canlah.app/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="WorthIt — Singapore HDB & condo resale price tracker">
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="WorthIt — Singapore HDB & Condo Resale Price Tracker">
@@ -29,7 +32,7 @@
   <meta name="twitter:image:width" content="1200">
   <meta name="twitter:image:height" content="630">
   <!-- JSON-LD (replaced by edge function for bots, fallback for direct visits) -->
-  <script type="application/ld+json" id="seo-jsonld">{"@context":"https://schema.org","@type":"WebSite","name":"WorthIt","url":"https://worthit.canlah.app/","description":"Singapore HDB & Property Resale Price Tracker"}</script>
+  <script type="application/ld+json" id="seo-jsonld">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://worthit.canlah.app/#website","name":"WorthIt","url":"https://worthit.canlah.app/","description":"Singapore HDB & Property Resale Price Tracker","potentialAction":{"@type":"SearchAction","target":"https://worthit.canlah.app/?q={search_term_string}","query-input":"required name=search_term_string"}},{"@type":"Organization","@id":"https://worthit.canlah.app/#organization","name":"WorthIt","url":"https://worthit.canlah.app/","logo":"https://worthit.canlah.app/logo.png"}]}</script>
   <!-- Anti-FOUC: apply dark class before render -->
   <script>
     (function() {
@@ -62,9 +65,17 @@
       }
     }
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <!-- Resource hints: speed up first data fetch + third-party libs -->
+  <link rel="preconnect" href="https://worthit-api.fly.dev" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://unpkg.com">
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+  <!-- Chart.js + Leaflet are only needed after a search, so defer to unblock first render.
+       Safe: Chart is first touched in App.init()/Charts.initDefaults() on DOMContentLoaded
+       (deferred scripts always run before it); Leaflet's L is used only on search. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -453,6 +464,37 @@
         <a href="/hdb/woodlands" class="seo-link" style="text-decoration:underline;">Woodlands</a>,
         <a href="/hdb/yishun" class="seo-link" style="text-decoration:underline;">Yishun</a>
         — plus private properties across all 28 Singapore districts (D01–D28).
+      </p>
+      <h3 class="seo-subheading" style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">Singapore Property Districts</h3>
+      <p class="seo-text" style="font-size:0.875rem;line-height:2;margin-bottom:1rem;">
+        <a href="/district/01" class="seo-link" style="text-decoration:underline;">D01 — Raffles Place, Marina</a>,
+        <a href="/district/02" class="seo-link" style="text-decoration:underline;">D02 — Tanjong Pagar, Shenton</a>,
+        <a href="/district/03" class="seo-link" style="text-decoration:underline;">D03 — Queenstown, Tiong Bahru</a>,
+        <a href="/district/04" class="seo-link" style="text-decoration:underline;">D04 — Telok Blangah, Harbourfront</a>,
+        <a href="/district/05" class="seo-link" style="text-decoration:underline;">D05 — Clementi, Dover</a>,
+        <a href="/district/06" class="seo-link" style="text-decoration:underline;">D06 — City Hall, Clarke Quay</a>,
+        <a href="/district/07" class="seo-link" style="text-decoration:underline;">D07 — Beach Road, Bugis</a>,
+        <a href="/district/08" class="seo-link" style="text-decoration:underline;">D08 — Farrer Park, Little India</a>,
+        <a href="/district/09" class="seo-link" style="text-decoration:underline;">D09 — Orchard, Cairnhill</a>,
+        <a href="/district/10" class="seo-link" style="text-decoration:underline;">D10 — Bukit Timah, Holland</a>,
+        <a href="/district/11" class="seo-link" style="text-decoration:underline;">D11 — Newton, Novena, Thomson</a>,
+        <a href="/district/12" class="seo-link" style="text-decoration:underline;">D12 — Balestier, Toa Payoh</a>,
+        <a href="/district/13" class="seo-link" style="text-decoration:underline;">D13 — Kallang, Macpherson</a>,
+        <a href="/district/14" class="seo-link" style="text-decoration:underline;">D14 — Geylang, Sims</a>,
+        <a href="/district/15" class="seo-link" style="text-decoration:underline;">D15 — Katong, Marine Parade, Joo Chiat</a>,
+        <a href="/district/16" class="seo-link" style="text-decoration:underline;">D16 — Bedok, Upper East Coast</a>,
+        <a href="/district/17" class="seo-link" style="text-decoration:underline;">D17 — Changi, Loyang</a>,
+        <a href="/district/18" class="seo-link" style="text-decoration:underline;">D18 — Tampines, Pasir Ris</a>,
+        <a href="/district/19" class="seo-link" style="text-decoration:underline;">D19 — Serangoon, Hougang, Punggol</a>,
+        <a href="/district/20" class="seo-link" style="text-decoration:underline;">D20 — Ang Mo Kio, Bishan</a>,
+        <a href="/district/21" class="seo-link" style="text-decoration:underline;">D21 — Upper Bukit Timah, Clementi Park</a>,
+        <a href="/district/22" class="seo-link" style="text-decoration:underline;">D22 — Jurong, Boon Lay, Tuas</a>,
+        <a href="/district/23" class="seo-link" style="text-decoration:underline;">D23 — Bukit Batok, Bukit Panjang, Choa Chu Kang</a>,
+        <a href="/district/24" class="seo-link" style="text-decoration:underline;">D24 — Lim Chu Kang, Tengah</a>,
+        <a href="/district/25" class="seo-link" style="text-decoration:underline;">D25 — Woodlands, Admiralty</a>,
+        <a href="/district/26" class="seo-link" style="text-decoration:underline;">D26 — Mandai, Upper Thomson</a>,
+        <a href="/district/27" class="seo-link" style="text-decoration:underline;">D27 — Yishun, Sembawang</a>,
+        <a href="/district/28" class="seo-link" style="text-decoration:underline;">D28 — Seletar, Sengkang</a>.
       </p>
       <h3 class="seo-subheading" style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">Data Sources</h3>
       <p class="seo-text" style="font-size:0.875rem;line-height:1.625;">

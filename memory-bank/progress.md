@@ -127,6 +127,19 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Twitter card image dimensions added (1200×630)
 - ✅ og-image.png updated
 
+## SEO Quick-Wins Pass — Jun 2026
+
+Audit-driven, zero-regression fixes (Tailwind Play CDN migration deferred by user choice):
+- ✅ AI/LLM crawlers added to `BOT_PATTERNS` (`functions/[[path]].js`) — GPTBot, ClaudeBot, OAI-SearchBot, PerplexityBot, Google-Extended, CCBot, Bytespider, Amazonbot, Applebot-Extended, etc. — so deep routes serve injected metadata + content instead of the empty SPA shell
+- ✅ 28 crawlable `/district/NN` links added to homepage `#seo-content` (D01–D28 were sitemap-only / orphaned)
+- ✅ robots.txt (edge + static) — explicit `Allow: /` blocks for major AI crawlers
+- ✅ Resource hints — `preconnect` API origin + `dns-prefetch` jsdelivr/unpkg/tailwind
+- ✅ `defer` on Chart.js + Leaflet (verified safe vs DOMContentLoaded init order)
+- ✅ Structured data — homepage `Organization.logo` + `SoftwareApplication` node; richer static fallback JSON-LD (WebSite + Organization)
+- ✅ Meta polish — `og:image:alt`, light/dark `theme-color`
+- ✅ 162 tests pass; JSON-LD + bot metadata validated locally; not yet deployed
+- ⏭️ Deferred: replace Tailwind Play CDN with prebuilt static CSS (biggest CWV win, higher regression risk)
+
 ## SEO Enhancement — COMPLETE (2026-05-29)
 
 - ✅ HDB pages: FAQ JSON-LD with real prices by flat type + YoY direction; content_html with prices table + internal links to all 25 other towns

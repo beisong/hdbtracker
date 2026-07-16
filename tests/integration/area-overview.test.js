@@ -21,7 +21,7 @@ describe('GET /api/area-overview', () => {
 
   it('town_summary counts all 10 BEDOK fixture rows (within 12 months)', async () => {
     const res = await request.get('/api/area-overview?town=BEDOK');
-    expect(res.body.town_summary.total_transactions_12m).toBe(10);
+    expect(res.body.town_summary.total_transactions_12m).toBe(22);
   });
 
   it('price_percentiles are ordered p10 ≤ p25 ≤ p50 ≤ p75 ≤ p90', async () => {

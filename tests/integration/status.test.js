@@ -6,7 +6,7 @@ describe('GET /api/status', () => {
     const res = await request.get('/api/status');
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('ok');
-    expect(res.body.total_transactions).toBe(30);
+    expect(res.body.total_transactions).toBe(42);
     expect(res.body.latest_month).toBe('2025-05');
   });
 });

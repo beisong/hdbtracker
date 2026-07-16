@@ -1,5 +1,25 @@
 # Active Context: WorthIt
 
+## Recent Changes (Jul 2026 — Check My Price: Deal Score & Fair Value calculator) — NOT YET DEPLOYED
+
+Feature #1 from the product proposal (`FEATURE_PROPOSALS.md`). 213 tests pass (42 new). **Local only — user handles commit + deploy; `?v=` bumps automatically via `bump-version.js`.**
+
+- **`findNearbyHdbBlocks()` is now true-radius (global change)**: SQL bounding box kept as index prefilter, exact haversine (`haversineM`) decides inclusion; rows carry `dist_m`, sorted nearest first. Existing postal searches no longer include corner blocks 500–707m away.
+- **New `GET /api/valuation`** (`server/index.js`, before SEO endpoints):
+  - Subject by `postal` OR `block`+`street`; without `price` → `block_facts` (flat types + counts, standard `floor_area_sqm` values, storey ranges, remaining lease) inferred from the block's full transaction history. Lease = newest tx `remaining_lease_years` − elapsed (fixture has no `lease_commence_date` column — do not use it).
+  - With `price` (50k–5M): comps ladder 500m (lease ±10y) → 1000m → drop lease → town+type fallback; `MIN_COMPS=8`. Confidence: high (≥15 @500m w/ lease) / medium / low (town fallback).
+  - Storey adjustment computed live (NOT the unused `storey_adjustments` table): town×type buckets over 24 months, **lease-banded ±10y** — without the lease band, high-floor buckets are dominated by newer blocks and overstate the premium (Tampines 5R test: +19% biased → +5.9% banded). `computeStoreyFactor` requires both buckets ≥10 tx, clamps to ±10%.
+  - `deal_score = clamp(50 − 250×deviation, 0, 100)`; ≥70 Good deal, 45–69 Fair price, <45 Premium. Fair range = p25–p75 × area. Response includes ≤20 comps with `dist_m`.
+  - New `_test` exports: `haversineM`, `dealScore`, `computeStoreyFactor`, `monthsBetween`.
+- **Frontend — one `#valuation-section` card, three entry points** (`index.html`, `app.js`, `api.js`):
+  1. Auto-shown after postal-code searches (`loadValuationCard({postal})` in `renderResults`), price is the only required input; flat type / size / storey render as pre-filled chips (rows hidden when single option).
+  2. 💰 "Check" buttons on desktop transaction rows (new 9th column; colspan 8→9) and mobile cards → `checkLikeThis(tx)` prefills everything from the row (HDB rows only).
+  3. `/check/<postal>?price=` deep link — `handleUrlRoute` runs the postal search and auto-submits; bare `/check` focuses the search input. `_pushCheckUrl` pushes the shareable URL after each check.
+  - `parsePrice()` accepts `685k` / `$685,000` / `0.685m`. Score badge colors reuse the map's green→blue→red anchors (`_valScoreColor`). GA4: `valuation_open`/`valuation_check`/`valuation_result`. Card resets in `_onResultsShown()`.
+- **SEO**: `/check` branch in `/api/seo/metadata` (generic title; per-postal `noindex, follow`, canonical → `/check`); `/check` added to sitemap (priority 0.6).
+- **Fixture** (`tests/fixtures/seed.js`): +12 BEDOK NORTH ST 1 3-ROOM rows (17 comps → exercises the high-confidence path). Deliberate assertion updates: BEDOK 12m count 10→22 (`area-overview.test.js`), total 30→42 (`status.test.js`).
+- New `tests/integration/valuation.test.js` (16 tests) + unit tests for the new helpers and `App.parsePrice`.
+
 ## Current State
 The project is fully deployed and functional:
 - **Backend API**: Running on Fly.io at `worthit-api.fly.dev` — 370K transactions, data through May 2026

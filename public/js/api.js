@@ -63,6 +63,17 @@ const API = {
     return resp.json();
   },
 
+  // Valuation — pass { postal } or { block, street }; add price/flat_type/storey_range/area_sqm for a full check
+  async getValuation(params) {
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== null && v !== undefined && v !== '') qs.set(k, String(v));
+    }
+    const resp = await fetch(`${this.baseUrl}/api/valuation?${qs}`);
+    if (!resp.ok) throw new Error('Failed to get valuation');
+    return resp.json();
+  },
+
   async getNearbyHDB(lat, lng) {
     const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
     const resp = await fetch(`${this.baseUrl}/api/nearby-hdb?${params}`);

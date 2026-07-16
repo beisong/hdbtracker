@@ -96,6 +96,24 @@ const App = {
       }
     }
 
+    // /check — tool landing: prompt for a postal code
+    if (path === '/check') {
+      const input = document.getElementById('search-input');
+      input.placeholder = 'Enter a postal code to check a price...';
+      input.focus();
+      return;
+    }
+
+    // /check/<6-digit code>?price=685000 — postal search + auto-run price check
+    const checkMatch = path.match(/^\/check\/(\d{6})$/);
+    if (checkMatch) {
+      const priceParam = new URLSearchParams(window.location.search).get('price');
+      this._pendingCheckPrice = this.parsePrice(priceParam);
+      document.getElementById('search-input').value = checkMatch[1];
+      await this.search();
+      return;
+    }
+
     // /postal/<6-digit code>
     const postalMatch = path.match(/^\/postal\/(\d{6})$/);
     if (postalMatch) {
@@ -209,6 +227,12 @@ const App = {
   },
 
   setupEventListeners() {
+    // Valuation card — Check button + Enter in the price field
+    document.getElementById('val-check-btn')?.addEventListener('click', () => this.submitValuation());
+    document.getElementById('val-price-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.submitValuation();
+    });
+
     // Flat type buttons — multi-select; ALL clears selection
     document.querySelectorAll('.flat-type-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -306,6 +330,14 @@ const App = {
     const fab = document.getElementById('new-search-fab');
     if (jumpBar) jumpBar.classList.remove('hidden');
     if (fab) fab.classList.remove('hidden');
+    // Reset the valuation card — postal searches re-populate it after facts load
+    this._val = null;
+    const valSec = document.getElementById('valuation-section');
+    if (valSec) valSec.classList.add('hidden');
+    const valRes = document.getElementById('val-result');
+    if (valRes) { valRes.classList.add('hidden'); valRes.innerHTML = ''; }
+    const valInput = document.getElementById('val-price-input');
+    if (valInput) valInput.value = '';
   },
 
   share() {
@@ -642,6 +674,9 @@ const App = {
 
     // Update URL and meta for HDB search
     this.updateSeoForSearch('hdb', data);
+
+    // Postal searches know the exact block — offer the asking-price check
+    if (this.currentPostalCode) this.loadValuationCard({ postal: this.currentPostalCode }, {}, 'postal_search');
 
     const resolved = this.lastResolvedData;
     if (resolved && resolved.lat && resolved.lng) {
@@ -1033,7 +1068,7 @@ const App = {
     cardsContainer.innerHTML = '';
 
     if (!transactions || transactions.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-gray-500 text-sm">No transactions match your filters<br><button onclick="App.clearTransactionFilters()" class="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 transition-colors">Clear filters</button></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-gray-500 text-sm">No transactions match your filters<br><button onclick="App.clearTransactionFilters()" class="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 transition-colors">Clear filters</button></td></tr>`;
       cardsContainer.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm">No transactions match your filters<br><button onclick="App.clearTransactionFilters()" class="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 transition-colors">Clear filters</button></div>`;
       return;
     }
@@ -1099,8 +1134,10 @@ const App = {
         <td class="py-2.5 pr-2 text-right text-xs">${this.sqmToSqft(tx.floor_area_sqm)} sqft</td>
         <td class="py-2.5 pr-2 text-right text-gray-400 text-xs">${leaseDisplay}</td>
         <td class="py-2.5 pr-2 text-right font-semibold text-xs">$${this.formatNumber(tx.resale_price)}</td>
-        <td class="py-2.5 text-right text-gray-400 text-xs">$${this.formatNumber(this.psmToPsf(tx.price_per_sqm))}</td>
+        <td class="py-2.5 pr-2 text-right text-gray-400 text-xs">$${this.formatNumber(this.psmToPsf(tx.price_per_sqm))}</td>
+        <td class="py-2.5 text-right">${(!tx.is_private && tx.block && tx.street_name) ? '<button class="val-row-btn px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/20 transition-colors whitespace-nowrap" title="Check a price like this">💰 Check</button>' : ''}</td>
       `;
+      tr.querySelector('.val-row-btn')?.addEventListener('click', () => this.checkLikeThis(tx));
       tbody.appendChild(tr);
 
       // Mobile card — collect into array for pagination
@@ -1132,8 +1169,10 @@ const App = {
           <span>Floor ${tx.storey_range || '--'}</span>
           <span>·</span>
           <span>Lease ${leaseDisplay}</span>
+          ${(!tx.is_private && tx.block && tx.street_name) ? '<button class="val-row-btn ml-auto px-2 py-1 rounded-lg text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 active:bg-emerald-500/20 whitespace-nowrap">💰 Check a price</button>' : ''}
         </div>
       `;
+      card.querySelector('.val-row-btn')?.addEventListener('click', (e) => { e.stopPropagation(); this.checkLikeThis(tx); });
       mobileCards.push(card);
     });
 
@@ -1149,6 +1188,264 @@ const App = {
         mobileCards.slice(MOBILE_PAGE).forEach(card => cardsContainer.appendChild(card));
       };
       cardsContainer.appendChild(btn);
+    }
+  },
+
+  // ============================================================
+  // VALUATION — "Check My Price" card
+  // ============================================================
+
+  /** Accepts "685k", "$685,000", "0.685m" → integer dollars (null if unparseable) */
+  parsePrice(str) {
+    if (!str) return null;
+    let s = String(str).trim().toLowerCase().replace(/[$,\s]/g, '');
+    let mult = 1;
+    if (s.endsWith('k')) { mult = 1e3; s = s.slice(0, -1); }
+    else if (s.endsWith('m')) { mult = 1e6; s = s.slice(0, -1); }
+    const n = parseFloat(s);
+    if (!isFinite(n) || n <= 0) return null;
+    return Math.round(n * mult);
+  },
+
+  /** Same anchor colors as the map's getValueStyle(): 0=red, 50=blue (fair), 100=green */
+  _valScoreColor(score) {
+    const lerp = (a, b, t) => Math.round(a + (b - a) * t);
+    if (score >= 50) {
+      const t = (score - 50) / 50;
+      return `rgb(${lerp(96, 34, t)},${lerp(165, 197, t)},${lerp(250, 94, t)})`;
+    }
+    const t = score / 50;
+    return `rgb(${lerp(239, 96, t)},${lerp(68, 165, t)},${lerp(68, 250, t)})`;
+  },
+
+  _defaultAreaFor(type) {
+    const tf = this._val?.facts.flat_types.find(t => t.flat_type === type);
+    if (!tf || tf.areas.length === 0) return null;
+    // Server's subject default is the block's most common size for its default type
+    if (type === this._val.subject.flat_type && this._val.subject.floor_area_sqm) {
+      return this._val.subject.floor_area_sqm;
+    }
+    return tf.areas[Math.floor(tf.areas.length / 2)];
+  },
+
+  /**
+   * Fetch block facts and show the card.
+   * lookup: { postal } or { block, street }; presel: { flat_type, area, storey } from a transaction row.
+   */
+  async loadValuationCard(lookup, presel = {}, source = 'postal_search') {
+    const sec = document.getElementById('valuation-section');
+    try {
+      const data = await API.getValuation(lookup);
+      if (!data.found || !data.block_facts?.flat_types?.length) { sec.classList.add('hidden'); return; }
+
+      const facts = data.block_facts;
+      const selType = (presel.flat_type && facts.flat_types.some(t => t.flat_type === presel.flat_type))
+        ? presel.flat_type : data.subject.flat_type;
+      this._val = { lookup, facts, subject: data.subject, selType, selArea: null, selStorey: null };
+      const tf = facts.flat_types.find(t => t.flat_type === selType);
+      this._val.selArea = (presel.area && tf?.areas.includes(presel.area)) ? presel.area : this._defaultAreaFor(selType);
+      this._val.selStorey = (presel.storey && tf?.storey_ranges.includes(presel.storey)) ? presel.storey : null;
+
+      const s = data.subject;
+      const lease = facts.remaining_lease_years;
+      document.getElementById('val-subtitle').textContent =
+        `Blk ${s.block} ${s.street_name}${lease != null ? ` · ~${Math.round(lease)}y lease remaining` : ''} — seen an asking price? Check if it's fair.`;
+
+      this._renderValChips();
+      const valRes = document.getElementById('val-result');
+      valRes.classList.add('hidden');
+      valRes.innerHTML = '';
+      sec.classList.remove('hidden');
+      this.track('valuation_open', { source });
+
+      // /check/<postal>?price=... deep link — auto-run once facts are in
+      if (this._pendingCheckPrice) {
+        document.getElementById('val-price-input').value = String(this._pendingCheckPrice);
+        this._pendingCheckPrice = null;
+        setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+        this.submitValuation();
+      }
+    } catch (err) {
+      console.error('Valuation card error:', err);
+      sec.classList.add('hidden');
+    }
+  },
+
+  _valChip(label, active, onClick) {
+    const b = document.createElement('button');
+    b.className = `px-2.5 py-1 rounded-lg border text-xs transition-colors ${active
+      ? 'bg-emerald-600 border-emerald-600 text-white font-semibold'
+      : 'bg-gray-100 dark:bg-dark-700 border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:border-emerald-500/50'}`;
+    b.textContent = label;
+    b.addEventListener('click', onClick);
+    return b;
+  },
+
+  _renderValChips() {
+    if (!this._val) return;
+    const { facts, selType, selArea, selStorey } = this._val;
+    const tf = facts.flat_types.find(t => t.flat_type === selType);
+    const clearResult = () => {
+      const valRes = document.getElementById('val-result');
+      valRes.classList.add('hidden');
+      valRes.innerHTML = '';
+    };
+    const showRow = (id, show) => {
+      const row = document.getElementById(id);
+      row.classList.toggle('hidden', !show);
+      row.classList.toggle('flex', show);
+    };
+
+    // Flat type — only when the block has transacted more than one type
+    const typeChips = document.getElementById('val-type-chips');
+    typeChips.innerHTML = '';
+    for (const t of facts.flat_types) {
+      typeChips.appendChild(this._valChip(t.flat_type, t.flat_type === selType, () => {
+        this._val.selType = t.flat_type;
+        this._val.selArea = this._defaultAreaFor(t.flat_type);
+        this._val.selStorey = null;
+        clearResult();
+        this._renderValChips();
+      }));
+    }
+    showRow('val-type-row', facts.flat_types.length > 1);
+
+    // Floor area — standard sizes seen in this block for the chosen type
+    const areaChips = document.getElementById('val-area-chips');
+    areaChips.innerHTML = '';
+    for (const a of (tf?.areas || [])) {
+      areaChips.appendChild(this._valChip(`${this.sqmToSqft(a)} sqft`, a === selArea, () => {
+        this._val.selArea = a;
+        clearResult();
+        this._renderValChips();
+      }));
+    }
+    showRow('val-area-row', (tf?.areas.length || 0) > 1);
+
+    // Storey — optional; "Any" skips the storey adjustment
+    const storeyChips = document.getElementById('val-storey-chips');
+    storeyChips.innerHTML = '';
+    const ranges = tf?.storey_ranges || [];
+    if (ranges.length > 0) {
+      storeyChips.appendChild(this._valChip('Any', selStorey === null, () => {
+        this._val.selStorey = null;
+        clearResult();
+        this._renderValChips();
+      }));
+      for (const r of ranges) {
+        storeyChips.appendChild(this._valChip(r, r === selStorey, () => {
+          this._val.selStorey = r;
+          clearResult();
+          this._renderValChips();
+        }));
+      }
+    }
+    showRow('val-storey-row', ranges.length > 0);
+  },
+
+  async submitValuation() {
+    if (!this._val) return;
+    const price = this.parsePrice(document.getElementById('val-price-input').value);
+    if (!price || price < 50000 || price > 5000000) {
+      this.showToast('Enter a price between $50k and $5m');
+      document.getElementById('val-price-input').focus();
+      return;
+    }
+    const btn = document.getElementById('val-check-btn');
+    btn.disabled = true;
+    this.track('valuation_check', { price });
+    try {
+      const params = { ...this._val.lookup, price, flat_type: this._val.selType };
+      if (this._val.selArea) params.area_sqm = this._val.selArea;
+      if (this._val.selStorey) params.storey_range = this._val.selStorey;
+      const data = await API.getValuation(params);
+      const valRes = document.getElementById('val-result');
+      if (!data.found || !data.valuation) {
+        valRes.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400">${data.valuation_message || data.message || 'Could not estimate a fair value for this flat.'}</p>`;
+        valRes.classList.remove('hidden');
+        return;
+      }
+      this.renderValuationResult(data.valuation);
+      this.track('valuation_result', { deal_score: data.valuation.deal_score, confidence: data.valuation.confidence });
+      this._pushCheckUrl(price);
+    } catch (err) {
+      console.error('Valuation error:', err);
+      this.showToast('Check failed — please try again');
+    } finally {
+      btn.disabled = false;
+    }
+  },
+
+  renderValuationResult(v) {
+    const fmt = n => this.formatNumber(n);
+    const color = this._valScoreColor(v.deal_score);
+    const diffPct = Math.round((v.asking_price - v.fair_value) / v.fair_value * 100);
+    const diffLabel = diffPct === 0 ? 'right at the typical price'
+      : `${Math.abs(diffPct)}% ${diffPct > 0 ? 'above' : 'below'} typical`;
+    const basis = v.radius_m
+      ? `${v.comps_used} sales of ${this._val.selType} flats within ${v.radius_m}m in the last 12 months${v.lease_filtered ? ', similar lease' : ''}${v.storey_adjusted ? ', storey-adjusted' : ''}`
+      : `${v.comps_used} ${this._val.selType} sales across ${this._val.subject.town} in the last 12 months`;
+    const confStyles = {
+      high: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+      medium: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300',
+      low: 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300',
+    };
+    const compRows = v.comps.map(c => `
+      <div class="flex items-center justify-between gap-2 py-1 border-b border-gray-100 dark:border-white/5 last:border-0">
+        <span class="truncate">${this.formatMonth(c.month)} · Blk ${c.block} ${c.street_name} · ${c.storey_range || '--'}</span>
+        <span class="whitespace-nowrap">$${fmt(c.resale_price)} <span class="text-gray-400">· $${fmt(this.psmToPsf(c.price_per_sqm))}/sqft${c.dist_m != null ? ` · ${c.dist_m}m` : ''}</span></span>
+      </div>`).join('');
+
+    const valRes = document.getElementById('val-result');
+    valRes.innerHTML = `
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex flex-col items-center justify-center text-white shrink-0" style="background:${color}">
+          <span class="text-xl sm:text-2xl font-black leading-none">${v.deal_score}</span>
+          <span class="text-[9px] uppercase tracking-wider opacity-80">score</span>
+        </div>
+        <div class="min-w-0">
+          <div class="text-lg font-bold" style="color:${color}">${v.verdict}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-300">Fair range <b>$${fmt(v.fair_low)} – $${fmt(v.fair_high)}</b> · typical <b>$${fmt(v.fair_value)}</b></div>
+          <div class="text-xs text-gray-400 mt-0.5">Asking $${fmt(v.asking_price)} is ${diffLabel} · higher than ${v.percentile_rank}% of comparable $/sqft</div>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-3">
+        Based on ${basis}
+        <span class="ml-1 px-1.5 py-0.5 rounded ${confStyles[v.confidence] || confStyles.low} text-[10px] font-semibold uppercase">${v.confidence} confidence</span>
+      </p>
+      <details class="mt-2">
+        <summary class="text-xs text-brand-500 cursor-pointer select-none">Show ${v.comps.length} comparable sales</summary>
+        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 max-h-48 overflow-y-auto pr-1">${compRows}</div>
+      </details>
+    `;
+    valRes.classList.remove('hidden');
+  },
+
+  /** Shareable deep link — only for postal-based checks */
+  _pushCheckUrl(price) {
+    const postal = this._val?.lookup?.postal;
+    if (!postal) return;
+    const path = `/check/${postal}?price=${price}`;
+    if (window.location.pathname + window.location.search !== path) {
+      history.pushState({ type: 'check', path }, '', path);
+      if (typeof gtag === 'function') gtag('event', 'page_view', { page_path: path });
+    }
+    document.title = `Is $${this.formatNumber(price)} fair for Blk ${this._val.subject.block} ${this._val.subject.street_name}? | WorthIt`;
+  },
+
+  /** "Check a price like this" from a transaction row/card */
+  async checkLikeThis(tx) {
+    await this.loadValuationCard(
+      { block: tx.block, street: tx.street_name },
+      { flat_type: tx.flat_type, area: tx.floor_area_sqm, storey: tx.storey_range || null },
+      'transaction_row'
+    );
+    const sec = document.getElementById('valuation-section');
+    if (!sec.classList.contains('hidden')) {
+      sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => document.getElementById('val-price-input')?.focus({ preventScroll: true }), 400);
+    } else {
+      this.showToast('No price-check data for this block');
     }
   },
 

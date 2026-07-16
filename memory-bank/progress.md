@@ -1,6 +1,7 @@
 # Progress: WorthIt
 
 ## What Works
+- ✅ Check My Price — `/api/valuation` Deal Score + fair-value calculator with chip-based UI, 3 entry points (postal search card, transaction-row 💰 buttons, `/check/<postal>?price=` deep links) (Jul 2026, not yet deployed)
 - ✅ HDB resale data download pipeline (Python → SQLite)
 - ✅ URA private property data download pipeline
 - ✅ Express.js server with full REST API
@@ -98,6 +99,16 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
   - `sqmToSqft`/`psmToPsf` unit tests; geocode address-cap tests for both `load()` and `addNearbyHDB()`
 - ✅ Private project search routing bug fixed — 55 projects containing town names (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES") were incorrectly routed to HDB town pages; fixed in `/api/resolve` by removing `inputUpper.includes(t)` and adding word-boundary check to `t.includes(inputUpper)` (May 2026)
 - ✅ psm→psf internal variable and ID renaming — magic number `10.7639` consolidated to helpers only; sort values, HTML IDs, and JS variable names all renamed to match display unit (May 2026)
+
+## Check My Price — Jul 2026 (NOT YET DEPLOYED)
+
+- ✅ `findNearbyHdbBlocks()` true-radius fix — haversine post-filter + `dist_m` attached, nearest-first; applies globally (postal search, nearby-hdb, valuation)
+- ✅ `GET /api/valuation` — block facts (postal or block+street) + fair value / Deal Score / percentile from storey-adjusted nearby comps; confidence ladder 500m → 1000m → no-lease → town fallback
+- ✅ Storey buckets lease-banded ±10y + factor clamp ±10% — fixes vintage bias (high floors ≠ new blocks)
+- ✅ Frontend `#valuation-section` card — price + pre-filled chips (type/size/floor inferred from block history); entry via postal search, transaction-row 💰 buttons, `/check/<postal>?price=` deep links; GA4 events
+- ✅ SEO — `/check` metadata branch + sitemap entry; per-postal check URLs noindexed
+- ✅ Test count: 171 → **213** (16 valuation integration + new helper/parsePrice unit tests; fixture +12 Bedok North rows; 2 deliberate count-assertion updates)
+- 🔲 Deploy (user-managed) — `npm run deploy` bumps `?v=` automatically
 
 ## Map & Performance — Jun 2026
 
@@ -234,3 +245,42 @@ Audit-driven, zero-regression fixes (Tailwind Play CDN migration deferred by use
 - Geocoding: OneMap primary + Nominatim fallback (for map display); `hdb_block_coords` for postal search radius
 - npm scripts use cross-platform `scripts/run-python.js` wrapper
 - DB seeding: tried SSH + Python on Fly.io → OOM kill → switched to local build + SFTP upload
+
+
+
+## TODO
+Off-site backlinks are the single biggest ranking lever you have left, and unlike the on-page work it can't be automated — it's outreach and distribution. Here's a concrete playbook tailored to a Singapore property tool, ordered by effort-to-payoff.
+
+Tier 1 — Do this week (easy, high-trust)
+
+Free citation / directory links (foundational, every site should have these):
+- Product Hunt launch — schedule a Tuesday/Wednesday launch. Gets you a dofollow link + a traffic spike + often picked up by aggregators.
+- BetaList, SaaSHub, AlternativeTo — list WorthIt as a free alternative to commercial property portals (PropertyGuru, 99.co, SRX). AlternativeTo in particular ranks well and sends qualified traffic.
+- Google Business Profile isn't relevant (no physical location), skip it.
+
+Your own footprint:
+- Add the link to your GitHub profile/repo README, your LinkedIn, any personal site.
+
+Tier 2 — Community seeding (where SG property buyers actually are)
+
+These are nofollow mostly, but they drive real users + the discovery that leads to natural links:
+- r/singaporefi and r/askSingapore — these communities constantly debate "is this flat overpriced." A genuinely helpful comment linking your Deal Score for a specific town reads as useful, not spammy. Don't drop-and-run; answer the actual question.
+- HardwareZone EDMW / Money Mind forums — huge SG property-discussion threads.
+- Seedly community (Singapore personal-finance) — they actively cover property tools and may feature you.
+- Telegram SG property groups — share a specific town link, not the homepage.
+
+Rule for all of these: link to the most relevant deep page (e.g. /hdb/tampines/4-room), never just the homepage. Deep links spread your crawl equity and convert better.
+
+Tier 3 — Content/PR (slower, strongest links)
+
+- HDB-questions Quora / SG finance blogs — offer a free data snapshot ("Cheapest towns by Deal Score, June 2026"). Bloggers like Seedly, Dollars and Sense, MoneySmart, Stacked Homes cover property data and cite tools that give them a story.
+- Original-data angle — you're sitting on a unique asset: median PSF + your Deal Score across every town. Publish a short monthly "SG resale price index" post (could be one of the ranking/best-of pages in your backlog, task #5). Journalists and bloggers link to data sources, and your /data-sources E-E-A-T page makes you look citeable.
+- HARO / Featured / journalist requests — respond to SG property/cost-of-living queries with a stat from your data + link.
+
+What actually moves the needle
+
+If I had to pick: ship the "best-of" ranking pages (backlog #5), then pitch that data to 2-3 SG finance blogs. A single link from Seedly or Stacked Homes outweighs 50 directory listings, and the ranking pages give people a concrete reason to link.
+
+Two things to avoid: paid link farms / Fiverr backlink gigs (Google penalty risk), and mass-posting the same link across forums (gets you banned and flagged as spam).
+
+Want me to draft (a) a Product Hunt listing, (b) a Reddit-ready comment template, or (c) start on the ranking/best-of pages that give bloggers something to cite?

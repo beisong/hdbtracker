@@ -223,6 +223,17 @@ function percentile(arr, p) {
   return sorted[low] + (sorted[high] - sorted[low]) * (idx - low);
 }
 
+// Great-circle distance in metres (haversine)
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
 // Compare avg of first N months vs avg of last N months to smooth single-month noise.
 // Falls back to 1-month comparison when the window is too small.
 function trendPct(arr, key, n = 3) {
@@ -232,6 +243,32 @@ function trendPct(arr, key, n = 3) {
   const late = arr.slice(-take).reduce((s, m) => s + m[key], 0) / take;
   if (!early || early === 0) return 0;
   return Math.round((late - early) / early * 1000) / 10;
+}
+
+// Whole months between two 'YYYY-MM' strings (b - a)
+function monthsBetween(a, b) {
+  const ya = parseInt(a.substring(0, 4)), ma = parseInt(a.substring(5, 7));
+  const yb = parseInt(b.substring(0, 4)), mb = parseInt(b.substring(5, 7));
+  return (yb - ya) * 12 + (mb - ma);
+}
+
+// Deal Score: linear map of deviation from fair value.
+// d = (asking − fair) / fair. Fair → 50; every +1% above fair −2.5 pts.
+// −20% → 100 (great deal), +20% → 0 (heavy premium).
+function dealScore(d) {
+  return Math.max(0, Math.min(100, Math.round(50 - 250 * d)));
+}
+
+// Storey premium factor from a { storey_range: { avg_psm, c } } bucket map.
+// Returns subject/comp psm ratio only when both buckets are well-populated; else 1.
+// Clamped to ±10% — buckets are lease-banded to control vintage bias, but thin
+// data in some towns can still produce implausible ratios.
+function computeStoreyFactor(buckets, subjectRange, compRange, minCount = 10) {
+  if (!subjectRange || !compRange || subjectRange === compRange) return 1;
+  const s = buckets[subjectRange];
+  const c = buckets[compRange];
+  if (!s || !c || s.c < minCount || c.c < minCount || !s.avg_psm || !c.avg_psm) return 1;
+  return Math.max(0.9, Math.min(1.1, s.avg_psm / c.avg_psm));
 }
 
 function monthsAgoStr(months) {
@@ -661,18 +698,24 @@ function findDbStreets(roadName, town) {
 }
 
 /**
- * Return distinct (block, street_name, lat, lng) rows from hdb_block_coords
- * within ~radiusM metres of the given point (bounding-box pre-filter).
+ * Return distinct (block, street_name, lat, lng, postal, dist_m) rows from
+ * hdb_block_coords within radiusM metres of the given point, nearest first.
+ * Bounding box is only the index-friendly pre-filter; exact haversine distance
+ * decides inclusion (a box alone admits corner blocks up to ~1.41 × radiusM).
  */
 function findNearbyHdbBlocks(lat, lng, radiusM = 500) {
   // 1 degree lat ≈ 111 000 m; 1 degree lng ≈ 111 000 * cos(lat_rad) m
   const dLat = radiusM / 111000;
   const dLng = radiusM / (111000 * Math.cos(lat * Math.PI / 180));
-  return db.prepare(`
+  const candidates = db.prepare(`
     SELECT block, street_name, lat, lng, postal
     FROM hdb_block_coords
     WHERE lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?
   `).all(lat - dLat, lat + dLat, lng - dLng, lng + dLng);
+  return candidates
+    .map(b => ({ ...b, dist_m: Math.round(haversineM(lat, lng, b.lat, b.lng)) }))
+    .filter(b => b.dist_m <= radiusM)
+    .sort((a, b) => a.dist_m - b.dist_m);
 }
 
 
@@ -1687,6 +1730,245 @@ app.get('/api/nearby-hdb', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/valuation — Fair value + Deal Score for a specific flat.
+ * Subject block via ?postal=XXXXXX or ?block=&street=.
+ * Without ?price: returns subject + block_facts only (powers the chip UI).
+ * With ?price (and optional flat_type / storey_range / area_sqm overrides):
+ * adds a valuation from storey-adjusted nearby comparables.
+ */
+app.get('/api/valuation', (req, res) => {
+  try {
+    const { postal, block, street, price, flat_type, storey_range, area_sqm } = req.query;
+
+    // --- Resolve subject block ---
+    let blockRow = null;
+    if (postal) {
+      if (!/^\d{6}$/.test(postal)) return res.status(400).json({ error: 'postal must be a 6-digit code' });
+      blockRow = db.prepare(
+        'SELECT block, street_name, lat, lng, postal FROM hdb_block_coords WHERE postal = ? LIMIT 1'
+      ).get(postal);
+    } else if (block && street) {
+      if (block.length > 10 || street.length > 200) return res.status(400).json({ error: 'block or street too long' });
+      blockRow = db.prepare(
+        'SELECT block, street_name, lat, lng, postal FROM hdb_block_coords WHERE block = ? AND street_name = ? LIMIT 1'
+      ).get(block.toUpperCase(), street.toUpperCase());
+    } else {
+      return res.status(400).json({ error: 'Provide postal, or block and street' });
+    }
+    if (!blockRow) return res.json({ found: false, message: 'Block not found' });
+
+    // --- Block facts: full history for this exact block ---
+    const blockTxs = db.prepare(`
+      SELECT month, town, flat_type, floor_area_sqm, storey_range, remaining_lease_years,
+             resale_price, price_per_sqm
+      FROM transactions
+      WHERE block = ? AND street_name = ? AND dataset_source != 'URA_PRIVATE'
+        AND resale_price IS NOT NULL
+      ORDER BY month DESC
+    `).all(blockRow.block, blockRow.street_name);
+    if (blockTxs.length === 0) {
+      return res.json({ found: false, message: 'No transaction history for this block' });
+    }
+
+    const town = blockTxs[0].town;
+    const latestMonth = db.prepare('SELECT MAX(month) as m FROM transactions').get().m;
+
+    // Remaining lease today: latest transaction with lease data, minus elapsed time.
+    // (One block = one lease start, so any row works; prefer the freshest.)
+    let leaseNow = null;
+    const leaseTx = blockTxs.find(t => t.remaining_lease_years != null);
+    if (leaseTx) {
+      leaseNow = Math.round((leaseTx.remaining_lease_years - monthsBetween(leaseTx.month, latestMonth) / 12) * 10) / 10;
+    }
+
+    // Group history by flat type for the chip UI
+    const byType = {};
+    for (const t of blockTxs) {
+      if (!byType[t.flat_type]) byType[t.flat_type] = { flat_type: t.flat_type, count: 0, areas: new Set(), storey_ranges: new Set() };
+      byType[t.flat_type].count++;
+      if (t.floor_area_sqm != null) byType[t.flat_type].areas.add(t.floor_area_sqm);
+      if (t.storey_range) byType[t.flat_type].storey_ranges.add(t.storey_range);
+    }
+    const storeyStart = r => parseInt(r) || 0;
+    const flatTypes = Object.values(byType)
+      .sort((a, b) => b.count - a.count)
+      .map(t => ({
+        flat_type: t.flat_type,
+        count: t.count,
+        areas: [...t.areas].sort((a, b) => a - b),
+        storey_ranges: [...t.storey_ranges].sort((a, b) => storeyStart(a) - storeyStart(b)),
+      }));
+
+    // --- Subject: params override inferred defaults ---
+    const subjectType = flat_type ? flat_type.toUpperCase().slice(0, 30) : flatTypes[0].flat_type;
+    const typeFacts = flatTypes.find(t => t.flat_type === subjectType);
+    // Most common area for the chosen type (mode over that type's rows)
+    let subjectArea = null;
+    if (area_sqm) {
+      subjectArea = parseFloat(area_sqm);
+      if (!(subjectArea >= 20 && subjectArea <= 350)) return res.status(400).json({ error: 'area_sqm out of range (20–350)' });
+    } else if (typeFacts) {
+      const areaCounts = {};
+      for (const t of blockTxs) {
+        if (t.flat_type === subjectType && t.floor_area_sqm != null) {
+          areaCounts[t.floor_area_sqm] = (areaCounts[t.floor_area_sqm] || 0) + 1;
+        }
+      }
+      const best = Object.entries(areaCounts).sort((a, b) => b[1] - a[1])[0];
+      subjectArea = best ? parseFloat(best[0]) : null;
+    }
+    const subjectStorey = storey_range ? storey_range.toUpperCase().slice(0, 20) : null;
+
+    const subject = {
+      block: blockRow.block,
+      street_name: blockRow.street_name,
+      town,
+      postal: blockRow.postal,
+      lat: blockRow.lat,
+      lng: blockRow.lng,
+      flat_type: subjectType,
+      floor_area_sqm: subjectArea,
+      storey_range: subjectStorey,
+      remaining_lease_years: leaseNow,
+    };
+    const blockFacts = { flat_types: flatTypes, remaining_lease_years: leaseNow };
+
+    if (price === undefined) {
+      return res.json({ found: true, subject, block_facts: blockFacts });
+    }
+
+    // --- Valuation ---
+    const askingPrice = parseFloat(price);
+    if (!(askingPrice >= 50000 && askingPrice <= 5000000)) {
+      return res.status(400).json({ error: 'price out of range (50,000–5,000,000)' });
+    }
+    if (!subjectArea) {
+      return res.json({ found: true, subject, block_facts: blockFacts, valuation: null, valuation_message: 'No floor area known for this flat type — pass area_sqm' });
+    }
+
+    const monthsAgo12 = monthsAgoStr(12);
+
+    // Comps: same flat type, last 12 months, within radius; optional lease band ±10y
+    const fetchComps = (radiusM, useLease) => {
+      const blocks = findNearbyHdbBlocks(blockRow.lat, blockRow.lng, radiusM);
+      if (blocks.length === 0) return [];
+      const distByKey = {};
+      for (const b of blocks) distByKey[`${b.block}|${b.street_name}`] = b.dist_m;
+      const keys = Object.keys(distByKey);
+      let q = `
+        SELECT month, block, street_name, storey_range, floor_area_sqm,
+               remaining_lease_years, resale_price, price_per_sqm
+        FROM transactions
+        WHERE dataset_source != 'URA_PRIVATE' AND resale_price IS NOT NULL
+          AND price_per_sqm IS NOT NULL AND flat_type = ? AND month >= ?
+          AND (block || '|' || street_name) IN (${keys.map(() => '?').join(',')})
+      `;
+      const params = [subjectType, monthsAgo12, ...keys];
+      if (useLease && leaseNow != null) {
+        q += ' AND remaining_lease_years BETWEEN ? AND ?';
+        params.push(leaseNow - 10, leaseNow + 10);
+      }
+      return db.prepare(q).all(...params)
+        .map(c => ({ ...c, dist_m: distByKey[`${c.block}|${c.street_name}`] ?? null }));
+    };
+
+    const MIN_COMPS = 8;
+    let comps = fetchComps(500, true);
+    let radiusUsed = 500;
+    let leaseFiltered = true;
+    let townFallback = false;
+    if (comps.length < MIN_COMPS) { comps = fetchComps(1000, true); radiusUsed = 1000; }
+    if (comps.length < MIN_COMPS) { comps = fetchComps(1000, false); leaseFiltered = false; }
+    if (comps.length < MIN_COMPS) {
+      townFallback = true;
+      radiusUsed = null;
+      comps = db.prepare(`
+        SELECT month, block, street_name, storey_range, floor_area_sqm,
+               remaining_lease_years, resale_price, price_per_sqm
+        FROM transactions
+        WHERE dataset_source != 'URA_PRIVATE' AND resale_price IS NOT NULL
+          AND price_per_sqm IS NOT NULL AND town = ? AND flat_type = ? AND month >= ?
+      `).all(town, subjectType, monthsAgo12).map(c => ({ ...c, dist_m: null }));
+    }
+    if (comps.length === 0) {
+      return res.json({ found: true, subject, block_facts: blockFacts, valuation: null, valuation_message: 'Not enough comparable sales to estimate a fair value' });
+    }
+
+    // Storey premium buckets for this town + type (last 24 months).
+    // Lease-banded to the subject when possible — without it, "high floor" buckets
+    // are dominated by newer (pricier, longer-lease) blocks and overstate the premium.
+    const storeyBuckets = {};
+    let bucketQuery = `
+      SELECT storey_range, AVG(price_per_sqm) as avg_psm, COUNT(*) as c
+      FROM transactions
+      WHERE town = ? AND flat_type = ? AND month >= ?
+        AND storey_range IS NOT NULL AND price_per_sqm IS NOT NULL
+    `;
+    const bucketParams = [town, subjectType, monthsAgoStr(24)];
+    if (leaseNow != null) {
+      bucketQuery += ' AND remaining_lease_years BETWEEN ? AND ?';
+      bucketParams.push(leaseNow - 10, leaseNow + 10);
+    }
+    for (const r of db.prepare(bucketQuery + ' GROUP BY storey_range').all(...bucketParams)) {
+      storeyBuckets[r.storey_range] = { avg_psm: r.avg_psm, c: r.c };
+    }
+
+    let storeyAdjusted = false;
+    for (const c of comps) {
+      const f = computeStoreyFactor(storeyBuckets, subjectStorey, c.storey_range);
+      if (f !== 1) storeyAdjusted = true;
+      c.adjusted_psm = Math.round(c.price_per_sqm * f);
+    }
+
+    const adjustedPsms = comps.map(c => c.adjusted_psm);
+    const fairPsm = median(adjustedPsms);
+    const fairValue = Math.round(fairPsm * subjectArea);
+    const fairLow = Math.round(percentile(adjustedPsms, 25) * subjectArea);
+    const fairHigh = Math.round(percentile(adjustedPsms, 75) * subjectArea);
+    const askingPsm = askingPrice / subjectArea;
+    const deviation = (askingPsm - fairPsm) / fairPsm;
+    const score = dealScore(deviation);
+    const verdict = score >= 70 ? 'Good deal' : score >= 45 ? 'Fair price' : 'Premium';
+    const percentileRank = Math.round(adjustedPsms.filter(p => p <= askingPsm).length / adjustedPsms.length * 100);
+    const confidence = (!townFallback && leaseFiltered && radiusUsed === 500 && comps.length >= 15) ? 'high'
+      : !townFallback ? 'medium' : 'low';
+
+    // Nearest + freshest comps first; cap payload at 20
+    const compsOut = [...comps]
+      .sort((a, b) => (a.dist_m ?? Infinity) - (b.dist_m ?? Infinity) || (a.month < b.month ? 1 : -1))
+      .slice(0, 20);
+
+    res.json({
+      found: true,
+      subject,
+      block_facts: blockFacts,
+      valuation: {
+        asking_price: askingPrice,
+        asking_psm: Math.round(askingPsm),
+        fair_value: fairValue,
+        fair_low: fairLow,
+        fair_high: fairHigh,
+        fair_psm: fairPsm,
+        deal_score: score,
+        verdict,
+        percentile_rank: percentileRank,
+        confidence,
+        comps_used: comps.length,
+        radius_m: radiusUsed,
+        lease_filtered: leaseFiltered,
+        storey_adjusted: storeyAdjusted,
+        months_window: 12,
+        data_as_of: latestMonth,
+        comps: compsOut,
+      },
+    });
+  } catch (err) {
+    console.error('Error in /api/valuation:', err);
+    res.status(500).json({ error: 'Failed to compute valuation: ' + err.message });
+  }
+});
+
 // ============================================================
 // SEO ENDPOINTS (for Cloudflare Pages Function / bot requests)
 // ============================================================
@@ -1790,6 +2072,9 @@ app.get('/api/seo/sitemap', (req, res) => {
     for (const page of ['about', 'methodology', 'data-sources']) {
       urls.push({ url: `${SEO_BASE_URL}/${page}`, changefreq: 'monthly', priority: '0.5', lastmod });
     }
+
+    // Check My Price tool page (per-postal variants are noindex)
+    urls.push({ url: `${SEO_BASE_URL}/check`, changefreq: 'monthly', priority: '0.6', lastmod });
 
     // HDB towns
     const towns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE' ORDER BY town").all();
@@ -1962,6 +2247,15 @@ app.get('/api/seo/metadata', (req, res) => {
           },
         ],
       });
+    } else if (route === '/check' || route.startsWith('/check/')) {
+      meta.title = 'Check an HDB Asking Price — Free Deal Score | WorthIt';
+      meta.description = 'Enter a postal code and asking price to get a fair-value estimate, Deal Score, and comparable sales from real HDB resale transactions.';
+      meta.canonical = `${SEO_BASE_URL}/check`;
+      meta.og_title = meta.title;
+      meta.og_description = meta.description;
+      meta.og_url = meta.canonical;
+      // Per-postal check URLs are user-specific — keep them out of the index
+      if (route.startsWith('/check/')) meta.robots = 'noindex, follow';
     } else if (route.startsWith('/postal/')) {
       const postal = route.replace('/postal/', '').trim();
       if (/^\d{6}$/.test(postal) && db) {
@@ -2493,4 +2787,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName } };
+module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween } };

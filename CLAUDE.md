@@ -31,7 +31,7 @@ npm run deploy:frontend # Deploy frontend only (wrangler pages deploy public --p
 ```
 
 ```bash
-npm test                # Run unit + integration tests (127 tests, Vitest + supertest)
+npm test                # Run unit + integration tests (213 tests, Vitest + supertest)
 npm run test:smoke      # Smoke tests against live worthit-api.fly.dev (19 tests)
 npm run test:smoke-local # Smoke tests against localhost:3000
 ```
@@ -90,13 +90,17 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Flat type selection**: multi-select (empty Set = All). Server's `flat_type` param accepts comma-separated list; `addFlatClause()` builds `= ?` or `IN (?,?)` accordingly.
 
+**Valuation / Check My Price** (`GET /api/valuation`): subject block by `postal` or `block`+`street` (from `hdb_block_coords`). Without `price` returns `block_facts` (flat types, standard areas, storey ranges, remaining lease — all inferred from the block's transaction history; lease = newest tx's `remaining_lease_years` minus elapsed time, NOT `lease_commence_date` which the test fixture lacks). With `price`: comps ladder 500m → 1000m → drop lease band → town fallback (12-month window, lease ±10y, `MIN_COMPS=8`); comps storey-adjusted via lease-banded town×type buckets (`computeStoreyFactor`, clamped ±10%); `deal_score = clamp(50 − 250×deviation, 0, 100)` (≥70 Good deal / 45–69 Fair / <45 Premium). Frontend: `#valuation-section` card (`index.html`), shown after postal searches and via 💰 buttons on transaction rows; deep link `/check/<postal>?price=` (noindex, canonical → `/check`).
+
+**findNearbyHdbBlocks** is true-radius: SQL bounding box is only the index prefilter; exact haversine decides inclusion, and each row carries `dist_m`, sorted nearest first.
+
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
 **Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=19`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 
-**Testing**: 155 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
+**Testing**: 213 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
 
 **WAL checkpoint**: always run `PRAGMA wal_checkpoint(TRUNCATE)` on the SQLite DB before uploading to Fly.io. Otherwise geocoded data in the WAL file is silently lost.
 

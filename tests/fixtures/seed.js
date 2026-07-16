@@ -77,6 +77,23 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
     ['BEDOK','4 ROOM','1000','BEDOK SOUTH AVE 1','13 TO 15',90,'MODEL A',76,455000,5055,'2025-05','HDB',null,null,null,'Resale',null],
   ];
 
+  // HDB BEDOK NORTH — 12 extra 3 ROOM rows so /api/valuation has a high-confidence
+  // comp pool (≥15 comps within 500m, similar lease) for postal 460100
+  const bedokNorthExtra = [
+    ['BEDOK','3 ROOM','100','BEDOK NORTH ST 1','01 TO 03',65,'MODEL A',67,282000,4338,'2024-08','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','100','BEDOK NORTH ST 1','04 TO 06',65,'MODEL A',67,286000,4400,'2024-11','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','100','BEDOK NORTH ST 1','07 TO 09',65,'MODEL A',67,291000,4477,'2025-02','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','100','BEDOK NORTH ST 1','10 TO 12',65,'MODEL A',67,296000,4553,'2025-04','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','200','BEDOK NORTH ST 1','01 TO 03',65,'MODEL A',68,279000,4292,'2024-07','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','200','BEDOK NORTH ST 1','04 TO 06',65,'MODEL A',68,287000,4415,'2024-12','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','200','BEDOK NORTH ST 1','07 TO 09',65,'MODEL A',68,292000,4492,'2025-02','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','200','BEDOK NORTH ST 1','13 TO 15',65,'MODEL A',68,299000,4600,'2025-04','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','500','BEDOK NORTH ST 1','01 TO 03',65,'MODEL A',69,281000,4323,'2024-09','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','500','BEDOK NORTH ST 1','04 TO 06',65,'MODEL A',69,285000,4384,'2024-12','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','500','BEDOK NORTH ST 1','10 TO 12',65,'MODEL A',69,294000,4523,'2025-03','HDB',null,null,null,'Resale',null],
+    ['BEDOK','3 ROOM','500','BEDOK NORTH ST 1','13 TO 15',65,'MODEL A',69,300000,4615,'2025-05','HDB',null,null,null,'Resale',null],
+  ];
+
   // HDB TOA PAYOH — 8 rows (4 × 3 ROOM, 4 × 4 ROOM), district 11/12
   const toaPayohHdb = [
     ['TOA PAYOH','3 ROOM','10','TOA PAYOH RISE','01 TO 03',65,'MODEL A',55,270000,4153,'2024-06','HDB',null,'11',null,'Resale',null],
@@ -112,7 +129,7 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   const insertAll = db.transaction((rows) => {
     for (const row of rows) insertTx.run(...row);
   });
-  insertAll([...bedokHdb, ...toaPayohHdb, ...skyHabitat, ...theCanopy]);
+  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy]);
 
   // Project coords
   const insertCoord = db.prepare(`

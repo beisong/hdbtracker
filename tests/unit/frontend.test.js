@@ -268,3 +268,16 @@ describe('TransactionMap.addNearbyHDB — pre-attached coords (no geocoding)', (
     expect(addedMarkers.length).toBeLessThanOrEqual(200);
   });
 });
+
+// ─── App.parsePrice ──────────────────────────────────────────────────────
+describe('App.parsePrice', () => {
+  it('parses a plain number', () => expect(App.parsePrice('685000')).toBe(685000));
+  it('parses commas and dollar sign', () => expect(App.parsePrice('$685,000')).toBe(685000));
+  it('parses k shorthand', () => expect(App.parsePrice('685k')).toBe(685000));
+  it('parses decimal k shorthand', () => expect(App.parsePrice('685.5k')).toBe(685500));
+  it('parses m shorthand', () => expect(App.parsePrice('0.685m')).toBe(685000));
+  it('is case-insensitive and ignores spaces', () => expect(App.parsePrice(' 685 K ')).toBe(685000));
+  it('returns null for empty input', () => expect(App.parsePrice('')).toBe(null));
+  it('returns null for garbage', () => expect(App.parsePrice('abc')).toBe(null));
+  it('returns null for zero/negative', () => expect(App.parsePrice('-5')).toBe(null));
+});

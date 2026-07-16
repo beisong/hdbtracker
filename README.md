@@ -6,6 +6,8 @@ Instantly check if a Singapore HDB resale flat or private property is fairly pri
 
 A free tool for Singapore homeowners and buyers — check HDB resale prices, condo transaction history, price trends, and fair-value estimates for any town, district, or project.
 
+**Check My Price**: search any HDB postal code, enter an asking price, and get a 0–100 Deal Score with a fair-value range from storey-adjusted comparable sales nearby — flat type, size, floor, and remaining lease are inferred automatically from the block's transaction history.
+
 ## Architecture
 
 WorthIt uses a **split architecture**:
@@ -223,14 +225,18 @@ curl -I https://worthit.canlah.app
 | `GET /api/towns` | List all HDB towns + district labels |
 | `GET /api/flat-types` | List all flat types |
 | `GET /api/resolve?q=` | Resolve town name or postal code |
-| `GET /api/area-overview?town=` | Main HDB market overview endpoint |
-| `GET /api/nearby-streets?lat=&lng=&town=` | Find nearby DB streets |
+| `GET /api/area-overview?town=` | Main HDB market overview endpoint (accepts `lat`/`lng` for 500m radius) |
+| `GET /api/valuation?postal=&price=` | Deal Score + fair value from storey-adjusted nearby comps |
 | `POST /api/geocode` | Batch geocode addresses |
+| `POST /api/feedback` | In-app feedback (rate-limited, separate feedback.db) |
 | `GET /api/private/projects?q=` | Search private property projects |
 | `GET /api/private/project-overview?project=` | Private project details |
+| `GET /api/private/property-types` | List private property types |
 | `GET /api/private/district-summary?districts=` | District aggregate stats |
 | `GET /api/private/district-overview?district=` | Full district overview |
-| `GET /api/nearby-hdb?lat=&lng=` | Nearby HDB + private transactions |
+| `GET /api/nearby-hdb?lat=&lng=` | Nearby HDB transactions + private projects (800m) |
+| `GET /api/seo/metadata?route=` | Bot metadata for edge-function injection |
+| `GET /api/seo/sitemap` | Sitemap URLs (consumed by Cloudflare edge function) |
 
 ## Project Structure
 

@@ -119,4 +119,48 @@ describe('GET /api/area-overview', () => {
     expect(types).toContain('3 ROOM');
     expect(types).not.toContain('4 ROOM');
   });
+
+  describe('map marker completeness (distance path)', () => {
+    // Fixture: blocks 100/200/500/700/900 BEDOK NORTH ST 1 within ~100m of this point
+    const NEAR = 'town=BEDOK&lat=1.3251&lng=103.9301';
+
+    it('attaches lat/lng to every distance-filtered transaction', async () => {
+      const res = await request.get(`/api/area-overview?${NEAR}`);
+      expect(res.status).toBe(200);
+      expect(res.body.recent_transactions.length).toBeGreaterThan(0);
+      for (const tx of res.body.recent_transactions) {
+        expect(typeof tx.lat).toBe('number');
+        expect(typeof tx.lng).toBe('number');
+      }
+    });
+
+    it('guarantees every nearby block with resale history appears', async () => {
+      const res = await request.get(`/api/area-overview?${NEAR}`);
+      const blocks = new Set(res.body.recent_transactions.map(tx => tx.block));
+      for (const b of ['100', '200', '500', '700', '900']) {
+        expect(blocks.has(b), `block ${b} missing from recent_transactions`).toBe(true);
+      }
+    });
+
+    it('caps each block at 3 latest transactions', async () => {
+      // Block 100 has 5 fixture transactions — only 3 newest should return
+      const res = await request.get(`/api/area-overview?${NEAR}`);
+      const perBlock = {};
+      for (const tx of res.body.recent_transactions) {
+        perBlock[tx.block] = (perBlock[tx.block] || 0) + 1;
+      }
+      expect(perBlock['100']).toBe(3);
+      for (const count of Object.values(perBlock)) {
+        expect(count).toBeLessThanOrEqual(3);
+      }
+    });
+
+    it('attaches coords on town-wide searches for blocks known to hdb_block_coords', async () => {
+      const res = await request.get('/api/area-overview?town=BEDOK');
+      const known = res.body.recent_transactions.find(tx => tx.block === '100' && tx.street_name === 'BEDOK NORTH ST 1');
+      expect(known).toBeTruthy();
+      expect(known.lat).toBeCloseTo(1.3250, 3);
+      expect(known.lng).toBeCloseTo(103.9300, 3);
+    });
+  });
 });

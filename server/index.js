@@ -746,6 +746,7 @@ app.get('/api/area-overview', (req, res) => {
     let streetClause = '';
     let streetParams = [];
     let streetNames = [];  // for response metadata only
+    let coordByKey = null; // block|street → { lat, lng } for marker coords (distance path)
 
     if (lat && lng) {
       const latF = parseFloat(lat);
@@ -758,6 +759,8 @@ app.get('/api/area-overview', (req, res) => {
           streetClause = ` AND (block || '|' || street_name) IN (${keys.map(() => '?').join(',')})`;
           streetParams = keys;
           streetNames = [...new Set(blocks.map(b => b.street_name))];
+          coordByKey = {};
+          for (const b of blocks) coordByKey[`${b.block}|${b.street_name}`] = { lat: b.lat, lng: b.lng };
           console.log(`[area-overview] distance filter: ${blocks.length} blocks across ${streetNames.length} streets near (${latF},${lngF})`);
         }
       }
@@ -905,17 +908,65 @@ app.get('/api/area-overview', (req, res) => {
     }
 
     // 6. Recent transactions — apply street + flat_type filter
-    let txQuery = `
-      SELECT month, town, flat_type, block, street_name, storey_range,
-             floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
-      FROM transactions
-      WHERE town = ? AND resale_price IS NOT NULL
-    `;
-    const txParams = [townUpper];
-    txQuery = addFlatClause(txQuery, txParams);
-    if (streetClause) { txQuery += streetClause; txParams.push(...streetParams); }
-    txQuery += ' ORDER BY month DESC, resale_price DESC LIMIT 200';
-    const recentTransactions = db.prepare(txQuery).all(...txParams);
+    let recentTransactions;
+    if (streetClause) {
+      // Block-filtered search: latest 3 per block so EVERY block in the radius
+      // gets a map marker — plain "newest 200" lets busy blocks crowd out quiet ones.
+      let innerQuery = `
+        SELECT month, town, flat_type, block, street_name, storey_range,
+               floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm,
+               ROW_NUMBER() OVER (
+                 PARTITION BY block, street_name
+                 ORDER BY month DESC, resale_price DESC
+               ) AS rn
+        FROM transactions
+        WHERE town = ? AND resale_price IS NOT NULL
+      `;
+      const txParams = [townUpper];
+      innerQuery = addFlatClause(innerQuery, txParams);
+      innerQuery += streetClause;
+      txParams.push(...streetParams);
+      recentTransactions = db.prepare(`
+        SELECT month, town, flat_type, block, street_name, storey_range,
+               floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
+        FROM (${innerQuery})
+        WHERE rn <= 3
+        ORDER BY month DESC, resale_price DESC
+        LIMIT 400
+      `).all(...txParams);
+    } else {
+      let txQuery = `
+        SELECT month, town, flat_type, block, street_name, storey_range,
+               floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
+        FROM transactions
+        WHERE town = ? AND resale_price IS NOT NULL
+      `;
+      const txParams = [townUpper];
+      txQuery = addFlatClause(txQuery, txParams);
+      txQuery += ' ORDER BY month DESC, resale_price DESC LIMIT 200';
+      recentTransactions = db.prepare(txQuery).all(...txParams);
+    }
+
+    // Attach lat/lng so the client can place markers without geocoding.
+    // Distance path already has coords from findNearbyHdbBlocks; other paths
+    // look up the returned blocks in hdb_block_coords (misses stay null and
+    // fall back to client-side geocoding).
+    if (!coordByKey) {
+      const keys = [...new Set(recentTransactions.map(t => `${t.block}|${t.street_name}`))];
+      coordByKey = {};
+      if (keys.length > 0) {
+        const rows = db.prepare(`
+          SELECT block, street_name, lat, lng FROM hdb_block_coords
+          WHERE (block || '|' || street_name) IN (${keys.map(() => '?').join(',')})
+        `).all(...keys);
+        for (const b of rows) coordByKey[`${b.block}|${b.street_name}`] = { lat: b.lat, lng: b.lng };
+      }
+    }
+    for (const tx of recentTransactions) {
+      const c = coordByKey[`${tx.block}|${tx.street_name}`];
+      tx.lat = c?.lat ?? null;
+      tx.lng = c?.lng ?? null;
+    }
 
     res.json({
       town: townUpper,
@@ -1678,7 +1729,9 @@ app.get('/api/nearby-hdb', async (req, res) => {
       return { ...tx, lat: coords.lat ?? null, lng: coords.lng ?? null };
     });
 
-    // 4. Also get nearby private projects from project_coords
+    // 4. Also get nearby private projects from project_coords — bounding box is
+    // only the index prefilter; exact haversine ≤ 800m decides inclusion.
+    const PROJECT_RADIUS_M = 800;
     const nearbyProjects = db.prepare(`
       SELECT pc.project, pc.street_name, pc.district, pc.market_segment, pc.latitude, pc.longitude,
              COUNT(t.rowid) as tx_count,
@@ -1690,11 +1743,13 @@ app.get('/api/nearby-hdb', async (req, res) => {
         AND pc.longitude BETWEEN ? AND ?
       GROUP BY pc.project
       ORDER BY tx_count DESC
-      LIMIT 20
     `).all(
-      latF - 0.005, latF + 0.005,
-      lngF - 0.0055, lngF + 0.0055
-    );
+      latF - 0.0072, latF + 0.0072,
+      lngF - 0.0074, lngF + 0.0074
+    )
+      .map(p => ({ ...p, dist_m: Math.round(haversineM(latF, lngF, p.latitude, p.longitude)) }))
+      .filter(p => p.dist_m <= PROJECT_RADIUS_M)
+      .slice(0, 40);
 
     // Get top 10 recent transactions for each nearby project
     const projectNames = nearbyProjects.map(p => p.project);

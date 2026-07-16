@@ -669,8 +669,8 @@ const App = {
     const privateSummaryEl = document.getElementById('private-summary-section');
     if (privateSummaryEl) privateSummaryEl.classList.add('hidden');
 
-    // Load map
-    TransactionMap.load(this.allTransactions, this.lastResolvedData);
+    // Load map — keep the promise so private markers wait for the map to exist
+    const mapLoad = TransactionMap.load(this.allTransactions, this.lastResolvedData);
 
     // Update URL and meta for HDB search
     this.updateSeoForSearch('hdb', data);
@@ -680,14 +680,19 @@ const App = {
 
     const resolved = this.lastResolvedData;
     if (resolved && resolved.lat && resolved.lng) {
-      // Postal code search — use bounded nearby query instead of district-wide summary
-      API.getNearbyHDB(resolved.lat, resolved.lng).then(hdbData => {
-        if (hdbData.nearby_projects && hdbData.nearby_projects.length > 0) {
-          TransactionMap.addNearbyProjects(hdbData.nearby_projects, null);
-        }
-      }).catch(err => {
-        console.warn('Failed to load nearby private projects:', err.message);
-      });
+      // Postal code search — bounded nearby query instead of district-wide summary.
+      // Chained after the map load: addNearbyProjects() silently no-ops if the
+      // map isn't initialized yet, so racing it loses markers.
+      mapLoad
+        .then(() => API.getNearbyHDB(resolved.lat, resolved.lng))
+        .then(hdbData => {
+          if (hdbData.nearby_projects && hdbData.nearby_projects.length > 0) {
+            TransactionMap.addNearbyProjects(hdbData.nearby_projects, null);
+          }
+        })
+        .catch(err => {
+          console.warn('Failed to load nearby private projects:', err.message);
+        });
     } else {
       // Town-name search — load district-wide private summary
       this.loadPrivateSummaryForTown(data.town);

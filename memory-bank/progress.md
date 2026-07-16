@@ -100,6 +100,14 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Private project search routing bug fixed — 55 projects containing town names (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES") were incorrectly routed to HDB town pages; fixed in `/api/resolve` by removing `inputUpper.includes(t)` and adding word-boundary check to `t.includes(inputUpper)` (May 2026)
 - ✅ psm→psf internal variable and ID renaming — magic number `10.7639` consolidated to helpers only; sort values, HTML IDs, and JS variable names all renamed to match display unit (May 2026)
 
+## Map Completeness Fixes — Jul 2026 (NOT YET DEPLOYED)
+
+- ✅ `/api/area-overview` attaches lat/lng to all returned transactions (from `hdb_block_coords`) — client geocoding now fallback-only; 100-address cap no longer limits markers
+- ✅ Per-block window query (`rn <= 3`, LIMIT 400) for block-filtered searches — every block with resale history within the radius gets a map marker
+- ✅ Condo-marker race fixed — nearby-projects fetch chained after `TransactionMap.load()` resolves (`addNearbyProjects` no-ops on uninitialized map)
+- ✅ `/api/nearby-hdb` private projects: true 800m haversine radius + `dist_m`, cap 20 → 40
+- ✅ Test count: 213 → **217**; verified live at 523876: 162 tx / 54 unique blocks / 0 missing coords; 9 condos ≤ 752m
+
 ## Check My Price — Jul 2026 (NOT YET DEPLOYED)
 
 - ✅ `findNearbyHdbBlocks()` true-radius fix — haversine post-filter + `dist_m` attached, nearest-first; applies globally (postal search, nearby-hdb, valuation)

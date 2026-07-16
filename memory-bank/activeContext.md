@@ -1,5 +1,15 @@
 # Active Context: WorthIt
 
+## Recent Changes (Jul 2026 — Map completeness fixes for postal searches) — NOT YET DEPLOYED
+
+User report: postal-code searches didn't show all houses (HDB or condo) on the map. Three root causes fixed; 217 tests pass (4 new).
+
+- **Coords attached server-side** — `/api/area-overview` now attaches `lat`/`lng` to every `recent_transactions` row: distance path reuses the `findNearbyHdbBlocks()` result (`coordByKey`), town/street paths do one `hdb_block_coords` lookup for the returned keys (misses stay `null` → client geocode fallback). `map.js load()` unchanged — pre-attached coords flow through its existing `preGeocoded` branch, killing the 100-address geocode cap + OneMap round-trip for HDB searches.
+- **Per-block marker guarantee** — when `streetClause` is active (postal/street search), recent transactions use `ROW_NUMBER() OVER (PARTITION BY block, street_name ORDER BY month DESC, resale_price DESC) <= 3`, cap 400 — every block with resale history within 500m gets a marker (verified: 54 unique blocks at 523876, was recency-crowded before). Town searches keep newest-200. Blocks with zero resale history intentionally never appear.
+- **Condo marker race fixed** — `renderResults` chains `API.getNearbyHDB()` AFTER `TransactionMap.load()` resolves; previously they raced and `addNearbyProjects()` silently no-ops when `this.map` is null → intermittently vanishing private markers. (Private-project search path uses synchronous `loadPreGeocoded` — never raced.)
+- **Nearby projects true radius** — `/api/nearby-hdb` `nearby_projects`: bounding box widened to prefilter only; haversine ≤ **800m** decides inclusion, `dist_m` attached, cap raised 20 → **40**.
+- **NOT touched**: `findNearbyHdbBlocks` stays HDB-only by design (private coords live in `project_coords`).
+
 ## Recent Changes (Jul 2026 — Check My Price: Deal Score & Fair Value calculator) — NOT YET DEPLOYED
 
 Feature #1 from the product proposal (`FEATURE_PROPOSALS.md`). 213 tests pass (42 new). **Local only — user handles commit + deploy; `?v=` bumps automatically via `bump-version.js`.**

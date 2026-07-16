@@ -80,7 +80,9 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 3. Expanded form (ST→STREET, BT→BUKIT via `expandStreetName()`)
 4. Keyword fallback — strip road-type stop words, LIKE-query meaningful words
 
-**Geocoding pipeline** (`/api/geocode`): OneMap SG API primary → Nominatim fallback. Nearby streets use 9-point reverse-geocoding at ~200m radius. Server enforces a hard cap of 100 addresses per request; client (`map.js`) caps at 100 to match.
+**Map marker coords**: `/api/area-overview` attaches `lat`/`lng` to every transaction it returns (from `hdb_block_coords`), so `map.js` places HDB markers without geocoding. Block-filtered searches (postal/street) return the latest **3 transactions per block** (window function, cap 400) so every block in the radius gets a marker; town searches keep newest-200. Private markers come from `/api/nearby-hdb` `nearby_projects` (true 800m haversine radius, ≤40 projects, `dist_m` attached) and are added only after `TransactionMap.load()` resolves — `addNearbyProjects()` no-ops if the map isn't initialized.
+
+**Geocoding pipeline** (`/api/geocode`): OneMap SG API primary → Nominatim fallback. Now only a fallback for blocks missing from `hdb_block_coords`. Server enforces a hard cap of 100 addresses per request; client (`map.js`) caps at 100 to match.
 
 **SEO for bots** (`functions/[[path]].js`): Cloudflare edge function detects crawlers via User-Agent regex, fetches metadata from Fly.io (`/api/seo/metadata`), and injects `<title>`, `<meta>`, OpenGraph, and JSON-LD into the HTML before serving. Normal users get the SPA directly.
 

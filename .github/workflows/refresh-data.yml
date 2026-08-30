@@ -5,8 +5,11 @@
 #
 # Required repo secrets (Settings → Secrets and variables → Actions):
 #   URA_API_ACCESS_KEY  — URA API access key (copy from .env)
-#   FLY_API_TOKEN       — scoped Fly deploy token:
-#                         fly tokens create deploy -a worthit-api
+#   FLY_API_TOKEN       — Fly ORG token:
+#                         fly tokens create org
+#                         Must be an org token, NOT `fly tokens create deploy` —
+#                         deploy tokens cannot issue the SSH certs that the
+#                         `fly ssh sftp` / `fly ssh console` steps below need.
 #                         (default expiry ~1 year — calendar-remind yourself to renew)
 
 name: Refresh Data

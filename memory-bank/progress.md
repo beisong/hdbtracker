@@ -1,7 +1,7 @@
 # Progress: WorthIt
 
 ## What Works
-- ✅ Check My Price — `/api/valuation` Deal Score + fair-value calculator with chip-based UI, 3 entry points (postal search card, transaction-row 💰 buttons, `/check/<postal>?price=` deep links) (Jul 2026, not yet deployed)
+- ✅ Check My Price — `/api/valuation` Deal Score + fair-value calculator with chip-based UI, 3 entry points (postal search card, transaction-row 💰 buttons, `/check/<postal>?price=` deep links) (Jul 2026, deployed v=20)
 - ✅ HDB resale data download pipeline (Python → SQLite)
 - ✅ URA private property data download pipeline
 - ✅ Express.js server with full REST API
@@ -100,7 +100,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Private project search routing bug fixed — 55 projects containing town names (e.g. "THE EDEN AT TAMPINES", "BEDOK RESIDENCES") were incorrectly routed to HDB town pages; fixed in `/api/resolve` by removing `inputUpper.includes(t)` and adding word-boundary check to `t.includes(inputUpper)` (May 2026)
 - ✅ psm→psf internal variable and ID renaming — magic number `10.7639` consolidated to helpers only; sort values, HTML IDs, and JS variable names all renamed to match display unit (May 2026)
 
-## Map Completeness Fixes — Jul 2026 (NOT YET DEPLOYED)
+## Map Completeness Fixes — Jul 2026 (DEPLOYED, v=20)
 
 - ✅ `/api/area-overview` attaches lat/lng to all returned transactions (from `hdb_block_coords`) — client geocoding now fallback-only; 100-address cap no longer limits markers
 - ✅ Per-block window query (`rn <= 3`, LIMIT 400) for block-filtered searches — every block with resale history within the radius gets a map marker
@@ -108,7 +108,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ `/api/nearby-hdb` private projects: true 800m haversine radius + `dist_m`, cap 20 → 40
 - ✅ Test count: 213 → **217**; verified live at 523876: 162 tx / 54 unique blocks / 0 missing coords; 9 condos ≤ 752m
 
-## Check My Price — Jul 2026 (NOT YET DEPLOYED)
+## Check My Price — Jul 2026 (DEPLOYED, v=20)
 
 - ✅ `findNearbyHdbBlocks()` true-radius fix — haversine post-filter + `dist_m` attached, nearest-first; applies globally (postal search, nearby-hdb, valuation)
 - ✅ `GET /api/valuation` — block facts (postal or block+street) + fair value / Deal Score / percentile from storey-adjusted nearby comps; confidence ladder 500m → 1000m → no-lease → town fallback
@@ -116,7 +116,7 @@ worthit-api.fly.dev    → Fly.io (Express API + SQLite) — ✅ LIVE
 - ✅ Frontend `#valuation-section` card — price + pre-filled chips (type/size/floor inferred from block history); entry via postal search, transaction-row 💰 buttons, `/check/<postal>?price=` deep links; GA4 events
 - ✅ SEO — `/check` metadata branch + sitemap entry; per-postal check URLs noindexed
 - ✅ Test count: 171 → **213** (16 valuation integration + new helper/parsePrice unit tests; fixture +12 Bedok North rows; 2 deliberate count-assertion updates)
-- 🔲 Deploy (user-managed) — `npm run deploy` bumps `?v=` automatically
+- ✅ Deployed Jul 2026 (v=20) — 19 smoke tests pass; valuation + map fixes verified live
 
 ## Map & Performance — Jun 2026
 
@@ -194,6 +194,16 @@ Audit-driven, zero-regression fixes (Tailwind Play CDN migration deferred by use
 - ✅ Validated with Google Rich Results Test — FAQPage detected
 - ⚠️ FAQ rich results deprecated by Google as of May 7, 2026 — FAQPage JSON-LD kept (harmless) but won't show rich result cards; BreadcrumbList + content injection still fully valuable
 - ✅ Submitted sitemap to Google Search Console (Jun 2026)
+
+## Automation — data refresh broke 4 Jul 2026, fixed 28 Aug 2026
+
+- ⚠️ **`Refresh Data` failed every night 2026-07-04 → 2026-08-26** (last green run 2026-07-03). Production `resale.db` has been stale since then; it refreshes on the first successful run after the fix lands.
+  - **Not an expired token** — `FLY_API_TOKEN` authenticated on every failed run (`fly machines start` succeeded).
+  - Trigger: one transient `copy file: connection lost (12812288 bytes written)` during SFTP left a truncated `/data/resale.db.new.gz` on the Fly volume. The `&&` chain then skipped the `gunzip && mv` that consumes it, so every subsequent run died on `remote file ... already exists. flyctl sftp doesn't overwrite existing files for safety`.
+  - **Fix**: `deploy:data` now runs `fly ssh console --command "rm -f /data/resale.db.new.gz /data/resale.db.new"` before the `sftp put` — idempotent, self-healing, and never touches the live `/data/resale.db`. **Local only — user handles the commit.**
+  - Verify after commit: trigger `Refresh Data` from the Actions tab (or `gh workflow run "Refresh Data"`), then `gh run watch`.
+  - Lesson: a `&&` chain that stages a file remotely must clear its own staging path first, or one dropped connection wedges the pipeline permanently.
+  - `FLY_API_TOKEN` (org token) created ~Jun 2026, default ~1-year expiry → renew around **Jun 2027**.
 
 ## Automation — Jun 2026 (WORKING)
 

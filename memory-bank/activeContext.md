@@ -1,6 +1,16 @@
 # Active Context: WorthIt
 
-## Recent Changes (Jul 2026 — Map completeness fixes for postal searches) — NOT YET DEPLOYED
+## Recent Changes (Aug 2026 — GitHub Actions "Refresh Data" wedged since 4 Jul) — FIXED, awaiting commit
+
+The nightly `Refresh Data` workflow (`.github/workflows/refresh-data.yml`) failed every run from **2026-07-04** to **2026-08-26** (last success 2026-07-03). **Not a token/auth problem** — `FLY_API_TOKEN` authenticated fine every run.
+
+- **Root cause chain**: on 2026-07-04 the SFTP upload died mid-transfer (`copy file: connection lost (12812288 bytes written)`), leaving a truncated `/data/resale.db.new.gz` on the Fly volume. Because `deploy:data` is a single `&&` chain, the failure skipped the `gunzip && mv` that would have consumed that staging file. Every later run then hit `Error: remote file /data/resale.db.new.gz already exists. flyctl sftp doesn't overwrite existing files for safety` — self-perpetuating deadlock.
+- **Fix** (`package.json` `deploy:data`): inserted `fly ssh console --command "rm -f /data/resale.db.new.gz /data/resale.db.new"` between the `gzip` and the `fly ssh sftp put`. Clears stale staging files only — never touches the live `/data/resale.db`. Makes the step idempotent and self-healing, so no manual volume cleanup is needed.
+- **Diagnostic note**: the failing step logs are only reachable via `gh run view <id> --log-failed`; the run summary just shows `Process completed with exit code 1`.
+- **Still open**: the deploy token was created ~Jun 2026 with flyctl's default ~1-year expiry, so it lapses around **Jun 2027** — renew with `fly tokens create org` (must be an org token — deploy tokens cannot issue SSH certs). Unrelated to this failure.
+
+
+## Recent Changes (Jul 2026 — Map completeness fixes for postal searches) — DEPLOYED (v=20)
 
 User report: postal-code searches didn't show all houses (HDB or condo) on the map. Three root causes fixed; 217 tests pass (4 new).
 
@@ -10,7 +20,7 @@ User report: postal-code searches didn't show all houses (HDB or condo) on the m
 - **Nearby projects true radius** — `/api/nearby-hdb` `nearby_projects`: bounding box widened to prefilter only; haversine ≤ **800m** decides inclusion, `dist_m` attached, cap raised 20 → **40**.
 - **NOT touched**: `findNearbyHdbBlocks` stays HDB-only by design (private coords live in `project_coords`).
 
-## Recent Changes (Jul 2026 — Check My Price: Deal Score & Fair Value calculator) — NOT YET DEPLOYED
+## Recent Changes (Jul 2026 — Check My Price: Deal Score & Fair Value calculator) — DEPLOYED (v=20)
 
 Feature #1 from the product proposal (`FEATURE_PROPOSALS.md`). 213 tests pass (42 new). **Local only — user handles commit + deploy; `?v=` bumps automatically via `bump-version.js`.**
 

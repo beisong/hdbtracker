@@ -374,6 +374,17 @@ const App = {
     document.getElementById('transactions-section')?.classList.remove('hidden');
     document.getElementById('map-section')?.classList.remove('hidden');
     document.getElementById('percentiles-section')?.classList.remove('hidden');
+    // Restore the resale-search stat-card labels — renderBtoResults() repurposes these
+    // same 4 slots for different concepts (price range/wait/classification/town) and
+    // relabels them; every other render path needs the original labels back.
+    const statLabelId = document.getElementById('stat-median-label');
+    if (statLabelId) statLabelId.textContent = 'Median Price';
+    const statPsfLabel = document.getElementById('stat-psf-label');
+    if (statPsfLabel) statPsfLabel.textContent = 'Median $/sqft';
+    const statRangeLabel = document.getElementById('stat-range-label');
+    if (statRangeLabel) statRangeLabel.textContent = 'Price Range';
+    const statPopularLabel = document.getElementById('stat-popular-label');
+    if (statPopularLabel) statPopularLabel.textContent = 'Most Popular';
   },
 
   share() {
@@ -1682,7 +1693,14 @@ const App = {
     const totalUnits = data.flats.reduce((s, f) => s + (f.units || 0), 0);
     document.getElementById('badge-volume').innerHTML = `<span class="w-2 h-2 rounded-full bg-orange-400"></span> ${totalUnits} total units`;
 
-    // Stat cards (reuse existing slots)
+    // Stat cards — reuse the existing 4 slots, but relabel them: this page shows a
+    // price range/wait/classification/town, not the resale median/psf/range/popular-type
+    // those labels describe by default (_onResultsShown() restores the originals).
+    document.getElementById('stat-median-label').textContent = 'Price Range';
+    document.getElementById('stat-psf-label').textContent = 'Est. Wait';
+    document.getElementById('stat-range-label').textContent = 'Classification';
+    document.getElementById('stat-popular-label').textContent = 'Town';
+
     const prices = data.flats.flatMap(f => [f.price_min, f.price_max]).filter(Boolean);
     document.getElementById('stat-median').textContent = prices.length
       ? `$${this.formatNumber(Math.min(...prices) / 1000)}k–$${this.formatNumber(Math.max(...prices) / 1000)}k` : '--';

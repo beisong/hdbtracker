@@ -31,9 +31,11 @@ const TransactionMap = {
       this.map.removeLayer(this._tileLayer);
     }
     const dark = this.isDark();
+    // CARTO requires an API key on this tile endpoint since Aug 2026 — see config.js.
+    const keyParam = typeof CARTO_API_KEY !== 'undefined' ? `?key=${CARTO_API_KEY}` : '';
     const tileUrl = dark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+      ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${keyParam}`
+      : `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png${keyParam}`;
     this._tileLayer = L.tileLayer(tileUrl, {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',

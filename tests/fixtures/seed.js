@@ -53,6 +53,27 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
       PRIMARY KEY (block, street_name)
     );
     CREATE INDEX idx_hdb_coords_latln ON hdb_block_coords(lat, lng);
+    CREATE TABLE bto_projects (
+      launch_id         TEXT NOT NULL,
+      launch_label      TEXT,
+      application_start TEXT,
+      application_end   TEXT,
+      project           TEXT NOT NULL,
+      display_name      TEXT,
+      town              TEXT NOT NULL,
+      classification    TEXT,
+      location_desc     TEXT,
+      lat               REAL,
+      lng               REAL,
+      waiting_months    INTEGER,
+      bto_label         TEXT,
+      resale_flat_type  TEXT,
+      floor_area_sqm    REAL,
+      units             INTEGER,
+      price_min         INTEGER,
+      price_max         INTEGER
+    );
+    CREATE INDEX idx_bto_project ON bto_projects(project);
   `);
 
   const insertTx = db.prepare(`
@@ -151,6 +172,22 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   // BEDOK SOUTH AVE 1 blocks — ~2km away from BEDOK NORTH ST 1
   insertBlock.run('300', 'BEDOK SOUTH AVE 1', 1.3100, 103.9200, '460300');
   insertBlock.run('400', 'BEDOK SOUTH AVE 1', 1.3102, 103.9202, '460400');
+
+  // BTO projects — one priced (inside the BEDOK NORTH ST 1 cluster, so the 1000m
+  // comps ladder finds the 3-ROOM/4-ROOM resale rows above), one upcoming (no
+  // flats/coords yet).
+  const insertBto = db.prepare(`
+    INSERT INTO bto_projects (launch_id, launch_label, application_start, application_end,
+      project, display_name, town, classification, location_desc, lat, lng, waiting_months,
+      bto_label, resale_flat_type, floor_area_sqm, units, price_min, price_max)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `);
+  const insertBtoAll = db.transaction((rows) => { for (const r of rows) insertBto.run(...r); });
+  insertBtoAll([
+    ['2026-06', 'June 2026 BTO', '2026-06-17', '2026-06-24', 'BEDOK VISTA CREST', 'Bedok Vista Crest', 'BEDOK', 'Standard', 'Near Bedok North', 1.3253, 103.9303, 40, '3-Room', '3 ROOM', 65, 200, 250000, 280000],
+    ['2026-06', 'June 2026 BTO', '2026-06-17', '2026-06-24', 'BEDOK VISTA CREST', 'Bedok Vista Crest', 'BEDOK', 'Standard', 'Near Bedok North', 1.3253, 103.9303, 40, '4-Room', '4 ROOM', 90, 300, 320000, 360000],
+    ['2026-11', 'November 2026 BTO (upcoming)', null, null, 'TOA PAYOH SUMMIT', 'Toa Payoh Summit', 'TOA PAYOH', 'Plus', 'TBD', null, null, null, '', null, null, null, null, null],
+  ]);
 
   db.close();
 

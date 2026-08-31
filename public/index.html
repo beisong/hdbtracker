@@ -224,6 +224,9 @@
       <div id="price-type-cards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
       </div>
 
+      <!-- BTO vs Nearby Resale comparison (BTO project pages only) -->
+      <div id="bto-comparison-container" class="mt-4"></div>
+
       <!-- Check My Price (postal-code searches / transaction rows) -->
       <div id="valuation-section" class="hidden mt-4 bg-white dark:bg-dark-800 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
         <div class="flex items-center gap-2 mb-1">
@@ -337,7 +340,7 @@
       </div>
 
       <!-- Percentiles + Town Summary -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div id="percentiles-section" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
           <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
             <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
@@ -459,6 +462,9 @@
     </div>
   </section>
 
+  <!-- BTO Launches Index (/bto) -->
+  <section id="bto-index-section" class="hidden max-w-5xl mx-auto px-4 py-8"></section>
+
   <!-- SEO Content Section (visible, provides keyword-rich content for indexing) -->
   <section id="seo-content" class="px-4 py-8 sm:py-12 mt-4 border-t border-gray-200 dark:border-white/5">
     <article class="max-w-4xl mx-auto" itemscope itemtype="https://schema.org/WebPage">
@@ -562,6 +568,7 @@
         <a href="/about" class="hover:text-brand-500 dark:hover:text-brand-400 hover:underline">About</a>
         <a href="/methodology" class="hover:text-brand-500 dark:hover:text-brand-400 hover:underline">Methodology</a>
         <a href="/data-sources" class="hover:text-brand-500 dark:hover:text-brand-400 hover:underline">Data Sources</a>
+        <a href="/bto" class="hover:text-brand-500 dark:hover:text-brand-400 hover:underline">BTO Launches</a>
       </nav>
     </div>
   </footer>

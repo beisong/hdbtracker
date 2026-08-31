@@ -1,0 +1,933 @@
+{
+  "_readme": "Seed data for the BTO launches feature. One launch object per BTO sales exercise. TO SEED A NEW LAUNCH: follow the curation runbook in BTO.plan.md section 8 at the repo root step by step (finding the Annex A PDF, extraction, geocoding, sanity checks, the reused-project-name check, verification) — don't wing it from memory, the URL patterns and edge cases in there were each hit for real. resale_flat_type values must exactly match transactions.flat_type ('2 ROOM','3 ROOM','4 ROOM','5 ROOM','MULTI-GENERATION'). Prices are 99-year-lease indicative prices, excluding grants, as officially quoted by HDB unless the launch has not happened yet (see section 8.9 for provisional/unofficial launches).",
+  "launches": [
+    {
+      "launch_id": "2026-06",
+      "label": "June 2026 BTO",
+      "application_start": "2026-06-17",
+      "application_end": "2026-06-24",
+      "sources": [
+        "https://www.hdb.gov.sg/hdb-pulse/news/2026/hdb-launches-6952-flats-across-7-projects-in-june-2026-bto-sales-exercise",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2026/20260617-HDB-Launches-6952-Flats-Across-7-Projects-in-June-2026-BTO-Sales-Exercise/Annex-A.pdf",
+        "https://www.mynicehome.gov.sg/get-started/hdb-bto-sales-launch/"
+      ],
+      "projects": [
+        {
+          "project": "SEMBAWANG PORTICO",
+          "display_name": "Sembawang Portico",
+          "town": "SEMBAWANG",
+          "classification": "Standard",
+          "location_desc": "Bounded by Admiralty Lane and Sembawang Drive",
+          "lat": 1.457769,
+          "lng": 103.817556,
+          "waiting_months": 31,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 50, "price_min": 142000, "price_max": 184000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 150, "price_min": 157000, "price_max": 225000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 100, "price_min": 250000, "price_max": 344000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 300, "price_min": 320000, "price_max": 437000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 275, "price_min": 465000, "price_max": 579000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 322000, "max": 390000, "note": "~93y lease, 47 sqm" },
+            { "resale_flat_type": "3 ROOM", "min": 500000, "max": 528888, "note": "~93y lease, 69 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 600000, "max": 680000, "note": "~93y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 685000, "max": 820000, "note": "~93y lease, 113-116 sqm" }
+          ]
+        },
+        {
+          "project": "SEMBAWANG BROOK",
+          "display_name": "Sembawang Brook",
+          "town": "SEMBAWANG",
+          "classification": "Standard",
+          "location_desc": "Bounded by Admiralty Street and Sungei Sembawang",
+          "lat": 1.461652,
+          "lng": 103.814050,
+          "waiting_months": 33,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 58, "price_min": 139000, "price_max": 187000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 203, "price_min": 164000, "price_max": 218000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 87, "price_min": 257000, "price_max": 333000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 464, "price_min": 302000, "price_max": 428000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 319, "price_min": 420000, "price_max": 571000 },
+            { "bto_label": "3Gen", "resale_flat_type": "MULTI-GENERATION", "floor_area_sqm": 120, "units": 29, "price_min": 468000, "price_max": 567000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 322000, "max": 390000, "note": "~93y lease, 47 sqm" },
+            { "resale_flat_type": "3 ROOM", "min": 500000, "max": 528888, "note": "~93y lease, 69 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 600000, "max": 680000, "note": "~93y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 685000, "max": 820000, "note": "~93y lease, 113-116 sqm" }
+          ]
+        },
+        {
+          "project": "WOODGROVE ACRES",
+          "display_name": "Woodgrove Acres",
+          "town": "WOODLANDS",
+          "classification": "Standard",
+          "location_desc": "Along Woodgrove Avenue",
+          "lat": 1.427747,
+          "lng": 103.780737,
+          "waiting_months": 42,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 31, "price_min": 137000, "price_max": 170000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 126, "price_min": 164000, "price_max": 211000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 80, "price_min": 260000, "price_max": 325000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 162, "price_min": 353000, "price_max": 437000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 257, "price_min": 472000, "price_max": 582000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 365000, "max": 423000, "note": "~92y lease, 47 sqm" },
+            { "resale_flat_type": "3 ROOM", "min": 510000, "max": 556000, "note": "~92y lease, 68 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 650000, "max": 750000, "note": "~92y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 777000, "max": 815188, "note": "~92y lease, 113 sqm" }
+          ]
+        },
+        {
+          "project": "KEBUN BARU RIDGE",
+          "display_name": "Kebun Baru Ridge",
+          "town": "ANG MO KIO",
+          "classification": "Plus",
+          "location_desc": "Along Ang Mo Kio Avenue 2",
+          "lat": 1.368000,
+          "lng": 103.834000,
+          "waiting_months": 37,
+          "flats": [
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 66, "units": 95, "price_min": 380000, "price_max": 492000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 89, "units": 390, "price_min": 543000, "price_max": 693000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "4 ROOM", "min": 830000, "max": 1080000, "note": "~91y lease, 92-93 sqm; no 3-room comparable quoted" }
+          ]
+        },
+        {
+          "project": "KEBUN BARU BREEZE",
+          "display_name": "Kebun Baru Breeze",
+          "town": "ANG MO KIO",
+          "classification": "Plus",
+          "location_desc": "Bounded by Ang Mo Kio Avenue 1 and Ang Mo Kio Rise",
+          "lat": 1.367937,
+          "lng": 103.833030,
+          "waiting_months": 52,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 38, "units": 261, "price_min": 191000, "price_max": 275000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 116, "price_min": 255000, "price_max": 349000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 202, "price_min": 547000, "price_max": 746000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "4 ROOM", "min": 830000, "max": 1080000, "note": "~91y lease, 92-93 sqm; no 2-room comparable quoted" }
+          ]
+        },
+        {
+          "project": "LAKEVIEW CASCADIA",
+          "display_name": "Lakeview Cascadia",
+          "town": "BISHAN",
+          "classification": "Prime",
+          "location_desc": "Bounded by Upper Thomson Road, near MacRitchie Reservoir",
+          "lat": 1.372679,
+          "lng": 103.828518,
+          "waiting_months": 51,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 118, "price_min": 216000, "price_max": 287000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 358, "price_min": 257000, "price_max": 361000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 745, "price_min": 534000, "price_max": 742000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "4 ROOM", "min": 840000, "max": 950000, "note": "~71y lease, 102 sqm; no 2-room comparable quoted" }
+          ]
+        },
+        {
+          "project": "BERLAYAR RISE",
+          "display_name": "Berlayar Rise",
+          "town": "BUKIT MERAH",
+          "classification": "Prime",
+          "location_desc": "Bounded by Berlayar Street and Berlayar Drive, next to Telok Blangah MRT",
+          "lat": 1.270706,
+          "lng": 103.809762,
+          "waiting_months": 54,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 172, "price_min": 247000, "price_max": 341000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 644, "price_min": 296000, "price_max": 406000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 172, "price_min": 435000, "price_max": 591000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 988, "price_min": 592000, "price_max": 810000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 740000, "max": 771000, "note": "~91y lease, 68 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 938888, "max": 1068000, "note": "~91y lease, 93 sqm; no 2-room comparable quoted" }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2025-02",
+      "label": "February 2025 BTO",
+      "application_start": "2025-02-10",
+      "application_end": "2025-02-17",
+      "sources": [
+        "https://www.hdb.gov.sg/hdb-pulse/news/2025/hdb-launches-10622-flats-in-february-2025-bto-and-sbf-exercises",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2025/hdb-launches-10622-flats-in-february-2025-bto-and-sbf-exercises/Annex-A.pdf"
+      ],
+      "projects": [
+        {
+          "project": "WOODLANDS NORTH VERGE",
+          "display_name": "Woodlands North Verge",
+          "town": "WOODLANDS",
+          "classification": "Standard",
+          "location_desc": "First BTO project in the new Woodlands North Coast precinct",
+          "lat": 1.449188,
+          "lng": 103.783839,
+          "waiting_months": 48,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 67, "price_min": 140000, "price_max": 204000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 268, "price_min": 166000, "price_max": 251000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 85, "price_min": 275000, "price_max": 363000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 608, "price_min": 365000, "price_max": 528000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 535, "price_min": 486000, "price_max": 661000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 368000, "max": 408000, "note": "~94y lease, 47 sqm" },
+            { "resale_flat_type": "3 ROOM", "min": 500000, "max": 530000, "note": "~94y lease, 68 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 615888, "max": 728888, "note": "~94y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 710000, "max": 790000, "note": "~94y lease, 113 sqm" }
+          ]
+        },
+        {
+          "project": "CHENCHARU VINES",
+          "display_name": "Chencharu Vines",
+          "town": "YISHUN",
+          "classification": "Standard",
+          "location_desc": "Chencharu precinct, along Bah Soon Pah Road",
+          "lat": 1.420726,
+          "lng": 103.825486,
+          "waiting_months": 37,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 38, "units": 39, "price_min": 108000, "price_max": 135000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 152, "price_min": 144000, "price_max": 179000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 90, "price_min": 245000, "price_max": 295000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 305, "price_min": 316000, "price_max": 380000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 262, "price_min": 447000, "price_max": 523000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 470000, "max": 515888, "note": "~91-92y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 560000, "max": 638000, "note": "~91-92y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 705000, "max": 760000, "note": "~91-92y lease, 113 sqm" }
+          ]
+        },
+        {
+          "project": "CHENCHARU GREEN",
+          "display_name": "Chencharu Green",
+          "town": "YISHUN",
+          "classification": "Standard",
+          "location_desc": "Chencharu precinct, along Bah Soon Pah Road",
+          "lat": 1.418998,
+          "lng": 103.827068,
+          "waiting_months": 38,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 38, "units": 41, "price_min": 110000, "price_max": 137000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 124, "price_min": 150000, "price_max": 181000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 94, "units": 271, "price_min": 324000, "price_max": 395000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 114, "units": 247, "price_min": 453000, "price_max": 533000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "4 ROOM", "min": 560000, "max": 638000, "note": "~91-92y lease, 93 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "5 ROOM", "min": 705000, "max": 760000, "note": "~91-92y lease, 113 sqm" }
+          ]
+        },
+        {
+          "project": "STIRLING HORIZON",
+          "display_name": "Stirling Horizon",
+          "town": "QUEENSTOWN",
+          "classification": "Plus",
+          "location_desc": "Along Mei Chin Road, near Queenstown MRT",
+          "lat": 1.293236,
+          "lng": 103.802904,
+          "waiting_months": 55,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 118, "price_min": 224000, "price_max": 298000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 341, "price_min": 266000, "price_max": 365000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 66, "units": 81, "price_min": 408000, "price_max": 529000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 89, "units": 586, "price_min": 554000, "price_max": 749000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 600000, "max": 720000, "note": "~89y lease, 63 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 891000, "max": 1050000, "note": "~89y lease, 88-96 sqm" }
+          ]
+        },
+        {
+          "project": "TANJONG RHU PARC FRONT",
+          "display_name": "Tanjong Rhu Parc Front",
+          "town": "KALLANG/WHAMPOA",
+          "classification": "Prime",
+          "location_desc": "Bounded by Tanjong Rhu Road, Kallang Paya Lebar Expressway (underground), and East Coast Parkway",
+          "lat": 1.297419,
+          "lng": 103.876621,
+          "waiting_months": 48,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 39, "units": 58, "price_min": 211000, "price_max": 286000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 203, "price_min": 275000, "price_max": 364000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 66, "units": 87, "price_min": 399000, "price_max": 519000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 464, "price_min": 548000, "price_max": 727000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 760000, "max": 838000, "note": "~91y lease, 70 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 960000, "max": 1050000, "note": "~91y lease, 88-95 sqm" }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2025-07",
+      "label": "July 2025 BTO",
+      "application_start": "2025-07-23",
+      "application_end": "2025-07-30",
+      "sources": [
+        "https://www.hdb.gov.sg/hdb-pulse/news/2025/hdb-launches-10209-flats-in-the-july-2025-bto-and-sbf-sales-exercises",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2025/hdb-launches-10209-flats-in-the-july-2025-bto-and-sbf-sales-exercises/Annex-A-20250723.pdf"
+      ],
+      "projects": [
+        {
+          "project": "BANGKIT BREEZE",
+          "display_name": "Bangkit Breeze",
+          "town": "BUKIT PANJANG",
+          "classification": "Standard",
+          "location_desc": "Near Bangkit LRT station and Zhenghua Nature Park",
+          "lat": 1.381950,
+          "lng": 103.773497,
+          "waiting_months": 35,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 41, "units": 24, "price_min": 149000, "price_max": 201000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 96, "price_min": 180000, "price_max": 236000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 96, "price_min": 289000, "price_max": 367000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 94, "units": 239, "price_min": 362000, "price_max": 458000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 114, "units": 188, "price_min": 518000, "price_max": 599000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 480000, "max": 513000, "note": "~89y lease, 67 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 585000, "max": 639800, "note": "~89y lease, 92 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 685000, "max": 745888, "note": "~89y lease, 112-113 sqm" }
+          ]
+        },
+        {
+          "project": "SEMBAWANG BEACON",
+          "display_name": "Sembawang Beacon",
+          "town": "SEMBAWANG",
+          "classification": "Standard",
+          "location_desc": "First BTO project in the new Sembawang North neighbourhood, along Admiralty Lane",
+          "lat": 1.456535,
+          "lng": 103.818775,
+          "waiting_months": 36,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 32, "price_min": 148000, "price_max": 173000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 136, "price_min": 167000, "price_max": 207000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 84, "price_min": 267000, "price_max": 323000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 94, "units": 286, "price_min": 328000, "price_max": 413000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 114, "units": 203, "price_min": 487000, "price_max": 586000 },
+            { "bto_label": "3Gen", "resale_flat_type": "MULTI-GENERATION", "floor_area_sqm": 120, "units": 34, "price_min": 497000, "price_max": 585000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 338000, "max": 395000, "note": "~94y lease, 47 sqm" },
+            { "resale_flat_type": "3 ROOM", "min": 510000, "max": 548888, "note": "~94y lease, 69 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 570000, "max": 690000, "note": "~94y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 745000, "max": 830000, "note": "~94y lease, 113-116 sqm" }
+          ]
+        },
+        {
+          "project": "SIMEI SYMPHONY",
+          "display_name": "Simei Symphony",
+          "town": "TAMPINES",
+          "classification": "Standard",
+          "location_desc": "Along Simei Road",
+          "lat": 1.341617,
+          "lng": 103.959205,
+          "waiting_months": 42,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 40, "price_min": 193000, "price_max": 234000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 100, "price_min": 223000, "price_max": 280000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 140, "price_min": 529000, "price_max": 625000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 100, "price_min": 658000, "price_max": 763000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "4 ROOM", "min": 648000, "max": 715000, "note": "~62-70y lease, 101-104 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "5 ROOM", "min": 712000, "max": 888000, "note": "~62-70y lease, 118-127 sqm" }
+          ]
+        },
+        {
+          "project": "WOODLANDS NORTH GROVE",
+          "display_name": "Woodlands North Grove",
+          "town": "WOODLANDS",
+          "classification": "Standard",
+          "location_desc": "Woodlands North Coast precinct, along Woodlands North Link",
+          "lat": 1.447924,
+          "lng": 103.781502,
+          "waiting_months": 55,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 64, "price_min": 160000, "price_max": 210000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 164, "price_min": 184000, "price_max": 250000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 88, "price_min": 305000, "price_max": 389000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 420, "price_min": 388000, "price_max": 544000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 412, "price_min": 517000, "price_max": 714000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 370000, "max": 400000, "note": "~93y lease, 47 sqm" },
+            { "resale_flat_type": "3 ROOM", "min": 520000, "max": 540000, "note": "~93y lease, 68 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 660000, "max": 720000, "note": "~93y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 755888, "max": 825000, "note": "~93y lease, 113 sqm" }
+          ]
+        },
+        {
+          "project": "ALEXANDRA PEAKS",
+          "display_name": "Alexandra Peaks",
+          "town": "BUKIT MERAH",
+          "classification": "Prime",
+          "location_desc": "Along Alexandra Road",
+          "lat": 1.291665,
+          "lng": 103.820641,
+          "waiting_months": 56,
+          "flats": [
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 66, "units": 76, "price_min": 403000, "price_max": 511000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 89, "units": 422, "price_min": 560000, "price_max": 771000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 628000, "max": 838000, "note": "~93y lease, 68 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 970000, "max": 1155000, "note": "~93y lease, 83-93 sqm" }
+          ]
+        },
+        {
+          "project": "ALEXANDRA VISTA",
+          "display_name": "Alexandra Vista",
+          "town": "BUKIT MERAH",
+          "classification": "Prime",
+          "location_desc": "Near Tanglin Road",
+          "lat": 1.292928,
+          "lng": 103.817180,
+          "waiting_months": 47,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 62, "price_min": 205000, "price_max": 294000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 186, "price_min": 266000, "price_max": 355000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 93, "price_min": 420000, "price_max": 518000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 268, "price_min": 547000, "price_max": 775000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 628000, "max": 838000, "note": "~93y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 970000, "max": 1155000, "note": "~93y lease, 83-93 sqm" }
+          ]
+        },
+        {
+          "project": "CLEMENTI EMERALD",
+          "display_name": "Clementi Emerald",
+          "town": "CLEMENTI",
+          "classification": "Prime",
+          "location_desc": "Along Clementi Close",
+          "lat": 1.317291,
+          "lng": 103.762656,
+          "waiting_months": 34,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 41, "units": 66, "price_min": 214000, "price_max": 289000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 156, "price_min": 261000, "price_max": 351000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 111, "price_min": 388000, "price_max": 512000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 420, "price_min": 562000, "price_max": 780000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 775000, "max": 840000, "note": "~86-92y lease, 69 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 963000, "max": 1130888, "note": "~86-92y lease, 87-94 sqm" }
+          ]
+        },
+        {
+          "project": "TOA PAYOH ASCENT",
+          "display_name": "Toa Payoh Ascent",
+          "town": "TOA PAYOH",
+          "classification": "Prime",
+          "location_desc": "Junction of Toa Payoh Rise and Braddell Rise",
+          "lat": 1.339401,
+          "lng": 103.841922,
+          "waiting_months": 41,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 38, "units": 39, "price_min": 212000, "price_max": 272000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 156, "price_min": 258000, "price_max": 354000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 66, "units": 78, "price_min": 406000, "price_max": 514000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 89, "units": 468, "price_min": 583000, "price_max": 777000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 780000, "max": 830000, "note": "~92y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 1070000, "max": 1170000, "note": "~92y lease, 93 sqm" }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2025-10",
+      "label": "October 2025 BTO",
+      "application_start": "2025-10-15",
+      "application_end": "2025-10-22",
+      "sources": [
+        "https://www.hdb.gov.sg/cs/infoweb/about-us/news-and-publications/press-releases/october-2025-bto-sales-exercise",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2025/october-2025-bto-sales-exercise/Annex-ABTO-sales-exercise-Oct-2025.pdf"
+      ],
+      "_curation_note": "Fernvale Plains also offered 207 Community Care Apartments (30-year lease senior housing, $88,000-$113,000) — a separate rental-adjacent scheme, not included in flats[] since it isn't a resale-comparable flat type. Redhill Peaks was split into two phases across this Oct 2025 launch and the Feb 2026 launch (see launch_id 2026-02) due to site preparation timelines for its two separate Bukit Merah land parcels — disambiguated as REDHILL PEAKS (OCT 2025) since both phases share the base project name but have different unit mixes/pricing.",
+      "projects": [
+        {
+          "project": "PING YI COURT",
+          "display_name": "Ping Yi Court",
+          "town": "BEDOK",
+          "classification": "Standard",
+          "location_desc": "Along Chai Chee Street",
+          "lat": 1.327038,
+          "lng": 103.920290,
+          "waiting_months": 33,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 54, "price_min": 201000, "price_max": 231000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 140, "price_min": 223000, "price_max": 286000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 84, "price_min": 353000, "price_max": 448000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 294, "price_min": 498000, "price_max": 624000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 262, "price_min": 715000, "price_max": 857000 },
+            { "bto_label": "3Gen", "resale_flat_type": "MULTI-GENERATION", "floor_area_sqm": 121, "units": 28, "price_min": 782000, "price_max": 874000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 382000, "max": 415000, "note": "~90-92y lease, 47 sqm" },
+            { "resale_flat_type": "3 ROOM", "min": 550000, "max": 620000, "note": "~90-92y lease, 68 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 745000, "max": 845000, "note": "~90-92y lease, 88-93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 980000, "max": 1038000, "note": "~90-92y lease, 113 sqm" }
+          ]
+        },
+        {
+          "project": "TEBAN HEIGHTS",
+          "display_name": "Teban Heights",
+          "town": "JURONG EAST",
+          "classification": "Standard",
+          "location_desc": "Along Teban Gardens Road",
+          "lat": 1.319663,
+          "lng": 103.743998,
+          "waiting_months": 48,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 36, "price_min": 145000, "price_max": 186000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 107, "price_min": 176000, "price_max": 232000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 107, "price_min": 254000, "price_max": 373000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 94, "units": 210, "price_min": 397000, "price_max": 539000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 114, "units": 142, "price_min": 576000, "price_max": 740000 },
+            { "bto_label": "3Gen", "resale_flat_type": "MULTI-GENERATION", "floor_area_sqm": 121, "units": 36, "price_min": 613000, "price_max": 738000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "4 ROOM", "min": 640000, "max": 685000, "note": "~87y lease, 92 sqm; no 2-room or 3-room comparable quoted" },
+            { "resale_flat_type": "5 ROOM", "min": 780000, "max": 858000, "note": "~87y lease, 118 sqm" }
+          ]
+        },
+        {
+          "project": "FERNVALE PLAINS",
+          "display_name": "Fernvale Plains",
+          "town": "SENGKANG",
+          "classification": "Standard",
+          "location_desc": "Along Fernvale Drive",
+          "lat": 1.400181,
+          "lng": 103.880231,
+          "waiting_months": 32,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 41, "units": 25, "price_min": 162000, "price_max": 204000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 75, "price_min": 195000, "price_max": 244000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 94, "units": 368, "price_min": 344000, "price_max": 472000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 362, "price_min": 466000, "price_max": 617000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 355000, "max": 385000, "note": "~90y lease, 47 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 583800, "max": 630888, "note": "~90y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 665000, "max": 808000, "note": "~90y lease, 113 sqm" }
+          ]
+        },
+        {
+          "project": "YISHUN GLADE",
+          "display_name": "Yishun Glade",
+          "town": "YISHUN",
+          "classification": "Standard",
+          "location_desc": "Along Yishun Street 31",
+          "lat": 1.430746,
+          "lng": 103.846336,
+          "waiting_months": 31,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 38, "units": 238, "price_min": 132000, "price_max": 166000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 168, "price_min": 168000, "price_max": 217000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 163, "price_min": 343000, "price_max": 415000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 330000, "max": 378000, "note": "~89-94y lease, 38-47 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 560000, "max": 618888, "note": "~89-94y lease, 92 sqm" }
+          ]
+        },
+        {
+          "project": "CHENCHARU GROVE",
+          "display_name": "Chencharu Grove",
+          "town": "YISHUN",
+          "classification": "Standard",
+          "location_desc": "Chencharu precinct, along Bah Soon Pah Road",
+          "lat": 1.418362,
+          "lng": 103.828829,
+          "waiting_months": 31,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 56, "price_min": 154000, "price_max": 192000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 177, "price_min": 182000, "price_max": 226000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 81, "price_min": 295000, "price_max": 362000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 276, "price_min": 358000, "price_max": 439000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 236, "price_min": 510000, "price_max": 597000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 470000, "max": 535000, "note": "~91y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 590000, "max": 660000, "note": "~91y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 723000, "max": 770000, "note": "~91y lease, 113 sqm" }
+          ]
+        },
+        {
+          "project": "OAK VILLE @ AMK",
+          "display_name": "Oak Ville @ AMK",
+          "town": "ANG MO KIO",
+          "classification": "Plus",
+          "location_desc": "Along Ang Mo Kio Street 82",
+          "lat": 1.376862,
+          "lng": 103.852764,
+          "waiting_months": 49,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 88, "price_min": 194000, "price_max": 244000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 346, "price_min": 230000, "price_max": 300000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 129, "price_min": 340000, "price_max": 434000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 862, "price_min": 514000, "price_max": 650000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 638000, "max": 794500, "note": "~92y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 875000, "max": 1138888, "note": "~92y lease, 93 sqm" }
+          ]
+        },
+        {
+          "project": "BISHAN TERRACES",
+          "display_name": "Bishan Terraces",
+          "town": "BISHAN",
+          "classification": "Prime",
+          "location_desc": "Along Bishan Street 12",
+          "lat": 1.346055,
+          "lng": 103.849156,
+          "waiting_months": 47,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 37, "price_min": 229000, "price_max": 292000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 98, "price_min": 288000, "price_max": 364000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 109, "price_min": 408000, "price_max": 516000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 294, "price_min": 543000, "price_max": 735000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "4 ROOM", "min": 780000, "max": 939000, "note": "~72y lease, 100-103 sqm; no 2-room or 3-room comparable quoted" }
+          ]
+        },
+        {
+          "project": "REDHILL PEAKS (OCT 2025)",
+          "display_name": "Redhill Peaks (Oct 2025)",
+          "town": "BUKIT MERAH",
+          "classification": "Prime",
+          "location_desc": "Along Redhill Close, near Redhill MRT. Phase 1 of Redhill Peaks — HDB split this project across this Oct 2025 launch and a Feb 2026 launch (see launch_id 2026-02) due to site preparation timelines for its two separate Bukit Merah land parcels. Disambiguated here by launch since both phases share the project name but have different unit mixes/pricing.",
+          "lat": 1.284623,
+          "lng": 103.817079,
+          "waiting_months": 53,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 78, "price_min": 183000, "price_max": 283000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 333, "price_min": 229000, "price_max": 359000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 610, "price_min": 541000, "price_max": 778000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "4 ROOM", "min": 880000, "max": 1200000, "note": "~93y lease, 83-93 sqm; no 2-room comparable quoted" }
+          ]
+        },
+        {
+          "project": "BERLAYAR RESIDENCES",
+          "display_name": "Berlayar Residences",
+          "town": "BUKIT MERAH",
+          "classification": "Prime",
+          "location_desc": "Along Berlayar Street, near Telok Blangah MRT",
+          "lat": 1.270256,
+          "lng": 103.807118,
+          "waiting_months": 56,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 86, "price_min": 218000, "price_max": 306000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 240, "price_min": 267000, "price_max": 369000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 86, "price_min": 420000, "price_max": 562000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 468, "price_min": 578000, "price_max": 788000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 635000, "max": 777777, "note": "~92y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 848000, "max": 1130000, "note": "~92y lease, 93 sqm" }
+          ]
+        },
+        {
+          "project": "MOUNT PLEASANT CREST",
+          "display_name": "Mount Pleasant Crest",
+          "town": "TOA PAYOH",
+          "classification": "Prime",
+          "location_desc": "First launch in the new Mount Pleasant estate, at the boundary of Toa Payoh, Novena, and Thomson (former Old Police Academy site)",
+          "lat": 1.325699,
+          "lng": 103.826670,
+          "waiting_months": 59,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 152, "price_min": 209000, "price_max": 297000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 389, "price_min": 250000, "price_max": 373000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 98, "price_min": 411000, "price_max": 552000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 89, "units": 709, "price_min": 558000, "price_max": 787000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 768000, "max": 850000, "note": "~92y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 1075000, "max": 1190000, "note": "~92y lease, 93 sqm" }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2026-02",
+      "label": "February 2026 BTO",
+      "application_start": "2026-02-04",
+      "application_end": "2026-02-11",
+      "sources": [
+        "https://www.hdb.gov.sg/hdb-pulse/news/2026/hdb-launches-9012-flats-in-february-2026-bto-and-sbf-exercises",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2026/hdb-launches-9012-flats-in-february-2026-bto-and-sbf-exercises/Annex-A.pdf"
+      ],
+      "projects": [
+        {
+          "project": "SEMBAWANG VOYAGE",
+          "display_name": "Sembawang Voyage",
+          "town": "SEMBAWANG",
+          "classification": "Standard",
+          "location_desc": "Sembawang North, near Admiralty Lane",
+          "lat": 1.457769,
+          "lng": 103.817556,
+          "waiting_months": 44,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 81, "price_min": 150000, "price_max": 187000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 210, "price_min": 175000, "price_max": 228000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 454, "price_min": 304000, "price_max": 422000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 428, "price_min": 439000, "price_max": 582000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 370000, "max": 400000, "note": "~94y lease, 47 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 585000, "max": 675000, "note": "~94y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 715000, "max": 820000, "note": "~94y lease, 113-116 sqm" }
+          ]
+        },
+        {
+          "project": "SEMBAWANG DECK",
+          "display_name": "Sembawang Deck",
+          "town": "SEMBAWANG",
+          "classification": "Standard",
+          "location_desc": "Sembawang North, bounded by Admiralty Street and Admiralty Lane",
+          "lat": 1.461652,
+          "lng": 103.814050,
+          "waiting_months": 33,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 42, "price_min": 158000, "price_max": 190000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 146, "price_min": 175000, "price_max": 237000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 84, "price_min": 261000, "price_max": 343000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 271, "price_min": 338000, "price_max": 426000 },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": 113, "units": 234, "price_min": 479000, "price_max": 585000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 370000, "max": 400000, "note": "~94y lease, 47 sqm" },
+            { "resale_flat_type": "3 ROOM", "min": 460000, "max": 560000, "note": "~94y lease, 69 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 585000, "max": 675000, "note": "~94y lease, 93 sqm" },
+            { "resale_flat_type": "5 ROOM", "min": 715000, "max": 820000, "note": "~94y lease, 113-116 sqm" }
+          ]
+        },
+        {
+          "project": "TAMPINES BLISS",
+          "display_name": "Tampines Bliss",
+          "town": "TAMPINES",
+          "classification": "Standard",
+          "location_desc": "Off Tampines Avenue 2 and Tampines Street 22",
+          "lat": 1.349527,
+          "lng": 103.949807,
+          "waiting_months": 23,
+          "flats": [
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 69, "units": 80, "price_min": 363000, "price_max": 444000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 94, "units": 204, "price_min": 481000, "price_max": 600000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 530000, "max": 580000, "note": "~88y lease, 67 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 688000, "max": 758000, "note": "~88y lease, 92 sqm" }
+          ]
+        },
+        {
+          "project": "TAMPINES NOVA",
+          "display_name": "Tampines Nova",
+          "town": "TAMPINES",
+          "classification": "Plus",
+          "location_desc": "Tampines Central 8, near Tampines MRT Interchange",
+          "lat": 1.356685,
+          "lng": 103.940538,
+          "waiting_months": 32,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 24, "price_min": 197000, "price_max": 235000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 98, "price_min": 214000, "price_max": 292000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 93, "units": 133, "price_min": 459000, "price_max": 602000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "2 ROOM", "min": 420000, "max": 440000, "note": "~88y lease, 47 sqm" },
+            { "resale_flat_type": "4 ROOM", "min": 738000, "max": 828000, "note": "~88y lease, 93 sqm" }
+          ]
+        },
+        {
+          "project": "KIM KEAT CREST",
+          "display_name": "Kim Keat Crest",
+          "town": "TOA PAYOH",
+          "classification": "Plus",
+          "location_desc": "Kim Keat area",
+          "lat": 1.325626,
+          "lng": 103.854029,
+          "waiting_months": 37,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 58, "price_min": 203000, "price_max": 253000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 48, "units": 219, "price_min": 229000, "price_max": 304000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 87, "price_min": 356000, "price_max": 450000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 89, "units": 787, "price_min": 455000, "price_max": 624000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 710000, "max": 768000, "note": "~93y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 850000, "max": 1090000, "note": "~93y lease, 93 sqm" }
+          ]
+        },
+        {
+          "project": "REDHILL PEAKS (FEB 2026)",
+          "display_name": "Redhill Peaks (Feb 2026)",
+          "town": "BUKIT MERAH",
+          "classification": "Prime",
+          "location_desc": "Along Redhill Close, near Redhill MRT. Phase 2 of Redhill Peaks — HDB split this project across the Oct 2025 and Feb 2026 launches due to site preparation timelines for its two separate land parcels in Bukit Merah. Disambiguated here by launch since both phases share the project name but have different unit mixes/pricing.",
+          "lat": 1.285452,
+          "lng": 103.816413,
+          "waiting_months": 55,
+          "flats": [
+            { "bto_label": "2-Room Flexi (Type 1)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 40, "units": 92, "price_min": 215000, "price_max": 295000 },
+            { "bto_label": "2-Room Flexi (Type 2)", "resale_flat_type": "2 ROOM", "floor_area_sqm": 49, "units": 276, "price_min": 257000, "price_max": 373000 },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": 67, "units": 91, "price_min": 385000, "price_max": 537000 },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": 90, "units": 593, "price_min": 563000, "price_max": 783000 }
+          ],
+          "hdb_quoted_resale": [
+            { "resale_flat_type": "3 ROOM", "min": 628000, "max": 828000, "note": "~92y lease, 68 sqm; no 2-room comparable quoted" },
+            { "resale_flat_type": "4 ROOM", "min": 915000, "max": 1135000, "note": "~92y lease, 83-93 sqm" }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2026-11",
+      "label": "November 2026 BTO (upcoming)",
+      "application_start": null,
+      "application_end": null,
+      "sources": [
+        "https://www.recordbto.com/bto-sales-launch/nov-2026-bto",
+        "https://propertynet.sg/october-2026-bto-launch-preview-bedok-toa-payoh-geylang-flats/",
+        "https://uchify.com/hdb-bto-november-2026-launch/",
+        "https://stackedhomes.com/we-review-the-october-2026-bto-launch-sites/"
+      ],
+      "_curation_note": "NOT YET LAUNCHED — HDB has not published an official press release or Annex A for this exercise. Every project below is PROVISIONAL, sourced from third-party BTO preview blogs (not HDB), and every 'flats' entry has price_min/price_max = null since no pricing exists yet. Project names are location/estate labels used consistently across trackers, not confirmed final HDB project names. Unit-type breakdowns are included only where a source gave an unambiguous, internally-consistent count (Mattar, Caldecott's BTO portion, Tengah Garden Avenue, Chencharu, Sembawang North); Bayshore's two sites have no clean per-type split reported, so their flats stay empty with the known aggregate noted in location_desc. REPLACE all of this with real data from BTO.plan.md's curation runbook once HDB's official Annex A is published after the launch.",
+      "projects": [
+        {
+          "project": "BEDOK BAYSHORE I",
+          "display_name": "Bedok Bayshore I",
+          "town": "BEDOK",
+          "classification": null,
+          "location_desc": "Near Bayshore MRT (TE29), Thomson-East Coast Line. Provisional: ~860 units (2-Room Flexi, 4-Room), exact type split not yet reported.",
+          "lat": 1.313122,
+          "lng": 103.942310,
+          "waiting_months": null,
+          "flats": [
+            { "bto_label": "All flat types (breakdown not yet released)", "resale_flat_type": null, "floor_area_sqm": null, "units": 860, "price_min": null, "price_max": null }
+          ],
+          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB. Aggregate unit count only; per-type split not yet reported by any tracker."
+        },
+        {
+          "project": "BEDOK BAYSHORE II",
+          "display_name": "Bedok Bayshore II",
+          "town": "BEDOK",
+          "classification": null,
+          "location_desc": "Near Bayshore MRT (TE29), Thomson-East Coast Line. Provisional: ~1,640 units (2-Room Flexi, 3-Room, 4-Room), exact type split not yet reported.",
+          "lat": 1.313122,
+          "lng": 103.942310,
+          "waiting_months": null,
+          "flats": [
+            { "bto_label": "All flat types (breakdown not yet released)", "resale_flat_type": null, "floor_area_sqm": null, "units": 1640, "price_min": null, "price_max": null }
+          ],
+          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB. Aggregate unit count only; per-type split not yet reported by any tracker."
+        },
+        {
+          "project": "GEYLANG MATTAR",
+          "display_name": "Geylang Mattar",
+          "town": "GEYLANG",
+          "classification": null,
+          "location_desc": "Along Merpati Road, 5-min walk from Mattar MRT (DT25). Provisional pre-launch estimate — not confirmed by HDB.",
+          "lat": 1.327498,
+          "lng": 103.882779,
+          "waiting_months": null,
+          "flats": [
+            { "bto_label": "2-Room Flexi", "resale_flat_type": "2 ROOM", "floor_area_sqm": null, "units": 170, "price_min": null, "price_max": null },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": null, "units": 270, "price_min": null, "price_max": null }
+          ],
+          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
+        },
+        {
+          "project": "TOA PAYOH CALDECOTT",
+          "display_name": "Toa Payoh Caldecott",
+          "town": "TOA PAYOH",
+          "classification": null,
+          "location_desc": "Beside Caldecott MRT interchange (Circle/Thomson-East Coast Lines). Also includes ~260 Community Care Apartments (a separate rental scheme, not shown here as BTO flats). Provisional pre-launch estimate — not confirmed by HDB.",
+          "lat": 1.337347,
+          "lng": 103.839544,
+          "waiting_months": null,
+          "flats": [
+            { "bto_label": "2-Room Flexi", "resale_flat_type": "2 ROOM", "floor_area_sqm": null, "units": 590, "price_min": null, "price_max": null },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": null, "units": 580, "price_min": null, "price_max": null }
+          ],
+          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
+        },
+        {
+          "project": "TENGAH GARDEN AVENUE",
+          "display_name": "Tengah Garden Avenue",
+          "town": "TENGAH",
+          "classification": null,
+          "location_desc": "Plantation district, near Pioneer Primary School. Provisional pre-launch estimate — not confirmed by HDB.",
+          "lat": 1.355608,
+          "lng": 103.731026,
+          "waiting_months": null,
+          "flats": [
+            { "bto_label": "2-Room Flexi", "resale_flat_type": "2 ROOM", "floor_area_sqm": null, "units": 160, "price_min": null, "price_max": null },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": null, "units": 50, "price_min": null, "price_max": null },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": null, "units": 250, "price_min": null, "price_max": null },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": null, "units": 200, "price_min": null, "price_max": null },
+            { "bto_label": "3Gen", "resale_flat_type": "MULTI-GENERATION", "floor_area_sqm": null, "units": 50, "price_min": null, "price_max": null }
+          ],
+          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
+        },
+        {
+          "project": "YISHUN CHENCHARU",
+          "display_name": "Yishun Chencharu",
+          "town": "YISHUN",
+          "classification": null,
+          "location_desc": "Near Khatib MRT (NS14), North-South Line. Provisional pre-launch estimate — not confirmed by HDB.",
+          "lat": 1.417383,
+          "lng": 103.832980,
+          "waiting_months": null,
+          "flats": [
+            { "bto_label": "2-Room Flexi", "resale_flat_type": "2 ROOM", "floor_area_sqm": null, "units": 390, "price_min": null, "price_max": null },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": null, "units": 80, "price_min": null, "price_max": null },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": null, "units": 460, "price_min": null, "price_max": null },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": null, "units": 650, "price_min": null, "price_max": null }
+          ],
+          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
+        },
+        {
+          "project": "SEMBAWANG NORTH",
+          "display_name": "Sembawang North",
+          "town": "SEMBAWANG",
+          "classification": null,
+          "location_desc": "No MRT within walking distance. Provisional pre-launch estimate — not confirmed by HDB.",
+          "lat": 1.448644,
+          "lng": 103.816820,
+          "waiting_months": null,
+          "flats": [
+            { "bto_label": "2-Room Flexi", "resale_flat_type": "2 ROOM", "floor_area_sqm": null, "units": 330, "price_min": null, "price_max": null },
+            { "bto_label": "3-Room", "resale_flat_type": "3 ROOM", "floor_area_sqm": null, "units": 100, "price_min": null, "price_max": null },
+            { "bto_label": "4-Room", "resale_flat_type": "4 ROOM", "floor_area_sqm": null, "units": 460, "price_min": null, "price_max": null },
+            { "bto_label": "5-Room", "resale_flat_type": "5 ROOM", "floor_area_sqm": null, "units": 420, "price_min": null, "price_max": null }
+          ],
+          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
+        }
+      ]
+    }
+  ]
+}

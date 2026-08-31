@@ -57,3 +57,27 @@ describe('GET /api/resolve', () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe('GET /api/resolve — BTO', () => {
+  it('BEDOK VISTA CREST resolves as bto (exact, case-insensitive)', async () => {
+    const res = await request.get('/api/resolve?q=bedok+vista+crest');
+    expect(res.status).toBe(200);
+    expect(res.body.resolved).toBe(true);
+    expect(res.body.type).toBe('bto');
+    expect(res.body.project).toBe('BEDOK VISTA CREST');
+  });
+
+  it('BEDOK still resolves as town, not bto', async () => {
+    const res = await request.get('/api/resolve?q=BEDOK');
+    expect(res.body.resolved).toBe(true);
+    expect(res.body.type).toBeUndefined();
+    expect(res.body.town).toBe('BEDOK');
+  });
+
+  it('BEDOK VISTA CREST is tagged type=bto, not a plain town match', async () => {
+    const res = await request.get('/api/resolve?q=BEDOK+VISTA+CREST');
+    expect(res.body.resolved).toBe(true);
+    expect(res.body.type).toBe('bto');
+    expect(res.body.project).toBe('BEDOK VISTA CREST');
+  });
+});

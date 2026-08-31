@@ -251,6 +251,9 @@ def create_database(records_by_dataset):
     seed_hdb_block_coords(conn)
     geocode_missing_hdb_blocks(conn)
 
+    # Seed BTO launch data
+    seed_bto_projects(conn)
+
     # Pre-compute aggregations
     compute_aggregations(conn)
 
@@ -297,6 +300,77 @@ def seed_hdb_block_coords(conn):
     ''', rows)
     conn.commit()
     print(f"\n   ✅ Seeded {len(rows):,} HDB block coordinates from hdb_blocks.csv")
+
+
+def seed_bto_projects(conn):
+    """(Re)create bto_projects from the bundled bto_launches.json.
+    The JSON is the sole source of truth (unlike hdb_block_coords, which merges
+    with incrementally-geocoded data) so this drops and recreates the table
+    from scratch on every full rebuild.
+    """
+    json_path = os.path.join(SCRIPT_DIR, 'bto_launches.json')
+    if not os.path.exists(json_path):
+        print(f"\n   ⚠️  bto_launches.json not found at {json_path}, skipping BTO seed")
+        return
+
+    with open(json_path) as f:
+        data = json.load(f)
+
+    conn.execute('DROP TABLE IF EXISTS bto_projects')
+    conn.execute('''
+        CREATE TABLE bto_projects (
+            launch_id         TEXT NOT NULL,
+            launch_label      TEXT,
+            application_start TEXT,
+            application_end   TEXT,
+            project           TEXT NOT NULL,
+            display_name      TEXT,
+            town              TEXT NOT NULL,
+            classification    TEXT,
+            location_desc     TEXT,
+            lat               REAL,
+            lng               REAL,
+            waiting_months    INTEGER,
+            bto_label         TEXT,
+            resale_flat_type  TEXT,
+            floor_area_sqm    REAL,
+            units             INTEGER,
+            price_min         INTEGER,
+            price_max         INTEGER
+        )
+    ''')
+    conn.execute('CREATE INDEX idx_bto_project ON bto_projects(project)')
+
+    rows = []
+    for launch in data.get('launches', []):
+        for project in launch.get('projects', []):
+            flats = project.get('flats') or []
+            if not flats:
+                # Upcoming/unpriced project — one placeholder row so it still
+                # appears in listings/search.
+                flats = [{'bto_label': '', 'resale_flat_type': None, 'floor_area_sqm': None,
+                          'units': None, 'price_min': None, 'price_max': None}]
+            for flat in flats:
+                rows.append((
+                    launch.get('launch_id'), launch.get('label'),
+                    launch.get('application_start'), launch.get('application_end'),
+                    project.get('project'), project.get('display_name'), project.get('town'),
+                    project.get('classification'), project.get('location_desc'),
+                    project.get('lat'), project.get('lng'), project.get('waiting_months'),
+                    flat.get('bto_label'), flat.get('resale_flat_type'), flat.get('floor_area_sqm'),
+                    flat.get('units'), flat.get('price_min'), flat.get('price_max'),
+                ))
+
+    conn.executemany('''
+        INSERT INTO bto_projects
+            (launch_id, launch_label, application_start, application_end,
+             project, display_name, town, classification, location_desc,
+             lat, lng, waiting_months, bto_label, resale_flat_type,
+             floor_area_sqm, units, price_min, price_max)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ''', rows)
+    conn.commit()
+    print(f"\n   ✅ Seeded {len(rows):,} BTO project rows from bto_launches.json")
 
 
 def geocode_missing_hdb_blocks(conn):

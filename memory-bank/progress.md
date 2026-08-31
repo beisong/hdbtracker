@@ -1,6 +1,7 @@
 # Progress: WorthIt
 
 ## What Works
+- ✅ BTO Launches — `bto_projects` table (dual-seeded like `hdb_block_coords`) + `/api/bto/launches`, `/api/bto/projects`, `/api/bto/project-overview`; BTO project names searchable from the main search bar (exact-match resolve + autocomplete) with a project page showing flats/prices and a live BTO-vs-nearby-resale comparison; `/bto` + `/bto/<slug>` routes; SEO metadata + sitemap. June 2026 launch (7 projects) fully seeded; 4 other 2025/2026 launches are documented skeletons pending curation. (Aug 2026, built locally — **not yet committed/deployed**, 239 tests pass)
 - ✅ Check My Price — `/api/valuation` Deal Score + fair-value calculator with chip-based UI, 3 entry points (postal search card, transaction-row 💰 buttons, `/check/<postal>?price=` deep links) (Jul 2026, deployed v=20)
 - ✅ HDB resale data download pipeline (Python → SQLite)
 - ✅ URA private property data download pipeline

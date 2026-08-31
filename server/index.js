@@ -42,6 +42,18 @@ const URA_ACCESS_KEY = process.env.URA_API_ACCESS_KEY || '';
 let uraToken = null;
 let uraTokenExpiry = 0;
 
+// BTO launches seed data — loaded eagerly (must exist before seedBtoProjects()
+// runs below, which is called during the initial DB-open try block). Display-only
+// hdb_quoted_resale garnish (HDB's own published comparables) never goes into
+// the DB; it's looked up in-memory by project name.
+const BTO_LAUNCHES_JSON = require(path.join(__dirname, '..', 'scripts', 'bto_launches.json'));
+const HDB_QUOTED_RESALE = {};
+for (const launch of BTO_LAUNCHES_JSON.launches || []) {
+  for (const project of launch.projects || []) {
+    HDB_QUOTED_RESALE[(project.project || '').toUpperCase()] = project.hdb_quoted_resale || [];
+  }
+}
+
 // Open database
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'db', 'resale.db');
 let db = null;
@@ -51,6 +63,7 @@ try {
   db.pragma('journal_mode = WAL');
   console.log(`✅ Connected to database: ${DB_PATH}`);
   seedHdbBlockCoords(DB_PATH);
+  seedBtoProjects(DB_PATH);
 } catch (err) {
   console.warn(`⚠️  Database not found at ${DB_PATH}`);
   console.warn(`   Run download scripts via SSH to populate it.`);
@@ -97,6 +110,76 @@ function seedHdbBlockCoords(dbPath) {
 
     insertMany(rows);
     console.log(`✅ Seeded ${rows.length.toLocaleString()} HDB block coordinates`);
+  } finally {
+    writable.close();
+  }
+}
+
+function seedBtoProjects(dbPath) {
+  const tableExists = db.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='bto_projects'"
+  ).get();
+  if (tableExists) return;
+
+  console.log('⏳ bto_projects missing — seeding from bto_launches.json...');
+
+  const writable = new Database(dbPath);
+  try {
+    writable.exec(`
+      CREATE TABLE IF NOT EXISTS bto_projects (
+        launch_id         TEXT NOT NULL,
+        launch_label      TEXT,
+        application_start TEXT,
+        application_end   TEXT,
+        project           TEXT NOT NULL,
+        display_name      TEXT,
+        town              TEXT NOT NULL,
+        classification    TEXT,
+        location_desc     TEXT,
+        lat               REAL,
+        lng               REAL,
+        waiting_months    INTEGER,
+        bto_label         TEXT,
+        resale_flat_type  TEXT,
+        floor_area_sqm    REAL,
+        units             INTEGER,
+        price_min         INTEGER,
+        price_max         INTEGER
+      )
+    `);
+    writable.exec('CREATE INDEX IF NOT EXISTS idx_bto_project ON bto_projects(project)');
+
+    const insert = writable.prepare(`
+      INSERT INTO bto_projects
+        (launch_id, launch_label, application_start, application_end,
+         project, display_name, town, classification, location_desc,
+         lat, lng, waiting_months, bto_label, resale_flat_type,
+         floor_area_sqm, units, price_min, price_max)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `);
+    const insertMany = writable.transaction((rows) => { for (const r of rows) insert.run(...r); });
+
+    const rows = [];
+    for (const launch of BTO_LAUNCHES_JSON.launches || []) {
+      for (const project of launch.projects || []) {
+        let flats = project.flats || [];
+        if (flats.length === 0) {
+          flats = [{ bto_label: '', resale_flat_type: null, floor_area_sqm: null, units: null, price_min: null, price_max: null }];
+        }
+        for (const flat of flats) {
+          rows.push([
+            launch.launch_id, launch.label, launch.application_start, launch.application_end,
+            project.project, project.display_name, project.town, project.classification,
+            project.location_desc, project.lat ?? null, project.lng ?? null, project.waiting_months ?? null,
+            flat.bto_label, flat.resale_flat_type, flat.floor_area_sqm ?? null,
+            flat.units ?? null, flat.price_min ?? null, flat.price_max ?? null,
+          ]);
+        }
+      }
+    }
+
+    insertMany(rows);
+    console.log(`✅ Seeded ${rows.length.toLocaleString()} BTO project rows`);
   } finally {
     writable.close();
   }
@@ -594,6 +677,18 @@ app.get('/api/resolve', async (req, res) => {
       // Exact match
       if (towns.includes(inputUpper)) {
         return res.json({ resolved: true, input, town: inputUpper });
+      }
+
+      // BTO project exact match — must come before the town partial-match below,
+      // since BTO names often CONTAIN town names ("SEMBAWANG PORTICO" must not
+      // resolve as town SEMBAWANG). EXACT match only — no LIKE/partial BTO match
+      // here, to avoid "SEMBAWANG" accidentally matching "SEMBAWANG PORTICO".
+      // Partial BTO discovery happens via autocomplete (/api/bto/projects) instead.
+      const btoMatch = db.prepare(`
+        SELECT project, display_name, town FROM bto_projects WHERE UPPER(project) = ? LIMIT 1
+      `).get(inputUpper);
+      if (btoMatch) {
+        return res.json({ resolved: true, input, type: 'bto', project: btoMatch.project, display_name: btoMatch.display_name, town: btoMatch.town });
       }
 
       // Partial match — input is a prefix/substring of a town name, with word-boundary check.
@@ -2035,6 +2130,188 @@ app.get('/api/valuation', (req, res) => {
 });
 
 // ============================================================
+// BTO LAUNCHES ENDPOINTS
+// ============================================================
+
+// Launch status from application window. today defaults to now; injectable for tests.
+function launchStatus(applicationStart, applicationEnd, today = new Date()) {
+  const t = today.toISOString().slice(0, 10);
+  if (!applicationStart || t < applicationStart) return 'upcoming';
+  if (applicationEnd && t <= applicationEnd) return 'open';
+  return 'closed';
+}
+
+app.get('/api/bto/launches', (req, res) => {
+  try {
+    const rows = db.prepare(`SELECT * FROM bto_projects ORDER BY launch_id DESC, project ASC`).all();
+    const launchMap = new Map();
+    for (const r of rows) {
+      if (!launchMap.has(r.launch_id)) {
+        launchMap.set(r.launch_id, {
+          launch_id: r.launch_id,
+          label: r.launch_label,
+          status: launchStatus(r.application_start, r.application_end),
+          application_start: r.application_start,
+          application_end: r.application_end,
+          projects: new Map(),
+        });
+      }
+      const launch = launchMap.get(r.launch_id);
+      if (!launch.projects.has(r.project)) {
+        launch.projects.set(r.project, {
+          project: r.project,
+          display_name: r.display_name,
+          town: r.town,
+          classification: r.classification,
+          location_desc: r.location_desc,
+          lat: r.lat,
+          lng: r.lng,
+          waiting_months: r.waiting_months,
+          total_units: 0,
+          flats: [],
+        });
+      }
+      const proj = launch.projects.get(r.project);
+      if (r.bto_label) {
+        proj.flats.push({
+          bto_label: r.bto_label,
+          resale_flat_type: r.resale_flat_type,
+          floor_area_sqm: r.floor_area_sqm,
+          units: r.units,
+          price_min: r.price_min,
+          price_max: r.price_max,
+        });
+        proj.total_units += (r.units || 0);
+      }
+    }
+    const launches = [...launchMap.values()].map(l => ({ ...l, projects: [...l.projects.values()] }));
+    res.json({ launches });
+  } catch (err) {
+    console.error('Error in /api/bto/launches:', err);
+    res.status(500).json({ error: 'Failed to fetch BTO launches: ' + err.message });
+  }
+});
+
+app.get('/api/bto/projects', (req, res) => {
+  try {
+    const { q, limit } = req.query;
+    const limitVal = Math.min(parseInt(limit) || 20, 50);
+
+    if (!q || q.trim().length < 2) {
+      return res.json({ projects: [] });
+    }
+    if (q.length > 200) return res.status(400).json({ error: 'Query too long' });
+
+    const searchPattern = `%${q.toUpperCase().trim()}%`;
+    const projects = db.prepare(`
+      SELECT DISTINCT project, display_name, town, classification, launch_id
+      FROM bto_projects
+      WHERE UPPER(project) LIKE ?
+      ORDER BY launch_id DESC
+      LIMIT ?
+    `).all(searchPattern, limitVal);
+
+    res.json({ projects });
+  } catch (err) {
+    console.error('Error in /api/bto/projects:', err);
+    res.status(500).json({ error: 'Failed to search BTO projects: ' + err.message });
+  }
+});
+
+app.get('/api/bto/project-overview', (req, res) => {
+  try {
+    const { project } = req.query;
+    if (!project) return res.status(400).json({ error: 'Missing project parameter' });
+    if (project.length > 200) return res.status(400).json({ error: 'project parameter too long' });
+
+    const rows = db.prepare(`SELECT * FROM bto_projects WHERE UPPER(project) = ?`).all(project.toUpperCase().trim());
+    if (rows.length === 0) return res.status(404).json({ error: 'Project not found' });
+
+    const head = rows[0];
+    const flats = rows.filter(r => r.bto_label).map(r => ({
+      bto_label: r.bto_label,
+      resale_flat_type: r.resale_flat_type,
+      floor_area_sqm: r.floor_area_sqm,
+      units: r.units,
+      price_min: r.price_min,
+      price_max: r.price_max,
+    }));
+
+    const MIN_COMPS = 5;
+    const monthsAgo12 = monthsAgoStr(12);
+
+    const fetchBtoComps = (radiusM, flatType) => {
+      if (head.lat == null || head.lng == null) return [];
+      const blocks = findNearbyHdbBlocks(head.lat, head.lng, radiusM);
+      if (blocks.length === 0) return [];
+      const keys = blocks.map(b => `${b.block}|${b.street_name}`);
+      return db.prepare(`
+        SELECT resale_price, price_per_sqm, remaining_lease_years
+        FROM transactions
+        WHERE dataset_source != 'URA_PRIVATE' AND resale_price IS NOT NULL
+          AND price_per_sqm IS NOT NULL AND flat_type = ? AND month >= ?
+          AND (block || '|' || street_name) IN (${keys.map(() => '?').join(',')})
+      `).all(flatType, monthsAgo12, ...keys);
+    };
+
+    const comparison = [...new Set(flats.map(f => f.resale_flat_type).filter(Boolean))].map(flatType => {
+      let comps = fetchBtoComps(1000, flatType);
+      let comps_basis = '1000m';
+      if (comps.length < MIN_COMPS) { comps = fetchBtoComps(2000, flatType); comps_basis = '2000m'; }
+      if (comps.length < MIN_COMPS) {
+        comps = db.prepare(`
+          SELECT resale_price, price_per_sqm, remaining_lease_years FROM transactions
+          WHERE dataset_source != 'URA_PRIVATE' AND resale_price IS NOT NULL AND price_per_sqm IS NOT NULL
+            AND town = ? AND flat_type = ? AND month >= ?
+        `).all(head.town, flatType, monthsAgo12);
+        comps_basis = 'town';
+      }
+      const prices = comps.map(c => c.resale_price);
+      const psms = comps.map(c => c.price_per_sqm);
+      const leases = comps.map(c => c.remaining_lease_years).filter(l => l != null);
+      const resale_median = median(prices);
+      const flat = flats.find(f => f.resale_flat_type === flatType);
+      const discount_pct = (resale_median && flat && flat.price_min != null && flat.price_max != null)
+        ? Math.round((1 - ((flat.price_min + flat.price_max) / 2) / resale_median) * 100)
+        : null;
+      return {
+        resale_flat_type: flatType,
+        comps_count: comps.length,
+        comps_basis: comps.length > 0 ? comps_basis : null,
+        resale_median,
+        resale_p25: prices.length ? Math.round(percentile(prices, 25)) : null,
+        resale_p75: prices.length ? Math.round(percentile(prices, 75)) : null,
+        resale_median_psm: psms.length ? median(psms) : null,
+        median_remaining_lease: leases.length ? Math.round(median(leases)) : null,
+        discount_pct,
+      };
+    });
+
+    res.json({
+      project: head.project,
+      display_name: head.display_name,
+      town: head.town,
+      classification: head.classification,
+      launch_id: head.launch_id,
+      launch_label: head.launch_label,
+      status: launchStatus(head.application_start, head.application_end),
+      application_start: head.application_start,
+      application_end: head.application_end,
+      location_desc: head.location_desc,
+      lat: head.lat,
+      lng: head.lng,
+      waiting_months: head.waiting_months,
+      flats,
+      comparison,
+      hdb_quoted_resale: HDB_QUOTED_RESALE[head.project] || [],
+    });
+  } catch (err) {
+    console.error('Error in /api/bto/project-overview:', err);
+    res.status(500).json({ error: 'Failed to fetch BTO project overview: ' + err.message });
+  }
+});
+
+// ============================================================
 // SEO ENDPOINTS (for Cloudflare Pages Function / bot requests)
 // ============================================================
 
@@ -2064,6 +2341,15 @@ function slugToProject(slug) {
     WHERE dataset_source = 'URA_PRIVATE' AND UPPER(project) LIKE ?
     GROUP BY project ORDER BY COUNT(*) DESC LIMIT 1
   `).get(searchPattern)?.project || null;
+}
+
+// Exact round-trip slug → BTO project (unlike slugToProject's fuzzy LIKE + tx-count
+// tiebreak, which is unsafe here — BTO rows have zero transactions to break ties with,
+// and BTO names collide more, e.g. SEMBAWANG PORTICO vs SEMBAWANG BROOK).
+function slugToBtoProject(slug) {
+  if (!db) return null;
+  const rows = db.prepare('SELECT DISTINCT project, display_name FROM bto_projects').all();
+  return rows.find(r => townToSlug(r.display_name || r.project) === slug) || null;
 }
 
 // Flat-type slug helpers — power /hdb/<town>/<flat-type> programmatic pages
@@ -2195,6 +2481,26 @@ app.get('/api/seo/sitemap', (req, res) => {
       });
     }
 
+    // BTO launches — small dataset (~40 projects), no cap needed. lastmod/changefreq here
+    // are BTO-specific, NOT the global resale-data `lastmod` above (that reflects resale
+    // transaction recency, which is meaningless for launch content). A launch with
+    // confirmed HDB application dates uses that date (stable, real); a still-provisional
+    // launch (no dates yet) uses today and a daily changefreq, since that page's content
+    // can change at any time before HDB's official announcement.
+    const todayStr = new Date().toISOString().slice(0, 10);
+    urls.push({ url: `${SEO_BASE_URL}/bto`, changefreq: 'daily', priority: '0.7', lastmod: todayStr });
+    const btoProjects = db.prepare(`
+      SELECT DISTINCT project, display_name, application_start FROM bto_projects WHERE bto_label != '' AND bto_label IS NOT NULL
+    `).all();
+    for (const p of btoProjects) {
+      urls.push({
+        url: `${SEO_BASE_URL}/bto/${townToSlug(p.display_name || p.project)}`,
+        changefreq: p.application_start ? 'monthly' : 'daily',
+        priority: '0.6',
+        lastmod: p.application_start || todayStr,
+      });
+    }
+
     sitemapCache = { data: { urls }, timestamp: now };
     res.json({ urls });
   } catch (err) {
@@ -2321,6 +2627,165 @@ app.get('/api/seo/metadata', (req, res) => {
       meta.og_url = meta.canonical;
       // Per-postal check URLs are user-specific — keep them out of the index
       if (route.startsWith('/check/')) meta.robots = 'noindex, follow';
+    } else if (route === '/bto') {
+      const townRows = db ? db.prepare(`
+        SELECT DISTINCT town FROM bto_projects WHERE launch_id = (SELECT MAX(launch_id) FROM bto_projects)
+      `).all().map(r => titleCase(r.town)) : [];
+      meta.title = 'HDB BTO Launches 2025/2026 — Prices & Resale Comparison | WorthIt';
+      meta.description = `Browse HDB BTO launches with indicative prices, flat types, and comparison against nearby resale flats.${townRows.length ? ` Latest: ${townRows.join(', ')}.` : ''}`;
+      meta.canonical = `${SEO_BASE_URL}/bto`;
+      meta.og_title = meta.title;
+      meta.og_description = meta.description;
+
+      const projectList = db ? db.prepare(`
+        SELECT DISTINCT project, display_name, town, launch_id FROM bto_projects ORDER BY launch_id DESC
+      `).all() : [];
+      const linksHtml = projectList.map(p =>
+        `<a href="/bto/${townToSlug(p.display_name || p.project)}" style="color:#3b82f6;text-decoration:none;display:block;padding:4px 0">${p.display_name} — ${titleCase(p.town)}</a>`
+      ).join('');
+      meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
+  <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">HDB BTO Launches</h2>
+  <p style="color:#4b5563;margin-bottom:1rem">Indicative prices, flat types, and a comparison against nearby resale transactions for recent and upcoming Build-To-Order launches.</p>
+  ${linksHtml}
+  ${freshnessNote}
+</section>`;
+      meta.json_ld = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [{
+          '@type': 'WebPage', name: 'HDB BTO Launches', description: meta.description, url: meta.canonical, dateModified,
+          breadcrumb: { '@type': 'BreadcrumbList', itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
+            { '@type': 'ListItem', position: 2, name: 'BTO Launches', item: meta.canonical },
+          ]},
+        }],
+      });
+    } else if (route.startsWith('/bto/')) {
+      const slug = route.replace('/bto/', '');
+      const hit = db ? slugToBtoProject(slug) : null;
+      if (hit) {
+        const rows = db.prepare('SELECT * FROM bto_projects WHERE project = ?').all(hit.project);
+        const head = rows[0];
+        const flats = rows.filter(r => r.bto_label);
+        const townDisplay = titleCase(head.town);
+        const prices = flats.flatMap(f => [f.price_min, f.price_max]).filter(Boolean);
+        const priceLabel = prices.length ? `from ${fmtPrice(Math.min(...prices))}` : 'TBD';
+        const flatTypesLabel = [...new Set(flats.map(f => f.resale_flat_type))].filter(Boolean).map(flatTypeLabel).join('/');
+        const classSuffix = head.classification ? ` ${head.classification}` : '';
+        const totalUnits = flats.reduce((s, f) => s + (f.units || 0), 0);
+        // "November 2026 BTO (upcoming)" -> "November 2026" — a clean month/year for
+        // sentences that already say "BTO"/"upcoming" themselves elsewhere.
+        const launchMonthYear = head.launch_label.replace(/\s*BTO.*$/i, '').trim();
+        const isProvisional = launchStatus(head.application_start, head.application_end) === 'upcoming';
+
+        if (isProvisional) {
+          // No official HDB launch yet — lead with "upcoming", not a price we don't have.
+          meta.title = `${head.display_name} BTO — Upcoming ${launchMonthYear} Launch in ${townDisplay}${classSuffix} | WorthIt`;
+          meta.description = `${head.display_name} is an upcoming HDB BTO${classSuffix} project in ${townDisplay}, expected in the ${launchMonthYear} sales exercise.${totalUnits ? ` ~${totalUnits.toLocaleString()} units expected.` : ''} See location and how nearby resale flats compare.`;
+        } else {
+          meta.title = `${head.display_name} BTO Price — ${flatTypesLabel || 'Flats'} ${priceLabel} (${head.launch_label}) | WorthIt`;
+          meta.description = `${head.display_name} BTO in ${townDisplay}: ${priceLabel} excl. grants,${classSuffix} flat, ${head.launch_label}. See flats, prices & nearby resale comparison.`;
+        }
+        meta.canonical = `${SEO_BASE_URL}/bto/${slug}`;
+        meta.og_title = meta.title;
+        meta.og_description = meta.description;
+
+        // Town-basis resale medians for cheap FAQ prose (avoid the full 1000m/2000m ladder here)
+        const townMedian = flats.length ? db.prepare(`
+          SELECT flat_type, ROUND(AVG(resale_price)) as avg_price FROM transactions
+          WHERE dataset_source != 'URA_PRIVATE' AND town = ? AND flat_type = ? AND month >= ?
+          GROUP BY flat_type
+        `).get(head.town, flats[0].resale_flat_type, monthsAgoStr(12)) : null;
+
+        const faqs = [];
+        if (isProvisional) {
+          // Price-shaped FAQs don't make sense pre-launch — ask what's actually knowable.
+          faqs.push({
+            '@type': 'Question',
+            name: `Which town is ${head.display_name} BTO in?`,
+            acceptedAnswer: { '@type': 'Answer', text: `${head.display_name} is an upcoming HDB BTO project in ${townDisplay}${classSuffix ? `, classified as a ${head.classification} project` : ''}, expected in the ${launchMonthYear} sales exercise.` },
+          });
+          if (totalUnits) {
+            faqs.push({
+              '@type': 'Question',
+              name: `How many units will ${head.display_name} BTO have?`,
+              acceptedAnswer: { '@type': 'Answer', text: `${head.display_name} is expected to offer around ${totalUnits.toLocaleString()} units${flatTypesLabel ? ` across ${flatTypesLabel} flat types` : ''}. Exact figures will be confirmed when HDB officially launches the ${launchMonthYear} exercise.` },
+            });
+          }
+          faqs.push({
+            '@type': 'Question',
+            name: `When can I apply for ${head.display_name} BTO?`,
+            acceptedAnswer: { '@type': 'Answer', text: `${head.display_name} has not been officially launched yet — HDB has not announced application dates for the ${launchMonthYear} exercise. Check back closer to the date for the official HDB Flat Portal application window.` },
+          });
+        } else {
+          // prices.length check (not flats.length) — a launched project can still have
+          // flats with no price data in rare cases, and Math.min/max of an empty array
+          // is +/-Infinity, which would otherwise leak into the FAQ text as "$InfinityM".
+          if (prices.length) {
+            faqs.push({
+              '@type': 'Question',
+              name: `How much does a flat at ${head.display_name} cost?`,
+              acceptedAnswer: { '@type': 'Answer', text: `${head.display_name} flats range from ${fmtPrice(Math.min(...prices))} to ${fmtPrice(Math.max(...prices))} (excluding grants), across ${flats.map(f => f.bto_label).join(', ')}.` },
+            });
+          }
+          if (head.waiting_months) {
+            faqs.push({
+              '@type': 'Question',
+              name: `When will ${head.display_name} be completed?`,
+              acceptedAnswer: { '@type': 'Answer', text: `${head.display_name} has an estimated waiting time of about ${Math.round(head.waiting_months / 12)} years (${head.waiting_months} months) from the ${head.launch_label} application.` },
+            });
+          }
+          if (townMedian?.avg_price) {
+            faqs.push({
+              '@type': 'Question',
+              name: `Is ${head.display_name} cheaper than resale flats nearby?`,
+              acceptedAnswer: { '@type': 'Answer', text: `Resale ${flatTypeLabel(flats[0].resale_flat_type)} flats in ${townDisplay} have averaged ${fmtPrice(townMedian.avg_price)} in the past 12 months, compared to ${head.display_name}'s BTO price of ${fmtPrice(flats[0].price_min)}–${fmtPrice(flats[0].price_max)} (excluding grants, full 99-year lease, but a ${Math.round(head.waiting_months / 12)}-year wait).` },
+            });
+          }
+        }
+
+        const flatRows = flats.map(f => `<tr>
+          <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">${f.bto_label}</td>
+          <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${Math.round(f.floor_area_sqm * 10.7639)} sqft</td>
+          <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${f.units}</td>
+          <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${fmtPrice(f.price_min)}–${fmtPrice(f.price_max)}</td>
+        </tr>`).join('');
+
+        meta.json_ld = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'WebPage', name: `${head.display_name} BTO`, description: meta.description, url: meta.canonical, dateModified,
+              breadcrumb: { '@type': 'BreadcrumbList', itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: SEO_BASE_URL + '/' },
+                { '@type': 'ListItem', position: 2, name: 'BTO Launches', item: `${SEO_BASE_URL}/bto` },
+                { '@type': 'ListItem', position: 3, name: head.display_name, item: meta.canonical },
+              ]},
+            },
+            ...(faqs.length ? [{ '@type': 'FAQPage', mainEntity: faqs }] : []),
+          ],
+        });
+
+        meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
+  <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${head.display_name} —${classSuffix} BTO in ${townDisplay}</h2>
+  <p style="color:#4b5563;margin-bottom:1rem">${head.location_desc || ''} ${head.launch_label}. ${prices.length ? `Prices ${priceLabel} (excluding grants).` : flats.length ? 'Indicative prices have not been released yet.' : 'Details to be released at launch.'}</p>
+  ${flats.length ? `<table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-bottom:1.5rem">
+    <thead><tr style="background:#f3f4f6">
+      <th style="padding:6px 12px;text-align:left;border-bottom:2px solid #e5e7eb">Flat Type</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Area</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Units</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Price (excl. grants)</th>
+    </tr></thead><tbody>${flatRows}</tbody></table>` : ''}
+  <p style="font-size:0.875rem;color:#6b7280">
+    <a href="/hdb/${townToSlug(head.town)}" style="color:#3b82f6;text-decoration:none">View ${townDisplay} HDB resale prices &rarr;</a> ·
+    <a href="/bto" style="color:#3b82f6;text-decoration:none">All BTO Launches &rarr;</a>
+  </p>
+  ${faqsToHtml(faqs)}
+  ${freshnessNote}
+</section>`;
+      } else {
+        meta.canonical = `${SEO_BASE_URL}/bto`;
+        meta.robots = 'noindex, follow';
+      }
     } else if (route.startsWith('/postal/')) {
       const postal = route.replace('/postal/', '').trim();
       if (/^\d{6}$/.test(postal) && db) {
@@ -2490,6 +2955,13 @@ app.get('/api/seo/metadata', (req, res) => {
 
         const otherTowns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE' ORDER BY town").all().map(r => r.town).filter(t => t !== town);
 
+        // BTO projects in this town — surfaces fresh launch content from the site's
+        // highest-authority, most-crawled pages (see BTO.plan.md "SEO" notes).
+        const townBtoProjects = db.prepare(`
+          SELECT DISTINCT project, display_name, launch_id, launch_label, application_start, application_end
+          FROM bto_projects WHERE town = ? ORDER BY launch_id DESC
+        `).all(town);
+
         meta.title = `${townDisplay} HDB Resale Price ${new Date().getFullYear()} — ${fmtPsf(avgPsm)} Avg | WorthIt`;
         meta.description = `${townDisplay} HDB resale prices: ${txCount.toLocaleString()} sales in 12 months, avg ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)}). Compare flat types, trends & Deal Scores.`;
         meta.canonical = `${SEO_BASE_URL}/hdb/${slug}`;
@@ -2567,6 +3039,13 @@ app.get('/api/seo/metadata', (req, res) => {
           .map(d => DISTRICT_LABELS[d] ? `<a href="/district/${d}" style="color:#3b82f6;text-decoration:none">${DISTRICT_LABELS[d]}</a>` : null)
           .filter(Boolean).join(' &middot; ');
 
+        const townBtoLinks = townBtoProjects.map(p => {
+          const status = launchStatus(p.application_start, p.application_end);
+          const statusLabel = status === 'upcoming' ? 'Upcoming' : status === 'open' ? 'Applications Open' : 'Closed';
+          const btoSlug = townToSlug(p.display_name || p.project);
+          return `<a href="/bto/${btoSlug}" style="color:#3b82f6;text-decoration:none;display:block;padding:2px 0">${p.display_name} <span style="color:#9ca3af;font-size:0.8rem">(${p.launch_label.replace(/\s*\(upcoming\)\s*$/i, '')} &middot; ${statusLabel})</span></a>`;
+        }).join('');
+
         meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
   <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${townDisplay} HDB Resale Prices — Market Overview</h2>
   <p style="color:#4b5563;margin-bottom:1rem">
@@ -2582,6 +3061,8 @@ app.get('/api/seo/metadata', (req, res) => {
     </tr></thead>
     <tbody>${typeRows}</tbody>
   </table>` : ''}
+  ${townBtoLinks ? `<h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">New BTO Launches in ${townDisplay}</h3>
+  <p style="font-size:0.9rem;line-height:1.9;margin-bottom:1.5rem">${townBtoLinks}</p>` : ''}
   ${relatedDistricts ? `<h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Private Property Near ${townDisplay}</h3>
   <p style="font-size:0.9rem;line-height:1.9;margin-bottom:1.5rem">${relatedDistricts}</p>` : ''}
   <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Compare HDB Resale Prices in Other Towns</h3>
@@ -2813,7 +3294,7 @@ app.get('/api/seo/metadata', (req, res) => {
     // Soft-404 guard: a deep route that didn't resolve to real data still has the default
     // homepage canonical. Tell crawlers not to index these junk URLs. Only when the DB is
     // available (never deindex valid pages while the DB is mid-refresh).
-    const isDeepRoute = /^\/(hdb|private|district|postal)(\/|$)/.test(route);
+    const isDeepRoute = /^\/(hdb|private|district|postal|bto)(\/|$)/.test(route);
     if (isDeepRoute && db && meta.canonical === SEO_BASE_URL + '/') {
       meta.robots = 'noindex, follow';
     }
@@ -2852,4 +3333,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween } };
+module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween, launchStatus } };

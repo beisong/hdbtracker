@@ -1,5 +1,183 @@
 # Active Context: WorthIt
 
+## Recent Changes (Aug 2026 — BTO backfill: Feb/Jul/Oct 2025 + Feb 2026 all now real official data) — BUILT LOCALLY
+
+User asked to backfill the remaining skeleton launches. All four are now fully seeded from HDB's
+official Annex A press-release PDFs (same standard as June 2026) — **no more skeletons**; every
+launch in `scripts/bto_launches.json` now has real data except Nov 2026 (genuinely hasn't launched
+yet, stays provisional). `bto_projects` now has **168 rows across 41 projects, 6 launches**.
+
+- **Feb 2025**: 5 projects (Woodlands North Verge, Chencharu Vines, Chencharu Green, Stirling
+  Horizon, Tanjong Rhu Parc Front), 5,032 units — matches official headline exactly.
+- **Jul 2025**: 8 projects (Bangkit Breeze, Sembawang Beacon, Simei Symphony, Woodlands North
+  Grove, Alexandra Peaks, Alexandra Vista, Clementi Emerald, Toa Payoh Ascent), 5,547 units —
+  matches exactly (Sembawang Beacon's 775 units matched press coverage precisely too).
+  Annex PDF URLs for this launch needed a `-20250723` date suffix
+  (`Annex-A-20250723.pdf`/`Annex-B-20250723.pdf`) — the plain `Annex-A.pdf` guess 404'd.
+- **Oct 2025**: 10 projects, 8,937 units in `flats[]` + 207 excluded Community Care Apartment
+  units at Fernvale Plains (a separate 30-year-lease senior-housing scheme, not a resale-comparable
+  flat type) = 9,144 exactly matching the official headline. Admin-details annex was named
+  **Annex C** here, not Annex B (`Annex-C-BTO-sales-exercise-Oct-2025-v2.pdf`) — the annex lettering
+  isn't stable across launches, don't assume it.
+- **Feb 2026**: 6 projects (Sembawang Voyage, Sembawang Deck, Tampines Bliss, Tampines Nova, Kim
+  Keat Crest, Redhill Peaks), 4,692 units — matches exactly.
+
+**Real data-integrity issue found and fixed mid-backfill**: HDB genuinely reused the exact project
+name **"Redhill Peaks"** twice — Oct 2025 (1,021 units: 2RF+4R only) and Feb 2026 (1,052 units:
+2RF+3R+4R) are two different launch phases of the same Bukit Merah site, split across two exercises
+due to site-preparation timelines for its two land parcels (confirmed by the user, corroborated by
+uchify's Feb 2026 coverage explicitly framing it as "more Redhill Peaks flats for those who missed
+out"). The app's schema/API treat `project` (uppercase name) as a **global unique key** — `/api/resolve`
+exact-match and `/api/bto/project-overview` both do `WHERE UPPER(project) = ?` with no `launch_id`
+filter — so two rows sharing that key would have silently conflated both launches' flats, prices,
+and waiting times into one incoherent record. **Fixed by disambiguating both entries**:
+`REDHILL PEAKS (OCT 2025)` / `REDHILL PEAKS (FEB 2026)` as the `project` key and `display_name`,
+with a note on each explaining why. Verified live: both resolve and render independently with
+correct, non-conflated data (1,021 vs 1,052 units, 53 vs 55 months wait). **This is a latent modeling
+risk for any future launch that reuses a project name** — if it happens again, apply the same
+`(MONTH YEAR)` disambiguation pattern before seeding.
+- Zero global duplicate `project` keys after the fix (verified programmatically across all 43
+  projects). All coordinates verified in Singapore bounds. 240 tests still pass (no test changes
+  needed — this was pure seed-data work, no code changes).
+- **Still local only — not committed/deployed.**
+
+## Recent Changes (Aug 2026 — `/api/nearby-hdb` map-marker bug fix) — BUILT LOCALLY
+
+**Pre-existing bug, found via user report, NOT introduced by the BTO feature** — but surfaced by it,
+since Bedok Bayshore (a new coastal BTO site) is the first place in the app anyone looked at that's
+both HDB-sparse nearby and condo-dense a bit further out. User noticed Bayshore's BTO page showed
+zero map markers while Geylang Mattar's showed plenty, despite Bayshore visibly having close blocks
+(e.g. postal 460066, 622m away) and condos (VELA BAY, 152m away) on the map.
+
+Two compounding bugs in `GET /api/nearby-hdb` (`server/index.js`, shared by postal searches,
+private-project pages, and now BTO pages — not BTO-specific code):
+1. **Hardcoded 500m radius with no fallback**: `findNearbyHdbBlocks(latF, lngF)` was called with no
+   radius argument (defaults to 500m) and the handler returned early with empty results if that
+   came up empty — inconsistent with `/api/bto/project-overview`'s own 500m→1000m→2000m→town ladder
+   used one endpoint over. Verified: Bayshore has 0 HDB blocks within 500m but 42 within 1000m.
+   **Fix**: the same radius ladder (500/1000/2000, stop at first non-empty tier) now used here too.
+2. **Private-project lookup wrongly coupled to the HDB-block search succeeding**: the early return
+   fired before the code ever reached the (separately-radiused, 800m) private-project query, so an
+   area could have real nearby condos and still show none. Verified: 28 private projects within
+   800m of Bayshore (Bayshore Park, Costa Del Sol, VELA BAY at 152m, etc.), all silently dropped.
+   **Fix**: private-project lookup now runs unconditionally, independent of whether any HDB blocks
+   were found; the transactions SQL query is separately guarded to skip cleanly (not throw on an
+   invalid empty `IN ()` clause) when the block ladder still finds nothing.
+- New regression test in `tests/integration/nearby-hdb.test.js`: nearby_projects still returns a
+  known project when 0 HDB blocks are nearby (uses the existing SKY HABITAT fixture, ~12.6km from
+  the fixture's Bedok blocks — no new fixture data needed). 240 tests pass (1 new).
+- Verified live: Bayshore now returns 68 HDB transactions + all 28 nearby private projects
+  (previously 0 and 0); Geylang Mattar's response is unchanged (500m already found data there, so
+  it never needed to escalate) — confirms the fix doesn't regress the common case.
+- **Still local only — not committed/deployed.**
+
+## Recent Changes (Aug 2026 — Nov 2026 BTO launch added as provisional data) — BUILT LOCALLY
+
+User asked to include the Nov 2026 launch (previously a deliberately-empty skeleton, since HDB
+hasn't officially launched it). Added all 7 projects — Bedok Bayshore I & II, Geylang Mattar,
+Toa Payoh Caldecott, Tengah Garden Avenue, Yishun Chencharu, Sembawang North — sourced from
+third-party BTO preview trackers (RecordBTO, uchify, PropertyNet.SG, StackedHomes), **not** an
+official HDB press release (none exists yet for this launch). Every flat entry has
+`price_min`/`price_max = null`; classification is `null` for all seven (not yet announced).
+Bayshore's two sites have no clean per-project flat-type split reported anywhere, so each got a
+single aggregate flat row (`resale_flat_type: null`, real total units 860/1,640) rather than an
+invented type breakdown; the other five projects have real, source-confirmed per-type unit counts.
+47 `bto_projects` rows total now (28 June 2026 + 19 Nov 2026). Tests still 239/240 (no new test
+file needed — existing fixture data is separate from the real seed JSON).
+
+**Four real bugs found and fixed while wiring this in** (none were in the original feature, all
+surfaced by having a project with real structure but unknown prices/classification for the first
+time):
+1. `discount_pct` in `/api/bto/project-overview` computed `NaN` (not `null`) when a flat's
+   `price_min`/`price_max` were null — fixed by guarding on both being non-null before computing.
+2. Five separate template-literal spots (`app.js` header pill, SEO title/description in both
+   `updateSeoForSearch` and the server's `/bto/<slug>` metadata branch, `renderBtoIndex` cards, the
+   autocomplete sub-label) rendered the literal string `"null"` when `classification` was null —
+   fixed each with a conditional suffix instead of unconditional interpolation. Caught only by
+   actually loading a null-classification project in a browser and reading the page title — grep
+   alone wouldn't have found the index-card and autocomplete instances.
+3. Flat cards showed `"$--–$--"` for unpriced flats instead of a clear "Price TBD" — added an
+   explicit null check before formatting.
+4. The comparison-table loop iterated `resale_flat_type` values including `null` (from the
+   Bayshore aggregate rows), which would have produced a blank-labeled comparison row — fixed by
+   filtering `Boolean` before building the per-type `Set`.
+
+Added a visible amber "⚠️ Provisional" notice on any project whose launch `status === 'upcoming'`,
+and surfaced `location_desc` in the page subtitle (previously computed by the API but never
+rendered anywhere for humans, only in bot-facing `content_html`) — both are small UX additions this
+task revealed were missing, not part of the earlier acceptance checklist. **Still local only —
+not committed/deployed.**
+
+## Recent Changes (Aug 2026 — BTO launches feature) — BUILT LOCALLY, not yet committed/deployed
+
+Implemented per `BTO.plan.md` (repo root, §1-4 + Appendices A/B) with corrections captured in the
+plan-mode execution plan (see "Deviations from the original plan" below). BTO project names (e.g.
+"Lakeview Cascadia", "Sembawang Portico") are now searchable from the main search bar and have a
+project page showing indicative flat prices plus a **BTO vs nearby resale comparison** computed
+live from the existing `transactions` table + `findNearbyHdbBlocks()`. 239 tests pass (22 new,
+up from 217). **Local only — user handles commit + deploy; `?v=` bump happens automatically via
+`bump-version.js` on deploy, not touched here.**
+
+- **Data**: `scripts/bto_launches.json` (new, hand-curated, NOT scraped — `homes.hdb.gov.sg` is
+  bot-blocked). June 2026 launch fully populated (7 projects, 28 flat-type rows, geocoded via
+  OneMap, cross-checked against `hdb_block_coords` for plausibility) from the official HDB Annex A
+  press-release PDF. Five other launches (Feb/Jul/Oct 2025, Feb 2026, Nov 2026) are **skeleton
+  entries only** (`projects: []`, sources noted) — a deliberate, documented follow-up curation task,
+  not fabricated data. Nov 2026 skeleton includes third-party-tracker town names as a `_curation_note`
+  (Bedok Bayshore ×2, Geylang Mattar, Sembawang North, Tengah Garden Avenue, Toa Payoh Caldecott,
+  Yishun Chencharu) but deliberately has zero project rows, since exact project names aren't
+  officially announced yet and inventing them would be fabrication.
+- **New `bto_projects` table** in `resale.db`, dual-seeded exactly like `hdb_block_coords`: Python
+  `seed_bto_projects()` in `download_data.py` (drops+recreates from the JSON on every full rebuild —
+  JSON is sole source of truth, unlike the incrementally-geocoded `hdb_block_coords`) and a server
+  startup fallback `seedBtoProjects()` in `server/index.js`. **Bug caught and fixed during
+  implementation**: a temporal-dead-zone `ReferenceError` — `seedBtoProjects()` is called (via
+  hoisted function declaration) from the top-of-file DB-open `try` block, before a `const
+  BTO_LAUNCHES_JSON = require(...)` declared later in the file had executed. Fixed by moving the
+  JSON `require()` + `HDB_QUOTED_RESALE` map construction to before the `try` block. BTO rows never
+  go into `transactions`.
+- **3 new endpoints**: `GET /api/bto/launches` (grouped listing), `GET /api/bto/projects` (autocomplete,
+  mirrors `/api/private/projects`' validation exactly — short query → `{projects:[]}`, not 400),
+  `GET /api/bto/project-overview` (flats + a standalone comps ladder: 1000m → 2000m → town fallback,
+  `MIN_COMPS=5`, reusing `findNearbyHdbBlocks`/`median`/`percentile`/`monthsAgoStr` — a new bespoke
+  version, NOT calling into `/api/valuation`'s deal-score/storey-adjustment internals).
+- **Search bar resolution**: `/api/resolve` gets an **exact-match-only** BTO check inserted between
+  the exact-town match and the town partial-match (so "SEMBAWANG PORTICO" resolves as `type:'bto'`
+  while bare "SEMBAWANG" still resolves as the town — verified both directions live). **Deviation
+  from the original plan**: no partial/LIKE BTO fallback in `/api/resolve` — that was this plan's
+  original looser idea, corrected during planning because `/api/resolve` has no district/private
+  logic inside it at all (confirmed by reading the actual code, not memory-bank paraphrase) and a
+  LIKE match risked "SEMBAWANG" shadowing "SEMBAWANG PORTICO". Partial BTO discovery happens via
+  autocomplete (`/api/bto/projects`) instead. Client-side `search()` in `app.js` checks
+  `resolved.type === 'bto'` before its existing "any truthy `resolved.resolved` is a town" fallthrough.
+- **Frontend**: `renderBtoResults()` (modeled on `renderPrivateResults`) and `renderBtoIndex()` new
+  methods in `app.js`; routes `/bto` (dispatches directly) and `/bto/<slug>` (mirrors the existing
+  `/private/<slug>` reconstruct-and-search pattern) in `handleUrlRoute()`. **Discovered during
+  browser verification, not in the original plan**: a third unnamed "Percentiles + Town Summary"
+  `<div>` (no id) sits between `#map-section` and `#transactions-section` in `index.html` and was
+  staying visible on BTO pages since nothing hid it — gave it `id="percentiles-section"` and added
+  it to the same hide/show pair as `#charts-section`/`#transactions-section` in `_onResultsShown()`
+  and `renderBtoResults()`. `map.js` gained a `loadBtoSite(lat,lng,resolvedData)` method (confirmed
+  via code read that `render([], resolvedData)` safely draws just the pin with an empty transaction
+  array) and a third `isBto` pin-color case (orange `#f59e0b`, "🏗️ BTO Site" label) alongside the
+  existing private/default cases.
+- **SEO**: `/bto` and `/bto/<slug>` metadata branches (own `slugToBtoProject()` exact-match resolver
+  — deliberately NOT reusing `slugToProject()`, whose fuzzy LIKE + transaction-count tiebreak is
+  unsafe for BTO projects that have zero transactions to break ties with), soft-404 regex extended,
+  sitemap adds `/bto` + one URL per priced project (excludes the empty skeleton launches).
+- **Verified live** via `npm run dev` + Claude-in-Chrome: autocomplete shows an orange `bto` badge,
+  "Lakeview Cascadia" and "Sembawang Portico" both resolve and render correctly (flats table in sqft,
+  comparison table incl. a genuine `"No comparable resale data found"` case for Bishan 2-room —
+  real data, not a bug — and HDB's-quoted-comparable footnotes), map shows the orange pin + nearby
+  markers, light/dark theme both render correctly, direct navigation/refresh on `/bto` and
+  `/bto/<slug>` both work.
+- **Not done this pass** (explicit follow-ups): full backfill curation of the 4 skeleton 2025/2026
+  launches; BTO markers on existing postal/town search maps (phase 2 per the original proposal);
+  mobile-width (375px) visual check — the browser automation's window-resize tool didn't take
+  effect in this sandbox (viewport stayed desktop-width), so mobile layout was verified by code
+  review only (existing responsive Tailwind patterns reused: `overflow-x-auto` on the comparison
+  table, `grid-cols-1 sm:...` on card grids), not an actual screenshot.
+
 ## Recent Changes (Aug 2026 — GitHub Actions "Refresh Data" wedged since 4 Jul) — FIXED, awaiting commit
 
 The nightly `Refresh Data` workflow (`.github/workflows/refresh-data.yml`) failed every run from **2026-07-04** to **2026-08-26** (last success 2026-07-03). **Not a token/auth problem** — `FLY_API_TOKEN` authenticated fine every run.

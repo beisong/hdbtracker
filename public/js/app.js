@@ -131,6 +131,22 @@ const App = {
       return;
     }
 
+    // /bto — launch index (dispatches directly; no "search" concept for a listing)
+    if (path === '/bto') {
+      await this.renderBtoIndex();
+      return;
+    }
+
+    // /bto/<project-slug> — mirrors the /private/<slug> pattern exactly: reconstruct
+    // a human-readable guess and let search() + /api/resolve recover it.
+    const btoMatch = path.match(/^\/bto\/(.+)$/);
+    if (btoMatch) {
+      const projectName = btoMatch[1].replace(/-/g, ' ');
+      document.getElementById('search-input').value = projectName.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+      await this.search();
+      return;
+    }
+
     // /private/<project-slug>
     const privMatch = path.match(/^\/private\/(.+)$/);
     if (privMatch) {
@@ -192,6 +208,19 @@ const App = {
       path = `/private/${slug}`;
       title = `${data.project.project} Resale Transaction Prices | WorthIt`;
       description = `View ${data.project.project} resale prices and history. ${data.project.total_transactions?.toLocaleString() || 0} transactions in District ${data.project.district}.`;
+    } else if (type === 'bto' && data?.project) {
+      const slug = (data.display_name || data.project).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      path = `/bto/${slug}`;
+      const townDisplay = data.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+      const classSuffix = data.classification ? ` ${data.classification}` : '';
+      title = `${data.display_name} BTO — ${townDisplay}${classSuffix} (${data.launch_label}) | WorthIt`;
+      const prices = (data.flats || []).flatMap(f => [f.price_min, f.price_max]).filter(Boolean);
+      const priceSpan = prices.length ? `$${Math.round(Math.min(...prices) / 1000)}k–$${Math.round(Math.max(...prices) / 1000)}k` : 'TBD';
+      description = `${data.display_name} BTO in ${townDisplay}${classSuffix ? ':' + classSuffix + ' flat' : ''}, ${priceSpan} indicative prices, ${data.launch_label}. Compare vs nearby resale.`;
+    } else if (type === 'bto-index') {
+      path = '/bto';
+      title = 'HDB BTO Launches 2025/2026 — Prices & Resale Comparison | WorthIt';
+      description = 'Browse all recent and upcoming HDB BTO launches with indicative prices and comparison against nearby resale flats.';
     }
 
     // Update browser URL (no reload)
@@ -338,6 +367,13 @@ const App = {
     if (valRes) { valRes.classList.add('hidden'); valRes.innerHTML = ''; }
     const valInput = document.getElementById('val-price-input');
     if (valInput) valInput.value = '';
+    // Restore default visibility — renderBtoResults() hides these (no comparable
+    // transactions/trend chart for a BTO project); every other render path needs
+    // them visible again in case the previous search was a BTO one.
+    document.getElementById('charts-section')?.classList.remove('hidden');
+    document.getElementById('transactions-section')?.classList.remove('hidden');
+    document.getElementById('map-section')?.classList.remove('hidden');
+    document.getElementById('percentiles-section')?.classList.remove('hidden');
   },
 
   share() {
@@ -479,7 +515,20 @@ const App = {
 
       // First, try to resolve as HDB town/postal code (prioritize town names over private projects)
       const resolved = await API.resolve(input);
-      if (resolved.resolved) {
+      if (resolved.resolved && resolved.type === 'bto') {
+        const data = await API.getBtoProjectOverview(resolved.project);
+        if (data && !data.error) {
+          this.currentTown = null;
+          this.pinnedBlock = null;
+          this.currentPostalCode = null;
+          this.lastResolvedData = { lat: data.lat || null, lng: data.lng || null, town: data.town, projectName: data.project, isBto: true };
+          this.renderBtoResults(data);
+          return;
+        }
+        this.track('search_failed', { query: input, failure_reason: 'bto_overview_missing' });
+        this.showAlert('Could not load this BTO project.');
+        return;
+      } else if (resolved.resolved) {
         // Successfully matched as HDB town — show HDB results
       } else if (!isPostalCode) {
         // Not a known HDB town and not a postal code — try matching private property projects
@@ -1591,6 +1640,167 @@ const App = {
     }
   },
 
+  renderBtoResults(data) {
+    this.track('view_results', { result_type: 'bto', location: data.project, town: data.town });
+
+    const section = document.getElementById('results-section');
+    section.classList.remove('hidden');
+    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    this._onResultsShown();
+    // BTO has no comparable transactions table, trend chart, or resale percentiles
+    document.getElementById('charts-section')?.classList.add('hidden');
+    document.getElementById('transactions-section')?.classList.add('hidden');
+    document.getElementById('percentiles-section')?.classList.add('hidden');
+
+    const townLabel = data.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+    const classColors = {
+      Standard: 'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300',
+      Plus: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300',
+      Prime: 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300',
+    };
+
+    // Header
+    document.getElementById('town-title').innerHTML =
+      `<span class="inline-flex items-center gap-2 flex-wrap">` +
+      `<span class="px-2 py-0.5 rounded-md bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-xs font-semibold uppercase tracking-wider">BTO</span>` +
+      (data.classification ? `<span class="px-2 py-0.5 rounded-md text-xs font-semibold ${classColors[data.classification] || classColors.Standard}">${data.classification}</span>` : '') +
+      `${data.display_name}</span>`;
+
+    const statusText = data.status === 'upcoming' ? 'Applications not open yet'
+      : data.status === 'open' ? `Applications open ${data.application_start} – ${data.application_end}`
+      : `Applications closed ${data.application_end || ''}`;
+    document.getElementById('town-subtitle').textContent = data.location_desc
+      ? `${townLabel} • ${data.launch_label} • ${statusText} • ${data.location_desc}`
+      : `${townLabel} • ${data.launch_label} • ${statusText}`;
+
+    // Provisional notice: an "upcoming" launch's data comes from unofficial pre-launch
+    // previews (no HDB Annex A exists yet) until it flips to "open"/"closed".
+    const isProvisional = data.status === 'upcoming';
+
+    const waitLabel = data.waiting_months ? `~${Math.floor(data.waiting_months / 12)}y ${data.waiting_months % 12}mo wait` : 'Wait TBD';
+    document.getElementById('badge-trend').innerHTML = `⏳ ${waitLabel}`;
+    const totalUnits = data.flats.reduce((s, f) => s + (f.units || 0), 0);
+    document.getElementById('badge-volume').innerHTML = `<span class="w-2 h-2 rounded-full bg-orange-400"></span> ${totalUnits} total units`;
+
+    // Stat cards (reuse existing slots)
+    const prices = data.flats.flatMap(f => [f.price_min, f.price_max]).filter(Boolean);
+    document.getElementById('stat-median').textContent = prices.length
+      ? `$${this.formatNumber(Math.min(...prices) / 1000)}k–$${this.formatNumber(Math.max(...prices) / 1000)}k` : '--';
+    document.getElementById('stat-psf').textContent = waitLabel;
+    document.getElementById('stat-range').textContent = data.classification || '--';
+    document.getElementById('stat-popular').textContent = townLabel;
+
+    // Flats table
+    const priceCards = document.getElementById('price-type-cards');
+    priceCards.innerHTML = data.flats.length ? data.flats.map(f => `
+      <div class="bg-gray-100 dark:bg-dark-700 rounded-xl border border-orange-500/10 p-3">
+        <div class="text-xs text-orange-500 dark:text-orange-300 mb-1">${f.bto_label}</div>
+        <div class="text-base font-bold">${f.price_min != null ? `$${this.formatNumber(f.price_min)}–$${this.formatNumber(f.price_max)}` : 'Price TBD'}</div>
+        <div class="text-xs text-gray-400 mt-0.5">${this.sqmToSqft(f.floor_area_sqm)} sqft</div>
+        <div class="text-xs text-gray-600 dark:text-gray-500 mt-1">${f.units} units</div>
+      </div>
+    `).join('') : '<p class="text-sm text-gray-400 col-span-full">Flat details not yet released for this launch.</p>';
+
+    if (isProvisional) {
+      priceCards.innerHTML += `<p class="text-xs text-amber-500 dark:text-amber-400 col-span-full mt-1">⚠️ Provisional — HDB has not yet released official project details or prices for this launch. Figures above are pre-launch estimates from third-party BTO trackers.</p>`;
+    }
+
+    // BTO vs nearby resale comparison
+    const compContainer = document.getElementById('bto-comparison-container');
+    if (compContainer) {
+      if (data.comparison && data.comparison.length) {
+        const rows = data.comparison.map(c => {
+          const flat = data.flats.find(f => f.resale_flat_type === c.resale_flat_type);
+          const label = c.resale_flat_type ? c.resale_flat_type.charAt(0) + c.resale_flat_type.slice(1).toLowerCase() : '';
+          const btoRange = flat && flat.price_min != null ? `$${this.formatNumber(flat.price_min)}–$${this.formatNumber(flat.price_max)}` : 'TBD';
+          const resaleRange = c.resale_median
+            ? `$${this.formatNumber(c.resale_median)} <span class="text-gray-400 text-xs">($${this.formatNumber(c.resale_p25)}–$${this.formatNumber(c.resale_p75)})</span>` : '--';
+          const discountBadge = c.discount_pct != null
+            ? `<span class="${c.discount_pct > 0 ? 'text-green-500' : 'text-red-500'} font-semibold">${c.discount_pct > 0 ? '−' : '+'}${Math.abs(c.discount_pct)}%</span>` : '--';
+          const basisNote = c.comps_basis === 'town'
+            ? `${c.comps_count} sales across ${townLabel} in last 12mo`
+            : c.comps_basis
+            ? `${c.comps_count} sales within ${c.comps_basis} in last 12mo${c.median_remaining_lease ? `, ~${c.median_remaining_lease}y lease left` : ''}`
+            : 'No comparable resale data found';
+          const hdbQuoted = (data.hdb_quoted_resale || []).find(h => h.resale_flat_type === c.resale_flat_type);
+          return `<tr>
+            <td class="py-2 pr-2">${label}</td>
+            <td class="py-2 pr-2">${btoRange}</td>
+            <td class="py-2 pr-2">${resaleRange}</td>
+            <td class="py-2 pr-2">${discountBadge}</td>
+            <td class="py-2 pr-2 text-xs text-gray-400">${basisNote}${hdbQuoted ? `<br><span class="italic">HDB's quoted comparable at launch: $${this.formatNumber(hdbQuoted.min)}–$${this.formatNumber(hdbQuoted.max)}</span>` : ''}</td>
+          </tr>`;
+        }).join('');
+        compContainer.innerHTML = `
+          <h3 class="text-sm font-semibold mb-2">BTO vs Nearby Resale</h3>
+          <div class="overflow-x-auto">
+          <table class="w-full text-sm"><thead><tr class="text-left text-gray-400 text-xs">
+            <th class="pb-1">Flat Type</th><th class="pb-1">BTO Price</th><th class="pb-1">Nearby Resale Median</th><th class="pb-1">Discount</th><th class="pb-1">Basis</th>
+          </tr></thead><tbody>${rows}</tbody></table>
+          </div>
+          <p class="text-xs text-gray-400 mt-3">
+            Indicative price ranges from HDB at launch, excluding grants; actual prices vary by unit.
+            Resale figures are actual transactions of nearby flats with older leases — a new BTO has a
+            full 99-year lease but a ${waitLabel}. Not financial advice.
+          </p>`;
+      } else {
+        compContainer.innerHTML = '<p class="text-sm text-gray-400">Details at launch.</p>';
+      }
+    }
+
+    this.updateSeoForSearch('bto', data);
+
+    // Map
+    if (data.lat && data.lng) {
+      TransactionMap.loadBtoSite(data.lat, data.lng, this.lastResolvedData);
+      API.getNearbyHDB(data.lat, data.lng).then(hdbData => {
+        if (hdbData.transactions && hdbData.transactions.length > 0) {
+          TransactionMap.addNearbyHDB(hdbData.transactions);
+        }
+        if (hdbData.nearby_projects && hdbData.nearby_projects.length > 0) {
+          TransactionMap.addNearbyProjects(hdbData.nearby_projects, null);
+        }
+      }).catch(err => {
+        console.warn('Failed to load nearby transactions:', err.message);
+      });
+    } else {
+      // Upcoming/unpriced launch — no site to plot yet
+      document.getElementById('map-section')?.classList.add('hidden');
+    }
+  },
+
+  async renderBtoIndex() {
+    const data = await API.getBtoLaunches();
+    document.getElementById('results-section')?.classList.add('hidden');
+    const section = document.getElementById('bto-index-section');
+    section.classList.remove('hidden');
+    section.innerHTML = data.launches.map(launch => {
+      const statusClass = launch.status === 'open' ? 'bg-green-500/10 text-green-500'
+        : launch.status === 'upcoming' ? 'bg-amber-500/10 text-amber-500'
+        : 'bg-gray-500/10 text-gray-400';
+      const cards = launch.projects.map(p => {
+        const slug = (p.display_name || p.project || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const prices = (p.flats || []).flatMap(f => [f.price_min, f.price_max]).filter(Boolean);
+        const priceSpan = prices.length ? `$${this.formatNumber(Math.min(...prices) / 1000)}k–$${this.formatNumber(Math.max(...prices) / 1000)}k` : 'TBD';
+        const wait = p.waiting_months ? `~${Math.round(p.waiting_months / 12)}y wait` : '';
+        const townLabel = p.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+        return `<a href="/bto/${slug}" class="block bg-gray-100 dark:bg-dark-700 rounded-xl p-3 hover:border-orange-500/40 border border-transparent transition-colors">
+          <div class="font-semibold text-sm">${p.display_name}</div>
+          <div class="text-xs text-gray-400">${townLabel}${p.classification ? ` • ${p.classification}` : ''} • ${p.total_units} units</div>
+          <div class="text-sm font-bold mt-1">${priceSpan}</div>
+          <div class="text-xs text-gray-400">${wait}</div>
+        </a>`;
+      }).join('');
+      return `<div class="mb-8">
+        <h2 class="text-lg font-bold mb-3">${launch.label}
+          <span class="text-xs font-normal px-2 py-0.5 rounded ${statusClass}">${launch.status}</span>
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${cards || '<p class="text-sm text-gray-400 col-span-full">No project details yet.</p>'}</div>
+      </div>`;
+    }).join('');
+    this.updateSeoForSearch('bto-index', {});
+  },
+
   estimateBedrooms(areaSqm, propertyType) {
     if (!areaSqm) return '--';
     const a = parseFloat(areaSqm);
@@ -1681,6 +1891,17 @@ const App = {
       } catch (e) { /* ignore */ }
     }
 
+    // 4. Search BTO projects (only if 2+ chars — project names are short and specific)
+    if (query.length >= 2) {
+      try {
+        const results = await API.searchBtoProjects(query, 3);
+        for (const p of (results.projects || [])) {
+          const townLabel = p.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+          items.push({ type: 'bto', label: p.display_name || p.project, sub: `${townLabel} · ${p.classification ? p.classification + ' ' : ''}BTO`, value: p.display_name || p.project, icon: '🏗️' });
+        }
+      } catch (e) { /* ignore */ }
+    }
+
     this._acItems = items;
     this._acIndex = -1;
     this.renderAc();
@@ -1699,7 +1920,7 @@ const App = {
           <div class="text-sm text-gray-900 dark:text-white truncate">${item.label}</div>
           ${item.sub ? `<div class="text-xs text-gray-500 truncate">${item.sub}</div>` : ''}
         </div>
-        <span class="text-[10px] px-1.5 py-0.5 rounded ${item.type === 'town' ? 'bg-brand-500/10 text-brand-400' : item.type === 'district' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400'}">${item.type}</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded ${item.type === 'town' ? 'bg-brand-500/10 text-brand-400' : item.type === 'district' ? 'bg-amber-500/10 text-amber-400' : item.type === 'bto' ? 'bg-orange-500/10 text-orange-400' : 'bg-purple-500/10 text-purple-400'}">${item.type}</span>
       </div>
     `).join('');
   },

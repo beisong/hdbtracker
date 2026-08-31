@@ -1,7 +1,7 @@
 'use strict';
 const { _test } = require('../../server/index.js');
 
-const { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween } = _test;
+const { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween, launchStatus } = _test;
 
 describe('median', () => {
   it('returns null for empty array', () => expect(median([])).toBeNull());
@@ -123,4 +123,21 @@ describe('monthsBetween', () => {
   it('same month → 0', () => expect(monthsBetween('2025-05', '2025-05')).toBe(0));
   it('across a year boundary', () => expect(monthsBetween('2024-11', '2025-02')).toBe(3));
   it('a full year → 12', () => expect(monthsBetween('2024-05', '2025-05')).toBe(12));
+});
+
+describe('launchStatus', () => {
+  it('upcoming when application_start is null', () => {
+    expect(launchStatus(null, null)).toBe('upcoming');
+  });
+  it('upcoming when application_start is in the future', () => {
+    expect(launchStatus('2099-01-01', '2099-01-08')).toBe('upcoming');
+  });
+  it('open when today is within the window', () => {
+    const today = new Date('2026-06-20');
+    expect(launchStatus('2026-06-17', '2026-06-24', today)).toBe('open');
+  });
+  it('closed when today is after application_end', () => {
+    const today = new Date('2026-07-01');
+    expect(launchStatus('2026-06-17', '2026-06-24', today)).toBe('closed');
+  });
 });

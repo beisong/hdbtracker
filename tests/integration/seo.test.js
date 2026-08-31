@@ -132,3 +132,32 @@ describe('GET /api/seo/metadata', () => {
     expect(home.body.robots).toBeFalsy();
   });
 });
+
+describe('GET /api/seo/metadata — BTO', () => {
+  it('/bto has a title mentioning BTO', async () => {
+    const res = await request.get('/api/seo/metadata?route=/bto');
+    expect(res.status).toBe(200);
+    expect(res.body.title).toContain('BTO');
+  });
+
+  it('/bto/bedok-vista-crest has project title and content_html', async () => {
+    const res = await request.get('/api/seo/metadata?route=/bto/bedok-vista-crest');
+    expect(res.body.title).toContain('Bedok Vista Crest');
+    expect(res.body.content_html).toBeTruthy();
+  });
+
+  it('unknown /bto/nope is noindex', async () => {
+    const res = await request.get('/api/seo/metadata?route=/bto/nope');
+    expect(res.body.robots).toBe('noindex, follow');
+  });
+});
+
+describe('GET /api/seo/sitemap — BTO', () => {
+  it('includes /bto and the priced project, not the upcoming skeleton', async () => {
+    const res = await request.get('/api/seo/sitemap');
+    const urls = res.body.urls.map(u => u.url);
+    expect(urls).toContain('https://worthit.canlah.app/bto');
+    expect(urls).toContain('https://worthit.canlah.app/bto/bedok-vista-crest');
+    expect(urls).not.toContain('https://worthit.canlah.app/bto/toa-payoh-summit');
+  });
+});

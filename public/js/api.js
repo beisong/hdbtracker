@@ -74,6 +74,27 @@ const API = {
     return resp.json();
   },
 
+  // BTO launches
+  async getBtoLaunches() {
+    const resp = await fetch(`${this.baseUrl}/api/bto/launches`);
+    if (!resp.ok) throw new Error('Failed to fetch BTO launches');
+    return resp.json();
+  },
+
+  async searchBtoProjects(query, limit = 10) {
+    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    const resp = await fetch(`${this.baseUrl}/api/bto/projects?${params}`);
+    if (!resp.ok) throw new Error('Failed to search BTO projects');
+    return resp.json();
+  },
+
+  async getBtoProjectOverview(project) {
+    const params = new URLSearchParams({ project });
+    const resp = await fetch(`${this.baseUrl}/api/bto/project-overview?${params}`);
+    if (!resp.ok) throw new Error('Failed to get BTO project overview');
+    return resp.json();
+  },
+
   async getNearbyHDB(lat, lng) {
     const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
     const resp = await fetch(`${this.baseUrl}/api/nearby-hdb?${params}`);

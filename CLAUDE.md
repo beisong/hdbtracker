@@ -96,13 +96,15 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **findNearbyHdbBlocks** is true-radius: SQL bounding box is only the index prefilter; exact haversine decides inclusion, and each row carries `dist_m`, sorted nearest first.
 
+**BTO Launches**: `scripts/bto_launches.json` (hand-curated per launch from HDB's official Annex A press-release PDF — never scrape `homes.hdb.gov.sg`, it's bot-blocked) seeds a `bto_projects` table, dual-seeded like `hdb_block_coords` (Python `seed_bto_projects()` in `download_data.py` drops+recreates on every rebuild since the JSON is sole source of truth; server-side `seedBtoProjects()` fallback on startup). One row per project × flat-type variant; an upcoming/unpriced project gets one placeholder row (`bto_label=''`) so it still appears in listings. Never inserted into `transactions`. `GET /api/bto/launches` (grouped listing), `GET /api/bto/projects` (autocomplete, mirrors `/api/private/projects`), `GET /api/bto/project-overview` (flats + a standalone comps ladder — 1000m → 2000m → town, `MIN_COMPS=5` — reusing `findNearbyHdbBlocks`/`median`/`percentile`, NOT `/api/valuation`'s internals). `/api/resolve` does an **exact-match-only** BTO check (no LIKE fallback — BTO names often contain town names, e.g. "SEMBAWANG PORTICO", so partial matching there would risk shadowing the town). Frontend: `renderBtoResults()`/`renderBtoIndex()` in `app.js`, routes `/bto` + `/bto/<slug>`, `map.js` `loadBtoSite()` draws an orange pin via `render([], resolvedData)`.
+
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
 **Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=20`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 
-**Testing**: 213 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
+**Testing**: 239 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
 
 **WAL checkpoint**: always run `PRAGMA wal_checkpoint(TRUNCATE)` on the SQLite DB before uploading to Fly.io. Otherwise geocoded data in the WAL file is silently lost.
 

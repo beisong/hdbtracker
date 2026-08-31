@@ -51,6 +51,14 @@ const TransactionMap = {
     this.render(markerData, resolvedData);
   },
 
+  loadBtoSite(lat, lng, resolvedData) {
+    // A BTO project has no transactions of its own — init the map with an empty
+    // marker set and just the project pin (via render()'s isBto branch).
+    const mapCount = document.getElementById('map-count');
+    if (mapCount) mapCount.textContent = '— BTO site location';
+    this.render([], resolvedData);
+  },
+
   addNearbyHDB(transactions) {
     // Add nearby HDB transactions to an existing map (after private project render).
     // Transactions already carry lat/lng from the server — no geocoding needed.
@@ -403,9 +411,10 @@ const TransactionMap = {
     // Add pin for search location or private project
     if (resolvedData && resolvedData.lat && resolvedData.lng) {
       const isPrivate = resolvedData.isPrivate;
-      const pinColor = isPrivate ? '#a855f7' : '#ef4444';
-      const pinShadow = isPrivate ? 'rgba(168,85,247,0.5)' : 'rgba(239,68,68,0.5)';
-      const pinLabel = isPrivate ? '🏢 Project Location' : '📍 Your Search Location';
+      const isBto = resolvedData.isBto;
+      const pinColor = isBto ? '#f59e0b' : isPrivate ? '#a855f7' : '#ef4444';
+      const pinShadow = isBto ? 'rgba(245,158,11,0.5)' : isPrivate ? 'rgba(168,85,247,0.5)' : 'rgba(239,68,68,0.5)';
+      const pinLabel = isBto ? '🏗️ BTO Site' : isPrivate ? '🏢 Project Location' : '📍 Your Search Location';
 
       const postalMarker = L.marker([resolvedData.lat, resolvedData.lng], {
         icon: L.divIcon({

@@ -1691,11 +1691,14 @@ app.get('/api/nearby-hdb', async (req, res) => {
       return res.status(400).json({ error: 'Invalid coordinates — must be within Singapore' });
     }
 
-    // 1. Find nearby HDB blocks by distance from hdb_block_coords
-    const nearbyBlocks = findNearbyHdbBlocks(latF, lngF);
-
-    if (nearbyBlocks.length === 0) {
-      return res.json({ transactions: [], streets: [] });
+    // 1. Find nearby HDB blocks by distance from hdb_block_coords. Widen in steps —
+    // a fixed 500m misses sites (e.g. newer estates) whose nearest existing blocks
+    // are a few hundred metres further out but still clearly "nearby" on the map.
+    // Mirrors the ladder /api/bto/project-overview already uses for its comps.
+    let nearbyBlocks = [];
+    for (const radiusM of [500, 1000, 2000]) {
+      nearbyBlocks = findNearbyHdbBlocks(latF, lngF, radiusM);
+      if (nearbyBlocks.length > 0) break;
     }
 
     // Build coord lookup and exact block-pair keys (same pattern as /api/area-overview)
@@ -1704,32 +1707,39 @@ app.get('/api/nearby-hdb', async (req, res) => {
       coordByKey[`${b.block}|${b.street_name}`] = { lat: b.lat, lng: b.lng };
     }
     const blockKeys = Object.keys(coordByKey);
-    const blockClause = blockKeys.map(() => '?').join(',');
     const nearbyStreets = [...new Set(nearbyBlocks.map(b => b.street_name))];
 
     const monthsAgo12 = monthsAgoStr(12);
 
-    // 2. Get HDB transactions for exact nearby blocks, last 12 months
-    const rawTransactions = db.prepare(`
-      SELECT month, town, flat_type, block, street_name, storey_range,
-             floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
-      FROM transactions
-      WHERE dataset_source != 'URA_PRIVATE'
-        AND (block || '|' || street_name) IN (${blockClause})
-        AND resale_price IS NOT NULL
-        AND month >= ?
-      ORDER BY month DESC, resale_price DESC
-      LIMIT 200
-    `).all(...blockKeys, monthsAgo12);
+    // 2. Get HDB transactions for exact nearby blocks, last 12 months.
+    // Skip the query entirely when no blocks were found — an empty IN (...) clause
+    // is invalid SQL, and there's nothing to look up anyway.
+    let transactions = [];
+    if (blockKeys.length > 0) {
+      const blockClause = blockKeys.map(() => '?').join(',');
+      const rawTransactions = db.prepare(`
+        SELECT month, town, flat_type, block, street_name, storey_range,
+               floor_area_sqm, flat_model, remaining_lease_years, resale_price, price_per_sqm
+        FROM transactions
+        WHERE dataset_source != 'URA_PRIVATE'
+          AND (block || '|' || street_name) IN (${blockClause})
+          AND resale_price IS NOT NULL
+          AND month >= ?
+        ORDER BY month DESC, resale_price DESC
+        LIMIT 200
+      `).all(...blockKeys, monthsAgo12);
 
-    // Attach lat/lng from hdb_block_coords — no geocoding needed on the client
-    const transactions = rawTransactions.map(tx => {
-      const key = `${tx.block}|${tx.street_name}`;
-      const coords = coordByKey[key] || {};
-      return { ...tx, lat: coords.lat ?? null, lng: coords.lng ?? null };
-    });
+      // Attach lat/lng from hdb_block_coords — no geocoding needed on the client
+      transactions = rawTransactions.map(tx => {
+        const key = `${tx.block}|${tx.street_name}`;
+        const coords = coordByKey[key] || {};
+        return { ...tx, lat: coords.lat ?? null, lng: coords.lng ?? null };
+      });
+    }
 
-    // 4. Also get nearby private projects from project_coords — bounding box is
+    // 4. Also get nearby private projects from project_coords — independent of
+    // whether any HDB blocks were found above (an area can be condo-dense but
+    // HDB-sparse, e.g. a new coastal BTO site) — bounding box is
     // only the index prefilter; exact haversine ≤ 800m decides inclusion.
     const PROJECT_RADIUS_M = 800;
     const nearbyProjects = db.prepare(`

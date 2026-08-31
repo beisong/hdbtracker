@@ -48,9 +48,23 @@ describe('GET /api/nearby-hdb', () => {
   });
 
   it('returns empty transactions for a valid SG location with no nearby blocks', async () => {
-    // Far south (Sentosa sea area) — no HDB blocks
+    // Far south (Sentosa sea area) — no HDB blocks even after widening to 2000m
     const res = await request.get('/api/nearby-hdb?lat=1.249&lng=103.830');
     expect(res.status).toBe(200);
     expect(res.body.transactions).toEqual([]);
+  });
+
+  // Regression: nearby_projects must not be skipped just because no HDB blocks were
+  // found nearby — a site can be HDB-sparse but condo-dense (e.g. a new coastal BTO
+  // site). Previously the handler returned early on zero HDB blocks, before ever
+  // computing nearby_projects, silently dropping real private projects.
+  it('still returns nearby private projects when no HDB blocks are nearby', async () => {
+    // SKY HABITAT (Bishan) is ~12.6km from the fixture's Bedok HDB blocks — none
+    // nearby even after the 500m->1000m->2000m widening — but it should still surface.
+    const res = await request.get('/api/nearby-hdb?lat=1.3521&lng=103.8198');
+    expect(res.status).toBe(200);
+    expect(res.body.transactions).toEqual([]);
+    const names = res.body.nearby_projects.map(p => p.project);
+    expect(names).toContain('SKY HABITAT');
   });
 });

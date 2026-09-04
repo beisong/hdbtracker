@@ -267,12 +267,35 @@ Audit-driven, zero-regression fixes (Tailwind Play CDN migration deferred by use
 
 
 
+## Search Indexing Status (Sep 2026 — diagnosed via GSC)
+
+**The organic-traffic problem is non-indexing, not on-page SEO.** Google Search Console data as of 2026-09-04:
+- Homepage: `Crawled – currently not indexed`, last crawl **2026-05-29**
+- `/hdb/tampines`: `URL is unknown to Google` (never crawled)
+- Sitemap: 255 submitted / **0 indexed**; Google's copy was 3 months stale
+- 3 impressions, 0 clicks across 94 days
+
+Google's last crawl **predated the entire June 2026 SEO batch**, so the bot-injection, E-E-A-T pages, town×flat-type pages and meta work had never been seen. The on-page work isn't underperforming — it was unread. Root cause is zero external backlinks: Google won't spend crawl budget on a new subdomain nothing links to.
+
+**Implication: adding more programmatic pages or meta tweaks will not help.** The bottleneck is off-site (see TODO below).
+
+Fixed this pass:
+- ✅ ~13 key pages manually submitted via GSC URL Inspection (homepage, E-E-A-T pages, `/bto`, `/check`, Nov 2026 BTO project pages — prioritised over town pages since BTO launch interest peaks pre-launch and competition on those names is ~zero)
+- ✅ Sitemap resubmitted — Google re-downloaded within 1 second, replacing the stale May copy (426 URLs)
+- ✅ IndexNow wired up (`scripts/indexnow-ping.js`, chained onto `deploy`/`deploy:frontend`) — all 426 URLs submitted to Bing/Yandex/DuckDuckGo/Naver/Seznam. Key file `public/a464a4c238872496dcaa8d33718f8e13.txt` **must never be deleted** (403 `SiteVerificationNotCompleted` without it). First submission 403s until IndexNow verifies the key file — it cleared in ~20s.
+- ✅ Cloudflare Crawler Hints enabled (Caching → Configuration; independent Cloudflare-managed key, doesn't conflict). Note `cf-cache-status: DYNAMIC` on app HTML, so it may detect little — the deploy-chained ping is the reliable path.
+- ✅ GSC Crawl Stats checked — clean, no Googlebot failures (Cloudflare is not blocking, unlike the earlier AI-bot incident)
+- 🔲 **Recheck indexing ~2026-09-11** — did the requested crawls happen, did `Crawled – currently not indexed` flip?
+
+**Querying GSC without the dashboard**: Composio CLI (`~/.local/bin/composio`) is logged in with Google Search Console + GitHub connected. Property `sc-domain:worthit.canlah.app`. Useful tools: `GOOGLE_SEARCH_CONSOLE_INSPECT_URL`, `..._SEARCH_ANALYTICS_QUERY`, `..._LIST_SITEMAPS`, `..._SUBMIT_SITEMAP`. No Bing toolkit exists in Composio — Bing Webmaster is dashboard-only (its bulk "Submit URLs" page is gone; IndexNow replaces it).
+
 ## TODO
 Off-site backlinks are the single biggest ranking lever you have left, and unlike the on-page work it can't be automated — it's outreach and distribution. Here's a concrete playbook tailored to a Singapore property tool, ordered by effort-to-payoff.
 
 Tier 1 — Do this week (easy, high-trust)
 
 Free citation / directory links (foundational, every site should have these):
+- 🔲 **data.gov.sg app showcase — OUTSTANDING, do this first.** WorthIt is built entirely on data.gov.sg's HDB resale dataset, which is exactly what their community/showcase listing exists for. A `.gov.sg` domain is the highest-trust backlink realistically available to this project, it's free, and the qualifying criteria are already met. Submit via the data.gov.sg site (look for the community/showcase or "built with our data" submission form); link the homepage plus a deep page such as `/hdb/tampines`.
 - Product Hunt launch — schedule a Tuesday/Wednesday launch. Gets you a dofollow link + a traffic spike + often picked up by aggregators.
 - BetaList, SaaSHub, AlternativeTo — list WorthIt as a free alternative to commercial property portals (PropertyGuru, 99.co, SRX). AlternativeTo in particular ranks well and sends qualified traffic.
 - Google Business Profile isn't relevant (no physical location), skip it.

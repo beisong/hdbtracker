@@ -1,5 +1,39 @@
 # Active Context: WorthIt
 
+## Recent Changes (Sep 2026 — Search indexing diagnosis + IndexNow) — DEPLOYED (v=24)
+
+User asked why SEO work wasn't producing organic traffic. Connected Google Search Console via the
+Composio CLI and pulled the real numbers — **the answer was non-indexing, not on-page SEO**.
+Google's last crawl of the site was **2026-05-29**, predating the entire June 2026 SEO batch, so
+none of that work had ever been seen. Homepage sat at `Crawled – currently not indexed`,
+`/hdb/tampines` was `URL is unknown to Google`, sitemap read 255 submitted / 0 indexed, and the
+site had 3 impressions and 0 clicks across 94 days. Root cause is zero external backlinks — Google
+won't spend crawl budget on a new subdomain nothing links to. See `progress.md` §Search Indexing
+Status for the full diagnosis and remediation checklist.
+
+- **IndexNow** (new `scripts/indexnow-ping.js`, chained onto `deploy` + `deploy:frontend`): fetches
+  the live sitemap and POSTs every URL to `api.indexnow.org` (Bing, Yandex, DuckDuckGo, Naver,
+  Seznam). All 426 URLs accepted. Deliberately **non-fatal** — logs a warning and exits 0 so a
+  search-engine outage can't block a deploy. Key file `public/a464a4c238872496dcaa8d33718f8e13.txt`
+  **must never be deleted**; IndexNow re-validates it on every submission. First submission returns
+  `403 SiteVerificationNotCompleted` until IndexNow fetches the key file (cleared in ~20s here) —
+  not a real failure, just retry.
+- **GSC actions**: ~13 key pages manually submitted via URL Inspection, prioritising the Nov 2026
+  BTO project pages over town pages (launch interest peaks pre-launch, competition on those names
+  is ~zero); sitemap resubmitted and re-downloaded by Google within 1s.
+- **Cloudflare Crawler Hints** enabled (Caching → Configuration — *not* Speed → Optimization; it's
+  free-plan, uses its own Cloudflare-managed key, no conflict with ours). Caveat: app HTML serves
+  `cf-cache-status: DYNAMIC`, so it may detect few changes — the deploy-chained ping is the
+  dependable path. Crawler Hints is **not** exposed as a zone setting in the API (`crawlhints` →
+  `Undefined zone setting`; only unrelated `early_hints` exists), so it's dashboard-only.
+- **GSC Crawl Stats verified clean** — no Googlebot failures; Cloudflare isn't blocking (unlike the
+  earlier AI-bot incident).
+- **Tooling**: Composio CLI installed + logged in, with Google Search Console and GitHub connected.
+  GSC is now queryable from a session without the dashboard — see `progress.md` for tool slugs.
+- **Outstanding**: off-site backlinks remain the bottleneck; **data.gov.sg app showcase submission
+  added as the top TODO item** (highest-trust `.gov.sg` link realistically available, and WorthIt is
+  built on their dataset). Recheck indexing ~2026-09-11.
+
 ## Recent Changes (Aug 2026 — BTO backfill: Feb/Jul/Oct 2025 + Feb 2026 all now real official data) — BUILT LOCALLY
 
 User asked to backfill the remaining skeleton launches. All four are now fully seeded from HDB's

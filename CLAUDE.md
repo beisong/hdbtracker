@@ -86,6 +86,8 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **SEO for bots** (`functions/[[path]].js`): Cloudflare edge function detects crawlers via User-Agent regex, fetches metadata from Fly.io (`/api/seo/metadata`), and injects `<title>`, `<meta>`, OpenGraph, and JSON-LD into the HTML before serving. Normal users get the SPA directly.
 
+**IndexNow** (`scripts/indexnow-ping.js`, chained onto `deploy` / `deploy:frontend`): after each frontend deploy, every sitemap URL is submitted to IndexNow (Bing, Yandex, DuckDuckGo, Naver, Seznam). **`public/a464a4c238872496dcaa8d33718f8e13.txt` must never be deleted** — IndexNow re-validates that key file on every submission and returns `403 SiteVerificationNotCompleted` without it. The script is deliberately non-fatal (logs a warning, exits 0) so a search-engine outage can't block a deploy. Cloudflare's own Crawler Hints toggle (Caching → Configuration) pings IndexNow independently with a separate Cloudflare-managed key; the two don't conflict.
+
 **URL routing**: `history.pushState()` SPA navigation with routes `/hdb/<town-slug>`, `/district/<code>`, `/private/<project-slug>`. `popstate` listener handles back/forward. GA4 `page_view` events fire on each route change.
 
 **Units**: DB stores sqm/psm. All display values are converted to sqft/psf via `sqmToSqft()` / `psmToPsf()` helpers in `app.js` (factor: 1 sqm = 10.7639 sqft). DB schema and server SQL are unchanged.
@@ -100,7 +102,7 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
-**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=23`.
+**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=24`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 

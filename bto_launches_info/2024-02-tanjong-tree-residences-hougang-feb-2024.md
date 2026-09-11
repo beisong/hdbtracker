@@ -1,9 +1,9 @@
-# Tanjong Tree Residences @ Hougang
+# Tanjong Tree Residences @ Hougang (Feb 2024)
 
 - **Launch**: February 2024 BTO (`2024-02`)
 - **Town**: HOUGANG
 - **Classification**: Non-Mature Town
-- **Location**: Hougang Street 13
+- **Location**: Hougang Street 13 Same site as the Nov 2021 Tanjong Tree Residences @ Hougang BTO launch — HDB reused this address across two separate exercises; disambiguated by launch date.
 - **Coordinates**: 1.347051, 103.886606
 - **Estimated waiting time**: 39 months
 - **Application window**: 2024-02-21 to 2024-02-28

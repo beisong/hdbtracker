@@ -1,7 +1,7 @@
 # Progress: WorthIt
 
 ## What Works
-- ✅ BTO Launches — `bto_projects` table (dual-seeded like `hdb_block_coords`) + `/api/bto/launches`, `/api/bto/projects`, `/api/bto/project-overview`; BTO project names searchable from the main search bar (exact-match resolve + autocomplete) with a project page showing flats/prices and a live BTO-vs-nearby-resale comparison; `/bto` + `/bto/<slug>` routes; SEO metadata + sitemap. June 2026 launch (7 projects) fully seeded; 4 other 2025/2026 launches are documented skeletons pending curation. (Aug 2026, built locally — **not yet committed/deployed**, 239 tests pass)
+- ✅ BTO Launches — `bto_projects` table (dual-seeded like `hdb_block_coords`) + `/api/bto/launches`, `/api/bto/projects`, `/api/bto/project-overview`; BTO project names searchable from the main search bar (exact-match resolve + autocomplete) with a project page showing flats/prices and a live BTO-vs-nearby-resale comparison; `/bto` + `/bto/<slug>` routes; SEO metadata + sitemap. **23 launches seeded, spanning August 2020 → June 2026** (plus a Nov 2026 provisional skeleton) — historical backfill from May 2022 onward completed and deployed to production in Sep 2026; Feb 2020 and earlier not yet done. Every launch's source PDFs + a per-project reference `.md` archived in `bto_launches_info/`. See `memory-bank/activeContext.md` for the full backfill writeup and the `seed-bto-launch` skill for the curation runbook. (240 tests pass)
 - ✅ Check My Price — `/api/valuation` Deal Score + fair-value calculator with chip-based UI, 3 entry points (postal search card, transaction-row 💰 buttons, `/check/<postal>?price=` deep links) (Jul 2026, deployed v=20)
 - ✅ HDB resale data download pipeline (Python → SQLite)
 - ✅ URA private property data download pipeline
@@ -287,7 +287,9 @@ Fixed this pass:
 - ✅ GSC Crawl Stats checked — clean, no Googlebot failures (Cloudflare is not blocking, unlike the earlier AI-bot incident)
 - 🔲 **Recheck indexing ~2026-09-11** — did the requested crawls happen, did `Crawled – currently not indexed` flip?
 
-**Querying GSC without the dashboard**: Composio CLI (`~/.local/bin/composio`) is logged in with Google Search Console + GitHub connected. Property `sc-domain:worthit.canlah.app`. Useful tools: `GOOGLE_SEARCH_CONSOLE_INSPECT_URL`, `..._SEARCH_ANALYTICS_QUERY`, `..._LIST_SITEMAPS`, `..._SUBMIT_SITEMAP`. No Bing toolkit exists in Composio — Bing Webmaster is dashboard-only (its bulk "Submit URLs" page is gone; IndexNow replaces it).
+**Querying GSC without the dashboard**: Composio CLI (`~/.local/bin/composio`) is logged in with Google Search Console + GitHub connected. Property `sc-domain:worthit.canlah.app`. Useful tools: `GOOGLE_SEARCH_CONSOLE_INSPECT_URL`, `..._SEARCH_ANALYTICS_QUERY`, `..._LIST_SITEMAPS`, `..._SUBMIT_SITEMAP`.
+
+**Bing is also scriptable** via the `bing_webmaster_tools` toolkit (OAuth, no API key needed): `BING_WEBMASTER_TOOLS_SUBMIT_URLS` (≤500 URLs/call — this replaces the bulk "Submit URLs" page that Bing removed from the dashboard), `..._INSPECT_URL`, `..._LIST_SITES`, `..._GET_CRAWL_DIAGNOSTICS`.
 
 ## TODO
 Off-site backlinks are the single biggest ranking lever you have left, and unlike the on-page work it can't be automated — it's outreach and distribution. Here's a concrete playbook tailored to a Singapore property tool, ordered by effort-to-payoff.

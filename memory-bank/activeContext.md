@@ -1,5 +1,63 @@
 # Active Context: WorthIt
 
+## Recent Changes (Sep 2026 — BTO historical backfill: Aug 2020 → Feb 2022) — LOCAL ONLY, DATA DEPLOYED
+
+Backfilled `scripts/bto_launches.json` with 18 additional historical BTO launches (May 2021 → Oct
+2024 done incrementally, then Feb 2021 → Aug 2020 in a deeper push), taking the dataset from 5
+launches to 23, now spanning **August 2020 → June 2026** (plus the Nov 2026 provisional skeleton).
+Every launch verified: per-project unit totals reconcile exactly to press-release headline figures
+before being committed. `npm test` stayed green throughout (240 tests, no test file changes — this
+is pure data work).
+
+**New permanent archive**: `bto_launches_info/` (repo root) — every launch's source PDFs plus one
+`<launch_id>-<project-slug>.md` human-readable reference summary per project (built straight from
+the JSON, not re-extracted). 218+ files. Naming convention: `<launch_id>-annex-<letter>-<desc>.pdf`
+for official annexes, `<launch_id>-brochure-<project>.pdf` for HDB sales brochures used as a
+fallback source. `<launch_id>` is always `YYYY-MM` (e.g. `2024-10`, `2020-08`), matching the JSON's
+own `launch_id`.
+
+**Pre-Oct-2024 launches use the old classification system** — Non-Mature/Mature Town(s) or Prime
+Location Public Housing Model (PLH), not Standard/Plus/Prime. Preserved as the real historical label
+in each project's `classification` field rather than force-mapped; the frontend's classification
+badge just falls back to its neutral "Standard" grey styling for any string it doesn't recognize,
+still showing the correct text.
+
+**Two genuine name collisions hit and resolved** the same way as the pre-existing Redhill Peaks
+(Oct 2025 / Feb 2026) case: HDB reused the exact same project name (identical coordinates confirmed)
+across two unrelated launches. Both entries disambiguated as `"NAME (MONTH YEAR)"` /
+`display_name: "Name (Month Year)"`:
+- **Alexandra Peaks** — Dec 2023 and Jul 2025
+- **Tanjong Tree Residences @ Hougang** — Nov 2021 and Feb 2024
+
+**New fallback source for when Annex A is genuinely unrecoverable** (confirmed to happen — Nov 2020
+and Aug 2020's official pricing PDFs were never successfully archived anywhere, live or Wayback):
+`housingmap.sg/bto/` hosts HDB's own sales brochure PDF per project
+(`housingmap.sg/hdb-brochures/bto-<yyyy>-<mm>/<Project_Name>.pdf`), whose site-plan page has a
+**rasterized (image, not text) per-block unit-mix table** giving real per-flat-type unit counts —
+must be read with Claude Code's `Read` tool image-rendering on the PDF (`pages` param), not `pypdf`
+text extraction, and requires `poppler` (`brew install poppler`). Floor-plan pages give real sqm.
+Full mechanics, plus the PropertyGuru-pricing companion technique and the price-estimation fallback
+for when only a "From" minimum price is found, are written up in the `seed-bto-launch` skill and in
+a dedicated auto-memory reference note (`reference_housingmap_unit_mix.md`) — **read that skill
+before doing any further BTO backfill work**, it has the complete runbook.
+
+**August 2020's price *ranges* are partly estimated, not fully sourced** (flagged per-launch in its
+own `_curation_note` in the JSON) — PropertyGuru only had "From" (minimum) prices for that launch, so
+every `price_max` and every 2-Room-Flexi-Type-2 `price_min` was extrapolated from the real minimum
+using the min-to-max ratio pattern from the nearest verified same-classification comparable launch
+(done with explicit user sign-off: "keep the data as accurate as possible, but best estimates are
+fine"). All unit counts and sqm for that launch are real, not estimated. Every other launch this
+session has fully real, sourced prices.
+
+**Not yet done**: February 2020 and earlier (housingmap.sg's list goes back to 2001) — backfill was
+paused there, expect the same Annex-A-unrecoverable pattern for most pre-2021 launches, so the
+housingmap.sg fallback will likely be the default rather than the exception going forward.
+
+An earlier 10-launch batch this same session (May 2022 → Oct 2024) was already committed, pushed,
+and confirmed live on production via a manual `workflow_dispatch` trigger of the "Refresh Data"
+GitHub Actions workflow (see that section below). This second batch (Feb 2021 → Aug 2020, 8 more
+launches) is being committed/pushed/deployed the same way immediately after this note is written.
+
 ## Recent Changes (Sep 2026 — Search indexing diagnosis + IndexNow) — DEPLOYED (v=24)
 
 User asked why SEO work wasn't producing organic traffic. Connected Google Search Console via the

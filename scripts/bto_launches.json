@@ -3815,11 +3815,11 @@
           ]
         },
         {
-          "project": "TANJONG TREE RESIDENCES @ HOUGANG",
-          "display_name": "Tanjong Tree Residences @ Hougang",
+          "project": "TANJONG TREE RESIDENCES @ HOUGANG (FEB 2024)",
+          "display_name": "Tanjong Tree Residences @ Hougang (Feb 2024)",
           "town": "HOUGANG",
           "classification": "Non-Mature Town",
-          "location_desc": "Hougang Street 13",
+          "location_desc": "Hougang Street 13 Same site as the Nov 2021 Tanjong Tree Residences @ Hougang BTO launch — HDB reused this address across two separate exercises; disambiguated by launch date.",
           "lat": 1.347051,
           "lng": 103.886606,
           "waiting_months": 39,
@@ -6781,6 +6781,2487 @@
               "min": 718000,
               "max": 970000,
               "note": "~89-95y lease, 87-93 sqm"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2022-02",
+      "label": "February 2022 BTO",
+      "application_start": "2022-02-17",
+      "application_end": "2022-02-23",
+      "sources": [
+        "https://www.hdb.gov.sg/about-us/news-and-publications/press-releases/17022022-HDB-launches-3953-flats-Feb-2022-BTO-Exercise",
+        "https://web.archive.org/web/20250404042406/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/SCEG/17022022-Feb-BTO-launch/17022022-AnnexA.ashx",
+        "https://web.archive.org/web/20250402155426/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/SCEG/17022022-Feb-BTO-launch/17022022-AnnexD.ashx"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature Town(s) / Mature Town / Prime Location Public Housing Model (PLH) system, preserved as-is. Annexes recovered via Wayback Machine (live URLs gone). Parc Flora @ Tengah and Plantation Creek both sit in the Tengah Garden Avenue/Walk precinct — town set to TENGAH for both, consistent with Parc Meadow @ Tengah (May 2023) and Garden Waterfront @ Tengah (Nov 2022); Tengah has zero rows in our own transactions table so their town-level comps fallback will be empty. King George's Heights was the second PLH project ever launched (after River Peaks, Nov 2021).",
+      "projects": [
+        {
+          "project": "PARC FLORA @ TENGAH",
+          "display_name": "Parc Flora @ Tengah",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tengah Garden Walk",
+          "lat": 1.363006,
+          "lng": 103.733533,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 25,
+              "price_min": 132000,
+              "price_max": 152000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 49,
+              "units": 76,
+              "price_min": 157000,
+              "price_max": 182000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 71,
+              "units": 85,
+              "price_min": 231000,
+              "price_max": 273000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 193,
+              "price_min": 322000,
+              "price_max": 403000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 181,
+              "price_min": 428000,
+              "price_max": 525000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 438000,
+              "max": 525000,
+              "note": "~82y lease, 86-92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 570000,
+              "max": 610000,
+              "note": "~82y lease, 110-118 sqm"
+            }
+          ]
+        },
+        {
+          "project": "PLANTATION CREEK",
+          "display_name": "Plantation Creek",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tengah Garden Avenue",
+          "lat": 1.353845,
+          "lng": 103.729852,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 377,
+              "price_min": 309000,
+              "price_max": 377000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 336,
+              "price_min": 420000,
+              "price_max": 506000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 438000,
+              "max": 525000,
+              "note": "~82y lease, 86-92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 570000,
+              "max": 610000,
+              "note": "~82y lease, 110-118 sqm"
+            }
+          ]
+        },
+        {
+          "project": "GROVE SPRING @ YISHUN",
+          "display_name": "Grove Spring @ Yishun",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Yishun Avenue 6. The 3-Room/4-Room/5-Room rows each span a floor-area range (e.g. 4-Room 95-98 sqm); the rounded midpoint is stored since Annex A gives one combined unit count per row.",
+          "lat": 1.431415,
+          "lng": 103.848888,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 56,
+              "price_min": 102000,
+              "price_max": 121000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 140,
+              "price_min": 118000,
+              "price_max": 145000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 73,
+              "units": 82,
+              "price_min": 180000,
+              "price_max": 248000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 97,
+              "units": 373,
+              "price_min": 270000,
+              "price_max": 362000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 115,
+              "units": 336,
+              "price_min": 385000,
+              "price_max": 485000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 365000,
+              "max": 395000,
+              "note": "~93y lease, 67 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 445000,
+              "max": 493888,
+              "note": "~93y lease, 92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 548000,
+              "max": 645000,
+              "note": "~93y lease, 112 sqm"
+            }
+          ]
+        },
+        {
+          "project": "YISHUN BOARDWALK",
+          "display_name": "Yishun Boardwalk",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Yishun Avenue 6. The 4-Room/5-Room rows each span a floor-area range (e.g. 4-Room 95-98 sqm); the rounded midpoint is stored since Annex A gives one combined unit count per row.",
+          "lat": 1.433179,
+          "lng": 103.847489,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 42,
+              "price_min": 95000,
+              "price_max": 126000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 140,
+              "price_min": 122000,
+              "price_max": 149000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 71,
+              "units": 80,
+              "price_min": 189000,
+              "price_max": 239000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 97,
+              "units": 313,
+              "price_min": 276000,
+              "price_max": 374000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 115,
+              "units": 277,
+              "price_min": 410000,
+              "price_max": 490000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 365000,
+              "max": 395000,
+              "note": "~93y lease, 67 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 445000,
+              "max": 493888,
+              "note": "~93y lease, 92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 548000,
+              "max": 645000,
+              "note": "~93y lease, 112 sqm"
+            }
+          ]
+        },
+        {
+          "project": "DAKOTA CREST",
+          "display_name": "Dakota Crest",
+          "town": "GEYLANG",
+          "classification": "Mature Town",
+          "location_desc": "Jalan Enam. The 4-Room row spans 93-96 sqm; rounded midpoint (95 sqm) is stored since Annex A gives one combined unit count.",
+          "lat": 1.307065,
+          "lng": 103.885255,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 40,
+              "price_min": 205000,
+              "price_max": 239000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 81,
+              "price_min": 236000,
+              "price_max": 315000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 80,
+              "price_min": 352000,
+              "price_max": 456000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 242,
+              "price_min": 522000,
+              "price_max": 688000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 622000,
+              "max": 815000,
+              "note": "~82y lease, 85-93 sqm"
+            }
+          ]
+        },
+        {
+          "project": "KING GEORGE'S HEIGHTS",
+          "display_name": "King George's Heights",
+          "town": "KALLANG/WHAMPOA",
+          "classification": "Prime Location Public Housing Model",
+          "location_desc": "King George's Avenue. Second PLH project ever launched, after River Peaks (Nov 2021).",
+          "lat": 1.30692,
+          "lng": 103.859896,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 66,
+              "units": 104,
+              "price_min": 353000,
+              "price_max": 462000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 89,
+              "units": 294,
+              "price_min": 488000,
+              "price_max": 675000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 515000,
+              "max": 555000,
+              "note": "~80-81y lease, 62 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 630000,
+              "max": 770000,
+              "note": "~80-81y lease, 75-90 sqm"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2021-11",
+      "label": "November 2021 BTO",
+      "application_start": "2021-11-17",
+      "application_end": "2021-11-23",
+      "sources": [
+        "https://www.hdb.gov.sg/about-us/news-and-publications/press-releases/17112021-HDB-Launches-6299-Flats-in-November-2021-BTO-and-SBF-Exercises",
+        "https://web.archive.org/web/20250402133237/https://www.hdb.gov.sg/-/media/doc/SCEG/17112021-BTO-Annexes/17112021-Annex-A1.ashx",
+        "https://web.archive.org/web/20250402155057/https://www.hdb.gov.sg/-/media/doc/SCEG/17112021-BTO-Annexes/17112021-Annex-A2.ashx",
+        "https://web.archive.org/web/20250402161716/https://www.hdb.gov.sg/-/media/doc/SCEG/17112021-BTO-Annexes/17112021-Annex-D.ashx"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature Town(s) / Mature Town / Prime Location Public Housing Model (PLH) system, preserved as-is. Annexes recovered via Wayback Machine. River Peaks I & II was the FIRST PLH project ever launched (in Rochor) — King George's Heights (Feb 2022) was the second. 'Tanjong Tree Residences @ Hougang' collides with the identically-named Feb 2024 launch at the exact same site (same coordinates) — both entries disambiguated by launch date, same treatment as Alexandra Peaks (Dec 2023/Jul 2025) and Redhill Peaks (Oct 2025/Feb 2026). The 6,299-flat press-release headline covers BTO+SBF combined; only the 4,501 BTO flats across these 8 projects are seeded here. Parc Glen/Parc Clover @ Tengah have zero close-proximity transactions in our dataset (same situation as other Tengah-precinct projects) — town set to TENGAH per the project's own name.",
+      "projects": [
+        {
+          "project": "HEART OF YEW TEE",
+          "display_name": "Heart of Yew Tee",
+          "town": "CHOA CHU KANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Yew Tee Close. 2-Room Flexi flats here are offered only to seniors (55+) on short leases of 15-45 years — no 99-year-lease option or other flat types in this project.",
+          "lat": 1.397394,
+          "lng": 103.746056,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1, Senior Short Lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 22,
+              "price_min": 72000,
+              "price_max": 78000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2, Senior Short Lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 46,
+              "price_min": 86000,
+              "price_max": 98000
+            }
+          ]
+        },
+        {
+          "project": "TANJONG TREE RESIDENCES @ HOUGANG (NOV 2021)",
+          "display_name": "Tanjong Tree Residences @ Hougang (Nov 2021)",
+          "town": "HOUGANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Hougang Street 13. Same site as the Feb 2024 Tanjong Tree Residences @ Hougang BTO launch — HDB reused this address across two separate exercises; disambiguated by launch date. The 4-Room/5-Room rows each span a floor-area range; the rounded midpoint is stored since Annex A gives one combined unit count per row.",
+          "lat": 1.347051,
+          "lng": 103.886606,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 97,
+              "units": 172,
+              "price_min": 318000,
+              "price_max": 389000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 115,
+              "units": 128,
+              "price_min": 419000,
+              "price_max": 495000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 460000,
+              "max": 560000,
+              "note": "~7-25y old comparables, 92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 525000,
+              "max": 560000,
+              "note": "~7-25y old comparables, 123 sqm"
+            }
+          ]
+        },
+        {
+          "project": "HOUGANG OLIVE",
+          "display_name": "Hougang Olive",
+          "town": "HOUGANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Hougang Street 13",
+          "lat": 1.348774,
+          "lng": 103.88836,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 206,
+              "price_min": 308000,
+              "price_max": 377000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 184,
+              "price_min": 416000,
+              "price_max": 488000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 460000,
+              "max": 560000,
+              "note": "~7-25y old comparables, 92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 525000,
+              "max": 560000,
+              "note": "~7-25y old comparables, 123 sqm"
+            }
+          ]
+        },
+        {
+          "project": "NANYANG OPAL",
+          "display_name": "Nanyang Opal",
+          "town": "JURONG WEST",
+          "classification": "Non-Mature Town",
+          "location_desc": "Jurong West Street 93",
+          "lat": 1.34096,
+          "lng": 103.690819,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 91,
+              "price_min": 173000,
+              "price_max": 229000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 92,
+              "units": 130,
+              "price_min": 264000,
+              "price_max": 321000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 290000,
+              "max": 333000,
+              "note": "~20-35y old comparables, 73 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 423000,
+              "max": 472000,
+              "note": "~20-35y old comparables, 93 sqm"
+            }
+          ]
+        },
+        {
+          "project": "PARC GLEN @ TENGAH",
+          "display_name": "Parc Glen @ Tengah",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tengah Park Avenue",
+          "lat": 1.362999,
+          "lng": 103.737736,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 48,
+              "price_min": 120000,
+              "price_max": 157000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 50,
+              "units": 156,
+              "price_min": 144000,
+              "price_max": 190000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 96,
+              "price_min": 194000,
+              "price_max": 253000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 400,
+              "price_min": 319000,
+              "price_max": 390000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 308,
+              "price_min": 436000,
+              "price_max": 519000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 430000,
+              "max": 518000,
+              "note": "~17-18y old comparables, 86-92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 568000,
+              "max": 620000,
+              "note": "~17-18y old comparables, 110-118 sqm"
+            }
+          ]
+        },
+        {
+          "project": "PARC CLOVER @ TENGAH",
+          "display_name": "Parc Clover @ Tengah",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tengah Drive. The 3-Room/4-Room/5-Room rows each span a floor-area range (e.g. 3-Room 70-71 sqm); the rounded midpoint is stored since Annex A gives one combined unit count per row.",
+          "lat": 1.360684,
+          "lng": 103.735583,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 52,
+              "price_min": 119000,
+              "price_max": 139000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 153,
+              "price_min": 142000,
+              "price_max": 170000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 71,
+              "units": 102,
+              "price_min": 215000,
+              "price_max": 257000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 472,
+              "price_min": 312000,
+              "price_max": 380000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 345,
+              "price_min": 428000,
+              "price_max": 500000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 430000,
+              "max": 518000,
+              "note": "~17-18y old comparables, 86-92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 568000,
+              "max": 620000,
+              "note": "~17-18y old comparables, 110-118 sqm"
+            }
+          ]
+        },
+        {
+          "project": "KENT HEIGHTS",
+          "display_name": "Kent Heights",
+          "town": "KALLANG/WHAMPOA",
+          "classification": "Mature Town",
+          "location_desc": "Owen Road",
+          "lat": 1.317045,
+          "lng": 103.85077,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 30,
+              "price_min": 192000,
+              "price_max": 241000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 124,
+              "price_min": 247000,
+              "price_max": 309000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 92,
+              "units": 276,
+              "price_min": 511000,
+              "price_max": 660000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 630000,
+              "max": 754000,
+              "note": "~19y old comparables, 90 sqm"
+            }
+          ]
+        },
+        {
+          "project": "RIVER PEAKS I & II",
+          "display_name": "River Peaks I & II",
+          "town": "CENTRAL AREA",
+          "classification": "Prime Location Public Housing Model",
+          "location_desc": "Kelantan Road, Rochor. The first Prime Location Public Housing (PLH) project ever launched.",
+          "lat": 1.304984,
+          "lng": 103.856163,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 66,
+              "units": 280,
+              "price_min": 409000,
+              "price_max": 474000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 88,
+              "units": 680,
+              "price_min": 582000,
+              "price_max": 688000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 490000,
+              "max": 555000,
+              "note": "~19-21y old comparables, 62 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 630000,
+              "max": 770000,
+              "note": "~19-21y old comparables, 85-91 sqm"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2021-08",
+      "label": "August 2021 BTO",
+      "application_start": "2021-08-11",
+      "application_end": "2021-08-17",
+      "sources": [
+        "https://www.hdb.gov.sg/about-us/news-and-publications/press-releases/11082021-HDB-Launches-4989-Flats-in-August-2021-BTO-Exercise",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2021/hdb-launches-4989-flats-in-august-2021-bto-exercise/Annex-A1.pdf",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2021/hdb-launches-4989-flats-in-august-2021-bto-exercise/Annex-B.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature Town(s) / Mature Town(s) system (no PLH project in this launch), preserved as-is. Both annexes were still live on hdb.gov.sg, no Wayback recovery needed. No Estimated Waiting Time column published for this launch — waiting_months is null for every project. Tampines GreenQuartz geocodes ambiguously between Bedok and Tampines at wider radius, but sits on the same street (Tampines Street 96) as its sibling project Tampines GreenJade (clearly Tampines) — set to TAMPINES for consistency.",
+      "projects": [
+        {
+          "project": "HOUGANG CITRINE",
+          "display_name": "Hougang Citrine",
+          "town": "HOUGANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Hougang Street 12",
+          "lat": 1.346923,
+          "lng": 103.889769,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 88,
+              "price_min": 108000,
+              "price_max": 128000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 242,
+              "price_min": 130000,
+              "price_max": 156000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 90,
+              "price_min": 199000,
+              "price_max": 240000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 227,
+              "price_min": 324000,
+              "price_max": 368000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 102,
+              "price_min": 392000,
+              "price_max": 482000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 340000,
+              "max": 370000,
+              "note": "~6-25y old comparables, 66 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 460000,
+              "max": 560000,
+              "note": "~6-25y old comparables, 92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 525000,
+              "max": 560000,
+              "note": "~6-25y old comparables, 123 sqm"
+            }
+          ]
+        },
+        {
+          "project": "KOVAN WELLSPRING",
+          "display_name": "Kovan Wellspring",
+          "town": "HOUGANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tampines Road",
+          "lat": 1.360363,
+          "lng": 103.887211,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 78,
+              "price_min": 153000,
+              "price_max": 181000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 188,
+              "price_min": 203000,
+              "price_max": 234000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 88,
+              "price_min": 289000,
+              "price_max": 340000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 232,
+              "price_min": 413000,
+              "price_max": 507000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 460000,
+              "max": 590000,
+              "note": "~6-31y old comparables, 92-104 sqm"
+            }
+          ]
+        },
+        {
+          "project": "TOH GUAN GROVE",
+          "display_name": "Toh Guan Grove",
+          "town": "JURONG EAST",
+          "classification": "Non-Mature Town",
+          "location_desc": "Toh Guan Road",
+          "lat": 1.340174,
+          "lng": 103.745233,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 74,
+              "price_min": 121000,
+              "price_max": 146000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 170,
+              "price_min": 154000,
+              "price_max": 189000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 85,
+              "price_min": 237000,
+              "price_max": 281000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 240,
+              "price_min": 347000,
+              "price_max": 436000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 475000,
+              "max": 530000,
+              "note": "~24y old comparables, 100-102 sqm"
+            }
+          ]
+        },
+        {
+          "project": "TOWNER RESIDENCES",
+          "display_name": "Towner Residences",
+          "town": "KALLANG/WHAMPOA",
+          "classification": "Mature Town",
+          "location_desc": "Towner Road",
+          "lat": 1.320829,
+          "lng": 103.856916,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 90,
+              "price_min": 336000,
+              "price_max": 440000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 226,
+              "price_min": 500000,
+              "price_max": 656000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 550000,
+              "max": 733000,
+              "note": "~11-18y old comparables, 86-90 sqm"
+            }
+          ]
+        },
+        {
+          "project": "QUEEN'S ARC",
+          "display_name": "Queen's Arc",
+          "town": "QUEENSTOWN",
+          "classification": "Mature Town",
+          "location_desc": "Queen's Crescent",
+          "lat": 1.289664,
+          "lng": 103.801162,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 76,
+              "price_min": 382000,
+              "price_max": 464000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 534,
+              "price_min": 540000,
+              "price_max": 670000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 580000,
+              "max": 608000,
+              "note": "~8-9y old comparables, 63 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 790000,
+              "max": 875000,
+              "note": "~8-9y old comparables, 88-96 sqm"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENQUARTZ",
+          "display_name": "Tampines GreenQuartz",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Tampines Street 96. The 4-Room/5-Room rows each span a floor-area range (e.g. 4-Room 95-98 sqm); the rounded midpoint is stored since Annex A gives one combined unit count per row.",
+          "lat": 1.340615,
+          "lng": 103.939272,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 58,
+              "price_min": 142000,
+              "price_max": 164000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 49,
+              "units": 144,
+              "price_min": 165000,
+              "price_max": 196000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 71,
+              "units": 87,
+              "price_min": 244000,
+              "price_max": 291000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 97,
+              "units": 687,
+              "price_min": 352000,
+              "price_max": 445000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 115,
+              "units": 637,
+              "price_min": 485000,
+              "price_max": 597000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 505000,
+              "max": 574000,
+              "note": "~22-23y old comparables, 104-107 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 540000,
+              "max": 650000,
+              "note": "~22-23y old comparables, 115-117 sqm"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENJADE",
+          "display_name": "Tampines GreenJade",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Tampines Street 96",
+          "lat": 1.341958,
+          "lng": 103.934703,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 302,
+              "price_min": 342000,
+              "price_max": 419000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 116,
+              "units": 244,
+              "price_min": 475000,
+              "price_max": 564000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 505000,
+              "max": 574000,
+              "note": "~22-23y old comparables, 104-107 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 540000,
+              "max": 650000,
+              "note": "~22-23y old comparables, 115-117 sqm"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2021-05",
+      "label": "May 2021 BTO",
+      "application_start": "2021-05-25",
+      "application_end": "2021-05-31",
+      "sources": [
+        "https://www.hdb.gov.sg/about-us/news-and-publications/press-releases/25052021-HDB-Launches-6373-Flats-in-May-2021-BTO-and-SBF-Exercises",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2021/hdb-launches-6373-flats-in-may-2021-bto-and-sbf-exercises/25052021-Annex-A1.pdf",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2021/hdb-launches-6373-flats-in-may-2021-bto-and-sbf-exercises/25052021-Annex-C.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature Town(s) / Mature Town(s) system (no PLH project in this launch), preserved as-is. This launch's Annex B is actually SBF pricing info, not BTO admin details — admin details are in Annex C instead; archived filename corrected to match. No Estimated Waiting Time column published — waiting_months is null for every project. The 6,373-flat press-release headline covers BTO+SBF combined (3,879 BTO + 2,494 SBF); only the 3,879 BTO flats across these 4 projects are seeded here. Garden Bloom @ Tengah has zero nearby transactions in our dataset (same situation as other Tengah-precinct projects) — town set to TENGAH per the project's own name.",
+      "projects": [
+        {
+          "project": "GARDEN BLOOM @ TENGAH",
+          "display_name": "Garden Bloom @ Tengah",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tengah Central",
+          "lat": 1.360553,
+          "lng": 103.728441,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 70,
+              "price_min": 113000,
+              "price_max": 137000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 49,
+              "units": 196,
+              "price_min": 132000,
+              "price_max": 167000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 265,
+              "price_min": 299000,
+              "price_max": 359000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 251,
+              "price_min": 404000,
+              "price_max": 495000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 365000,
+              "max": 460000,
+              "note": "~17-18y old comparables, 86-92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 505000,
+              "max": 608000,
+              "note": "~17-18y old comparables, 115-118 sqm"
+            }
+          ]
+        },
+        {
+          "project": "WOODGROVE ASCENT",
+          "display_name": "Woodgrove Ascent",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Woodlands Avenue 1",
+          "lat": 1.43319,
+          "lng": 103.783148,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 146,
+              "price_min": 98000,
+              "price_max": 119000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 540,
+              "price_min": 121000,
+              "price_max": 148000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 84,
+              "price_min": 185000,
+              "price_max": 219000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 411,
+              "price_min": 275000,
+              "price_max": 373000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 359,
+              "price_min": 372000,
+              "price_max": 491000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 330000,
+              "max": 345000,
+              "note": "~9y old comparables, 67 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 445000,
+              "max": 470000,
+              "note": "~9y old comparables, 92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 476888,
+              "max": 550000,
+              "note": "~9y old comparables, 112 sqm"
+            }
+          ]
+        },
+        {
+          "project": "TELOK BLANGAH BEACON",
+          "display_name": "Telok Blangah Beacon",
+          "town": "BUKIT MERAH",
+          "classification": "Mature Town",
+          "location_desc": "Telok Blangah Drive",
+          "lat": 1.273256,
+          "lng": 103.808172,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 105,
+              "price_min": 419000,
+              "price_max": 504000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 70,
+              "price_min": 602000,
+              "price_max": 710000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 558000,
+              "max": 650000,
+              "note": "~5-10y old comparables, 65-68 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 762000,
+              "max": 860000,
+              "note": "~5-10y old comparables, 93 sqm"
+            }
+          ]
+        },
+        {
+          "project": "MACPHERSON WEAVE",
+          "display_name": "MacPherson Weave",
+          "town": "GEYLANG",
+          "classification": "Mature Town",
+          "location_desc": "Circuit Road",
+          "lat": 1.327134,
+          "lng": 103.888589,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 54,
+              "price_min": 180000,
+              "price_max": 210000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 162,
+              "price_min": 235000,
+              "price_max": 269000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 156,
+              "price_min": 343000,
+              "price_max": 405000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 1010,
+              "price_min": 489000,
+              "price_max": 626000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 425000,
+              "max": 565000,
+              "note": "~6y old comparables, 67 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 635000,
+              "max": 800000,
+              "note": "~6y old comparables, 93 sqm"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2021-02",
+      "label": "February 2021 BTO",
+      "application_start": "2021-02-04",
+      "application_end": "2021-02-10",
+      "sources": [
+        "https://www.hdb.gov.sg/cs/infoweb/about-us/news-and-publications/press-releases/04022021-HDB-Launches-3740-Flats-in-February-2021-BTO-Exercise",
+        "https://web.archive.org/web/20240626181700/https://www.hdb.gov.sg/-/media/doc/SCEG/04022021-BTO-Annexes/Annex-A1-Feb-2021-BTO.ashx",
+        "https://web.archive.org/web/20221128194138/https://www.hdb.gov.sg/-/media/doc/CCG/04022021-BTO-Annexes/Annex-B-Feb-2021-BTO.ashx"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature Town(s) / Mature Town(s)/Estates system (no PLH project in this launch), preserved as-is. Annexes recovered via Wayback Machine. Bartley GreenRise and Parc Woods @ Tengah have zero close-proximity transactions in our dataset — Bartley GreenRise's town is set to TOA PAYOH (matching its Bidadari-precinct sibling ParkEdge @ Bidadari and the press release's own 'Toa Payoh (Bidadari)' designation, overriding a distant Serangoon-town geocode pickup at wider radius); Parc Woods @ Tengah is set to TENGAH per the other Tengah-precinct projects. No Estimated Waiting Time column was published — waiting_months is null for every project.",
+      "projects": [
+        {
+          "project": "HARMONY VILLAGE @ BUKIT BATOK",
+          "display_name": "Harmony Village @ Bukit Batok",
+          "town": "BUKIT BATOK",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bukit Batok West Avenue 9",
+          "lat": 1.355234,
+          "lng": 103.741759,
+          "waiting_months": null,
+          "flats": [],
+          "_curation_note": "This project consists entirely of 169 Community Care Apartment (CCA) units (34 sqm, 30-year lease, seniors 65+ only, $52,000-$60,000 indicative) — CCAs are not standard BTO flats, so flats[] is empty here (same exclusion rule as CCA rows within otherwise-mixed projects elsewhere in this dataset). This launch's headline total of 3,740 flats includes these 169 CCA units; the sum of this launch's other projects' flats[] units is 3,571."
+        },
+        {
+          "project": "WEST HILL @ BUKIT BATOK",
+          "display_name": "West Hill @ Bukit Batok",
+          "town": "BUKIT BATOK",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bukit Batok West Avenue 5",
+          "lat": 1.35919,
+          "lng": 103.743954,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 56,
+              "price_min": 101000,
+              "price_max": 115000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 107,
+              "price_min": 119000,
+              "price_max": 144000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 81,
+              "price_min": 175000,
+              "price_max": 221000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 387,
+              "price_min": 260000,
+              "price_max": 334000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 331,
+              "price_min": 384000,
+              "price_max": 460000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 368000,
+              "max": 450000,
+              "note": "~17y old comparables, 86-92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 515000,
+              "max": 570000,
+              "note": "~17y old comparables, 118 sqm"
+            }
+          ]
+        },
+        {
+          "project": "PARC WOODS @ TENGAH",
+          "display_name": "Parc Woods @ Tengah",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tengah Drive",
+          "lat": 1.362202,
+          "lng": 103.734278,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 78,
+              "price_min": 110000,
+              "price_max": 138000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 49,
+              "units": 219,
+              "price_min": 133000,
+              "price_max": 167000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 71,
+              "units": 83,
+              "price_min": 209000,
+              "price_max": 239000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 387,
+              "price_min": 298000,
+              "price_max": 359000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 368000,
+              "max": 450000,
+              "note": "~17y old comparables, 86-92 sqm"
+            }
+          ]
+        },
+        {
+          "project": "BARTLEY GREENRISE",
+          "display_name": "Bartley GreenRise",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town / Estate",
+          "location_desc": "Bidadari Park Drive",
+          "lat": 1.343041,
+          "lng": 103.877363,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 96,
+              "price_min": 312000,
+              "price_max": 362000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 291,
+              "price_min": 496000,
+              "price_max": 580000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 352000,
+              "max": 408888,
+              "note": "~37y old comparables, 74 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 538888,
+              "max": 588000,
+              "note": "~37y old comparables, 103-111 sqm"
+            }
+          ]
+        },
+        {
+          "project": "PARKEDGE @ BIDADARI",
+          "display_name": "ParkEdge @ Bidadari",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town / Estate",
+          "location_desc": "Bartley Walk. The 4-Room/5-Room rows each span a floor-area range (e.g. 4-Room 93-96 sqm); the rounded midpoint is stored since Annex A gives one combined unit count per row.",
+          "lat": 1.340593,
+          "lng": 103.87584,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 280,
+              "price_min": 476000,
+              "price_max": 576000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 115,
+              "units": 196,
+              "price_min": 612000,
+              "price_max": 717000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 538888,
+              "max": 588000,
+              "note": "~37y old comparables, 103-111 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 695000,
+              "max": 765000,
+              "note": "~37y old comparables, 135-143 sqm"
+            }
+          ]
+        },
+        {
+          "project": "ALKAFF BREEZE",
+          "display_name": "Alkaff Breeze",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town / Estate",
+          "location_desc": "Alkaff Crescent",
+          "lat": 1.336266,
+          "lng": 103.874639,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 226,
+              "price_min": 464000,
+              "price_max": 578000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 127,
+              "price_min": 611000,
+              "price_max": 728000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 538888,
+              "max": 588000,
+              "note": "~37y old comparables, 103-111 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 695000,
+              "max": 765000,
+              "note": "~37y old comparables, 135-143 sqm"
+            }
+          ]
+        },
+        {
+          "project": "MCNAIR HEIGHTS",
+          "display_name": "McNair Heights",
+          "town": "KALLANG/WHAMPOA",
+          "classification": "Mature Town / Estate",
+          "location_desc": "McNair Road. 2-Room Flexi flats here are offered only to seniors (55+) on short leases of 15-45 years.",
+          "lat": 1.31795,
+          "lng": 103.857365,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1, Senior Short Lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 46,
+              "price_min": 117000,
+              "price_max": 136000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2, Senior Short Lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 90,
+              "price_min": 139000,
+              "price_max": 182000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 104,
+              "price_min": 359000,
+              "price_max": 453000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 386,
+              "price_min": 532000,
+              "price_max": 672000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 710000,
+              "max": 733888,
+              "note": "~11-18y old comparables, 89-92 sqm"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2020-11",
+      "label": "November 2020 BTO",
+      "application_start": "2020-11-17",
+      "application_end": "2020-11-23",
+      "sources": [
+        "https://www.hdb.gov.sg/about-us/news-and-publications/press-releases/17112020-HDB-Launches-11015-Flats-in-November-2020-BTO-and-SBF-Exercises",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-11/Sun_Sails.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-11/Garden_Court_%40_Tengah.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-11/Garden_Terrace_%40_Tengah.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-11/Bishan_Ridges.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-11/Tampines_GreenEmerald.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-11/Bartley_Beacon.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-11/ParkView_%40_Bidadari.pdf",
+        "https://web.archive.org/web/20220125090538/https://www.propertyguru.com.sg/property-guides/hdb-november-2020-sembawang-bto-29324",
+        "https://web.archive.org/web/20250623095843/https://www.propertyguru.com.sg/property-guides/hdb-november-2020-bto-launch-29317"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature Town / Mature Town system (no PLH project in this launch), preserved as-is. This launch's official Annex A/pricing PDF was NEVER successfully archived anywhere (only a dead 403 Wayback capture exists at hdb.gov.sg/-/media/doc/CCG/17112020-Annex-A1.ashx) — reconstructed instead from (a) HDB's own public sales brochures at housingmap.sg/hdb-brochures/bto-2020-11/, whose site-plan page (page 11 or nearby, varies by brochure) has a rasterized per-block unit-mix table image (not extractable as text — must render the PDF page as an image) giving exact per-flat-type unit counts, cross-checked against each floor-plan page's printed sqm, and (b) PropertyGuru's per-project 'review' articles (distinct from its general launch-overview article) and the overview article's own FAQ section further down the page, both of which reproduce real per-flat-type price ranges. All unit totals reconciled exactly to independently-known project totals, and the launch-wide sum (5,795) matches the confirmed BTO-only headline (the press release's 11,015 figure includes SBF). No waiting-time data was found for this launch — waiting_months is null for every project. ParkView @ Bidadari's 4-Room row combines two floor-plan variants (93 sqm standard, 96 sqm with balcony) sharing one unit count/price range in the source data — same combined-row treatment used elsewhere in this dataset for split floor areas. Garden Court/Garden Terrace @ Tengah share identical per-flat-type pricing (both are literally labelled with the same 'Tengah BTO Flat Type' price table in the source) despite being two separate HDB projects with independently-verified unit-mix tables.",
+      "projects": [
+        {
+          "project": "SUN SAILS",
+          "display_name": "Sun Sails",
+          "town": "SEMBAWANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Sembawang Avenue",
+          "lat": 1.443577,
+          "lng": 103.822768,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 60,
+              "price_min": 92000,
+              "price_max": 102000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 46,
+              "units": 160,
+              "price_min": 106000,
+              "price_max": 122000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 84,
+              "price_min": 163000,
+              "price_max": 189000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 238,
+              "price_min": 260000,
+              "price_max": 302000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 184,
+              "price_min": 336000,
+              "price_max": 388000
+            }
+          ]
+        },
+        {
+          "project": "GARDEN COURT @ TENGAH",
+          "display_name": "Garden Court @ Tengah",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tengah Garden Walk",
+          "lat": 1.35963,
+          "lng": 103.730411,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 56,
+              "price_min": 108000,
+              "price_max": 131000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 168,
+              "price_min": 127000,
+              "price_max": 150000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 108,
+              "price_min": 194000,
+              "price_max": 233000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 286,
+              "price_min": 288000,
+              "price_max": 366000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 172,
+              "price_min": 394000,
+              "price_max": 487000
+            }
+          ]
+        },
+        {
+          "project": "GARDEN TERRACE @ TENGAH",
+          "display_name": "Garden Terrace @ Tengah",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Tengah Garden Avenue",
+          "lat": 1.357616,
+          "lng": 103.730113,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 72,
+              "price_min": 108000,
+              "price_max": 131000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 168,
+              "price_min": 127000,
+              "price_max": 150000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 110,
+              "price_min": 194000,
+              "price_max": 233000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 284,
+              "price_min": 288000,
+              "price_max": 366000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 155,
+              "price_min": 394000,
+              "price_max": 487000
+            }
+          ]
+        },
+        {
+          "project": "BISHAN RIDGES",
+          "display_name": "Bishan Ridges",
+          "town": "BISHAN",
+          "classification": "Mature Town",
+          "location_desc": "Bishan Street 14",
+          "lat": 1.351533,
+          "lng": 103.852874,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1, 40-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 38,
+              "price_min": 121000,
+              "price_max": 139000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2, 40-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 118,
+              "price_min": 151000,
+              "price_max": 179000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 124,
+              "price_min": 374000,
+              "price_max": 470000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 1222,
+              "price_min": 528000,
+              "price_max": 679000
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENEMERALD",
+          "display_name": "Tampines GreenEmerald",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Tampines Street 96",
+          "lat": 1.338671,
+          "lng": 103.937332,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 39,
+              "price_min": 130000,
+              "price_max": 155000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 49,
+              "units": 107,
+              "price_min": 161000,
+              "price_max": 192000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 360,
+              "price_min": 334000,
+              "price_max": 410000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 244,
+              "price_min": 460000,
+              "price_max": 538000
+            }
+          ]
+        },
+        {
+          "project": "BARTLEY BEACON",
+          "display_name": "Bartley Beacon",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town",
+          "location_desc": "Mount Vernon Road, Bidadari precinct",
+          "lat": 1.341699,
+          "lng": 103.879565,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 96,
+              "price_min": 324000,
+              "price_max": 397000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 640,
+              "price_min": 466000,
+              "price_max": 598000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 144,
+              "price_min": 627000,
+              "price_max": 726000
+            }
+          ]
+        },
+        {
+          "project": "PARKVIEW @ BIDADARI",
+          "display_name": "ParkView @ Bidadari",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town",
+          "location_desc": "Upper Aljunied Road, Bidadari precinct",
+          "lat": 1.338503,
+          "lng": 103.875256,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 88,
+              "price_min": 324000,
+              "price_max": 397000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 270,
+              "price_min": 466000,
+              "price_max": 598000
+            }
+          ],
+          "_curation_note": "The 4-Room row combines two floor-plan variants sharing one unit count and price range in the source data: 93 sqm (standard) and 96 sqm (with balcony)."
+        }
+      ]
+    },
+    {
+      "launch_id": "2020-08",
+      "label": "August 2020 BTO",
+      "application_start": "2020-08-12",
+      "application_end": "2020-08-18",
+      "sources": [
+        "https://www.propertyguru.com.sg/property-guides/hdb-may-2020-choa-chu-kang-bto-launch-26148",
+        "https://web.archive.org/web/20220127154208/https://www.propertyguru.com.sg/property-guides/HDB-BTO-launch-in-August-2020-what-you-can-expect-28244",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Keat_Hong_Verge.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Kebun_Baru_Edge.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Bishan_Towers.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Dakota_One.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Costa_Grove.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Tampines_GreenCrest.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Tampines_GreenGlade.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Tampines_GreenOpal.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Parc_Residences_%40_Tengah.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/Champions_Bliss.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-2020-08/UrbanVille_%40_Woodlands.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Estates system, preserved as-is. This launch's official Annex A PDF is genuinely unrecoverable (live URL dead, zero Wayback captures at all for that path — worse than Nov 2020, which at least had a dead 403 capture). Reconstructed via the housingmap.sg/bto/ fallback: real per-flat-type unit counts and sqm came from each project's HDB sales brochure's rasterized unit-mix table + floor-plan pages (same method as Nov 2020); real 'From' (minimum) prices per flat type came from PropertyGuru's launch-overview article (web.archive.org capture) and its per-town infographic breakdown, cross-verified against the Keat Hong Verge project-specific review article. All unit totals reconcile exactly: each project's total matches its independently-known figure, and the full launch sums to exactly 7,862 units (matching the press release headline). HOWEVER, every price_max value, plus the 2-Room Flexi Type 2 price_min for every project (only Type 1's floor price was ever separately quoted), is ESTIMATED (not sourced from an official HDB document) — extrapolated from this project's real verified 'From' (minimum) price using the min-to-max spread ratio observed in the nearest verified same-classification comparable launch (Sun Sails for Non-Mature Town, Bishan Ridges/Tampines GreenEmerald blend for Mature Town, both Nov 2020, 3 months later). Do not treat as an official HDB figure. Costa Grove's brochure unit-mix table also lists 200 rental flats (58x 1-Room + 142x 2-Room, not for sale to the public) alongside the 1,070 home-ownership units — correctly excluded from flats[]. Several projects (Bishan Towers, Costa Grove) have a 4-Room and/or 3-Room/5-Room row spanning two floor-plan variants (a smaller standard unit and a larger balcony unit) sharing one combined unit count in the source brochure — the smaller/standard sqm is stored, matching the convention used elsewhere in this dataset for the same situation. Parc Residences @ Tengah's town (TENGAH) has zero rows in our own transactions table (same situation as other Tengah-precinct projects across this dataset) — its town-level comps fallback will be empty. Tampines GreenOpal geocodes to Bedok at every radius tested, but is explicitly named and press-release-grouped as a Tampines project — town is set to TAMPINES per the official designation, same treatment as other boundary-adjacent projects elsewhere in this dataset. No waiting-time data was found for this launch — waiting_months is null for every project.",
+      "projects": [
+        {
+          "project": "KEAT HONG VERGE",
+          "display_name": "Keat Hong Verge",
+          "town": "CHOA CHU KANG",
+          "classification": "Non-Mature Estate",
+          "location_desc": "Keat Hong Link",
+          "lat": 1.37523,
+          "lng": 103.75025,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 39,
+              "units": 38,
+              "price_min": 99000,
+              "price_max": 110000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 125,
+              "price_min": 114000,
+              "price_max": 131000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 118,
+              "price_min": 164000,
+              "price_max": 190000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 290,
+              "price_min": 253000,
+              "price_max": 294000
+            }
+          ]
+        },
+        {
+          "project": "KEBUN BARU EDGE",
+          "display_name": "Kebun Baru Edge",
+          "town": "ANG MO KIO",
+          "classification": "Mature Estate",
+          "location_desc": "Ang Mo Kio Avenue 1",
+          "lat": 1.367627,
+          "lng": 103.833861,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 240,
+              "price_min": 423000,
+              "price_max": 532000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 140,
+              "price_min": 571000,
+              "price_max": 668000
+            }
+          ]
+        },
+        {
+          "project": "BISHAN TOWERS",
+          "display_name": "Bishan Towers",
+          "town": "BISHAN",
+          "classification": "Mature Estate",
+          "location_desc": "Bishan Street 11",
+          "lat": 1.344731,
+          "lng": 103.856592,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 24,
+              "price_min": 176000,
+              "price_max": 206000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 96,
+              "price_min": 219000,
+              "price_max": 260000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 80,
+              "price_min": 302000,
+              "price_max": 380000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 272,
+              "price_min": 484000,
+              "price_max": 608000
+            }
+          ],
+          "_curation_note": "The 4-Room row spans two floor-plan variants sharing one unit count/price range in the source data: 93 sqm (standard) and 96 sqm (with balcony)."
+        },
+        {
+          "project": "DAKOTA ONE",
+          "display_name": "Dakota One",
+          "town": "GEYLANG",
+          "classification": "Mature Estate",
+          "location_desc": "Jalan Satu",
+          "lat": 1.309927,
+          "lng": 103.887148,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 87,
+              "price_min": 355000,
+              "price_max": 446000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 334,
+              "price_min": 523000,
+              "price_max": 657000
+            }
+          ]
+        },
+        {
+          "project": "COSTA GROVE",
+          "display_name": "Costa Grove",
+          "town": "PASIR RIS",
+          "classification": "Mature Estate",
+          "location_desc": "Pasir Ris Drive 3",
+          "lat": 1.378139,
+          "lng": 103.947132,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 56,
+              "price_min": 137000,
+              "price_max": 160000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 156,
+              "price_min": 170000,
+              "price_max": 202000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 160,
+              "price_min": 245000,
+              "price_max": 308000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 373,
+              "price_min": 374000,
+              "price_max": 470000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 325,
+              "price_min": 493000,
+              "price_max": 577000
+            }
+          ],
+          "_curation_note": "Excludes 200 rental flats (58x 1-Room + 142x 2-Room, not for sale to the public) — the brochure's unit-mix table lists these alongside the 1,070 home-ownership (BTO-for-sale) units; flats[] contains only the home-ownership units. The 3-Room, 4-Room and 5-Room rows each span two floor-plan variants (a smaller standard unit and a larger balcony unit) sharing one unit count/price range in the source data — the smaller/standard sqm (69/93/113) is stored."
+        },
+        {
+          "project": "TAMPINES GREENCREST",
+          "display_name": "Tampines GreenCrest",
+          "town": "TAMPINES",
+          "classification": "Mature Estate",
+          "location_desc": "Tampines Street 64. Pricing is shared with Tampines GreenGlade and Tampines GreenOpal in the source (one combined per-flat-type price table for all three Tampines projects in this launch).",
+          "lat": 1.36979,
+          "lng": 103.935499,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 70,
+              "units": 88,
+              "price_min": 205000,
+              "price_max": 258000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 146,
+              "price_min": 311000,
+              "price_max": 391000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 112,
+              "price_min": 423000,
+              "price_max": 495000
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENGLADE",
+          "display_name": "Tampines GreenGlade",
+          "town": "TAMPINES",
+          "classification": "Mature Estate",
+          "location_desc": "Tampines Street 64. Pricing is shared with Tampines GreenCrest and Tampines GreenOpal in the source (one combined per-flat-type price table for all three Tampines projects in this launch). No 3-Room units offered in this specific project.",
+          "lat": 1.367711,
+          "lng": 103.934528,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 179,
+              "price_min": 311000,
+              "price_max": 391000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 175,
+              "price_min": 423000,
+              "price_max": 495000
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENOPAL",
+          "display_name": "Tampines GreenOpal",
+          "town": "TAMPINES",
+          "classification": "Mature Estate",
+          "location_desc": "Tampines Street 96/92. Pricing is shared with Tampines GreenCrest and Tampines GreenGlade in the source (one combined per-flat-type price table for all three Tampines projects in this launch). Geocodes to Bedok at every radius tested, but is press-release-grouped and named as a Tampines project — town set to TAMPINES per the official designation.",
+          "lat": 1.338168,
+          "lng": 103.938068,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 94,
+              "price_min": 205000,
+              "price_max": 258000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 546,
+              "price_min": 311000,
+              "price_max": 391000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 430,
+              "price_min": 423000,
+              "price_max": 495000
+            }
+          ]
+        },
+        {
+          "project": "PARC RESIDENCES @ TENGAH",
+          "display_name": "Parc Residences @ Tengah",
+          "town": "TENGAH",
+          "classification": "Non-Mature Estate",
+          "location_desc": "Tengah Drive",
+          "lat": 1.359415,
+          "lng": 103.73789,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 122,
+              "price_min": 108000,
+              "price_max": 120000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 358,
+              "price_min": 124000,
+              "price_max": 143000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 70,
+              "units": 99,
+              "price_min": 198000,
+              "price_max": 230000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 95,
+              "units": 281,
+              "price_min": 303000,
+              "price_max": 352000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 184,
+              "price_min": 418000,
+              "price_max": 483000
+            }
+          ]
+        },
+        {
+          "project": "CHAMPIONS BLISS",
+          "display_name": "Champions Bliss",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Estate",
+          "location_desc": "Champions Way. Pricing is shared with UrbanVille @ Woodlands in the source (one combined per-flat-type price table for both Woodlands projects in this launch). No 3-Room or 5-Room units offered in this specific project.",
+          "lat": 1.427741,
+          "lng": 103.791482,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 38,
+              "price_min": 90000,
+              "price_max": 100000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 112,
+              "price_min": 104000,
+              "price_max": 120000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 199,
+              "price_min": 276000,
+              "price_max": 321000
+            }
+          ]
+        },
+        {
+          "project": "URBANVILLE @ WOODLANDS",
+          "display_name": "UrbanVille @ Woodlands",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Estate",
+          "location_desc": "Woodlands Square. Pricing is shared with Champions Bliss in the source (one combined per-flat-type price table for both Woodlands projects in this launch).",
+          "lat": 1.437982,
+          "lng": 103.7836,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 184,
+              "price_min": 90000,
+              "price_max": 100000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 512,
+              "price_min": 104000,
+              "price_max": 120000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 144,
+              "price_min": 184000,
+              "price_max": 213000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 507,
+              "price_min": 276000,
+              "price_max": 321000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 438,
+              "price_min": 405000,
+              "price_max": 468000
             }
           ]
         }

@@ -1,6 +1,94 @@
 # Active Context: WorthIt
 
-## Recent Changes (Sep 2026 — BTO historical backfill: Aug 2020 → Feb 2022) — LOCAL ONLY, DATA DEPLOYED
+## Recent Changes (Sep 2026 — BTO historical backfill: Feb 2019) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **February 2019 BTO launch** (5 projects: Boon Lay Glade and Jurong West Jewel in Jurong
+West, Fernvale Vines in Sengkang — Non-Mature; Kallang Breeze and Towner Crest in Kallang/Whampoa —
+Mature — 3,162 units total, reconciles exactly to the press-release headline). Same recurring
+pattern as every other 2019 launch this session: bundled with a separate Re-Offer of Balance Flats
+(ROF) exercise (577 flats, not seeded); Annex B was the ROF list, Annex C the real BTO admin annex.
+Two shared-price-table pairs (Boon Lay Glade/Jurong West Jewel, and Kallang Breeze/Towner Crest)
+use the by-now-standard shared-pricing + combined-2-Room-Flexi-variant conventions; Fernvale Vines
+stands alone with its own full price breakdown including a 3Gen row that initially looked missing
+from a naive text scan of the PDF (a `pypdf` per-line extraction interleaved the two projects'
+3Gen rows oddly — worth grep'ing for "3Gen" case-insensitively across the whole page rather than
+trusting a single top-to-bottom read when a project's row count looks short). Dataset now spans
+**February 2019 → June 2026**, 28 launches total. `npm test` green (240 tests, no test file
+changes). **Not yet committed, pushed, or deployed** — five launches now queued (Feb/May/Sep/Nov
+2019, Feb 2020).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2019) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2019 BTO launch** (4 projects: Champions Green in Woodlands, Garden Vale @ Tengah
+and Plantation Acres in Tengah — Non-Mature; Kempas Residences in Kallang/Whampoa — Mature — 3,485
+units total, reconciles exactly to the press-release headline). Same recurring pattern as Sep/Nov
+2019: this press release bundled a BTO exercise with a separate Sale of Balance Flats (SBF)
+exercise — Annex B was the SBF price list (not seeded), Annex C the real BTO admin-details annex.
+Kempas Residences' 2-Room Flexi flats are senior-only short-lease (like Kim Keat Ripples, Feb 2020)
+but — unlike the Tengah/Feb-2020 combined-row cases — its Type 1/Type 2 unit counts were given
+*separately* in the official price table, so both are seeded as distinct rows rather than combined.
+Garden Vale @ Tengah and Plantation Acres repeat the shared-price-table + combined-2-Room-Flexi
+pattern from earlier launches. Dataset now spans **May 2019 → June 2026**, 27 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed** —
+four launches now queued (May 2019, Sep 2019, Nov 2019, Feb 2020).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2019) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2019 BTO launch** (3 projects: Punggol Point Cove and Punggol Point Crown in
+Punggol — Non-Mature; Tampines GreenGlen in Tampines — Mature — 3,373 units total, reconciles
+exactly to the press-release headline). Officially an HDB "September 2019" exercise (applications
+11-17 Sep 2019) even though contemporary press/blog coverage calls it the "August 2019" launch
+(announcement date) — filed under `2019-09` to match HDB's own application-window naming, matching
+this project's existing `launch_id` convention. Same non-standard-annex-lettering gotcha as Nov
+2019: this press release's "Annex B" was actually a Re-Offer of Balance Flats (ROF) list (HDB's
+equivalent of SBF), not BTO admin details — the real admin annex was Annex C; the ROF PDF was
+downloaded, inspected, and discarded (not seeded). Dataset now spans **September 2019 → June
+2026**, 26 launches total. Punggol Point Cove/Crown share one HDB price table (same
+shared-pricing-table + combined-2-Room-Flexi-variant conventions as Nov 2019 and Feb 2020, using
+real per-project 99-year prices from Annex A3). `npm test` green (240 tests, no test file changes).
+**Not yet committed, pushed, or deployed** — three launches now queued (Sep 2019, Nov 2019, Feb
+2020) pending the user's next instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2019) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2019 BTO launch** (5 projects: Garden Vines @ Tengah, Plantation Grange,
+Plantation Village in Tengah town — Non-Mature; Tampines GreenSpring in Tampines and Yio Chu Kang
+Beacon in Ang Mo Kio — Mature — 4,571 units total, reconciles exactly to the press-release headline
+of 4,571 BTO flats). This press release actually combined a BTO exercise **and** a separate Sale of
+Balance Flats (SBF) exercise (3,599 flats) under one 8,170-flat headline — only the BTO portion was
+seeded; the SBF annex (which was itself misleadingly named "Annex B" on HDB's site, while the actual
+BTO admin-details annex was "Annex C") was downloaded, inspected, and discarded as out of scope —
+worth double-checking annex letter/content match on every older launch, not just trusting the
+filename. Dataset now spans **November 2019 → June 2026**, 25 launches total. The three Tengah
+projects share one HDB price table for 3/4/5-Room flats (seeded identically per existing
+shared-pricing-table convention) and one resale-comparables table; their 2-Room Flexi units (two
+floor-area variants each) were again only published as a launch-wide combined total, not split per
+project or size — same combined-row technique as Feb 2020, using each project's real 99-year-lease
+price band from Annex A2. `npm test` green (240 tests, no test file changes). **Not yet committed,
+pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Feb 2020) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **February 2020 BTO launch** (3 projects: Canberra Vista in Sembawang, Kim Keat Ripples
+and Toa Payoh Ridge in Toa Payoh — 3,095 units total, reconciles exactly to the press-release
+headline). Dataset now spans **February 2020 → June 2026**, 24 launches total. Official Annex A1/A2
+(pricing) and Annex B (admin) recovered via Wayback Machine (live hdb.gov.sg URLs are dead, but a
+real `200`/`application/pdf` capture of the `.ashx` path exists — note: the `.pdf`-suffixed capture
+of Annex A1 was truncated to exactly 1MB by Wayback's playback, the `.ashx`-suffixed capture was
+not — always verify downloaded PDF size against the CDX `length` field before trusting a fetch).
+Two data-modeling notes worth remembering for earlier launches: (1) Kim Keat Ripples and Toa Payoh
+Ridge share one HDB-published 4-Room price table row — both seeded with the identical price range,
+per the existing shared-pricing-table convention; (2) their 2-Room Flexi flats (senior short-lease)
+have two floor-area variants (36 sqm / 45-46 sqm) whose units were only published as a *combined*
+per-launch total, not split per project or per size — resolved by seeding one combined row per
+project (units are known per-project) using that project's real 40-year-lease price band from Annex
+A2 (Type 1 min to Type 2 max), which is more accurate than falling back to housingmap.sg since real
+official per-project prices were available. `npm test` green (240 tests, no test file changes).
+**Not yet committed, pushed, or deployed** — pending user's next instruction. Feb 2020 was picked
+as the next launch back from the previously-backfilled Aug 2020 floor; earlier launches (2019 and
+before) remain undone.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Aug 2020 → Feb 2022) — DEPLOYED
 
 Backfilled `scripts/bto_launches.json` with 18 additional historical BTO launches (May 2021 → Oct
 2024 done incrementally, then Feb 2021 → Aug 2020 in a deeper push), taking the dataset from 5

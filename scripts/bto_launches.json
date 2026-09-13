@@ -9771,11 +9771,11 @@
       "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Officially an HDB \"September 2019\" exercise (applications 11-17 Sep 2019), though contemporary press coverage often calls it the \"August 2019\" launch (announcement date). Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This press release combined a BTO exercise (3,373 flats, seeded here) with a separate Re-Offer of Balance Flats (ROF) exercise (716 flats, not seeded — ROF re-releases previously-returned/unselected flats across many towns, not a new BTO launch); watch for non-standard annex lettering on older launches — here Annex B was actually the ROF flat list, and the real BTO admin-details annex was Annex C. Punggol Point Cove and Punggol Point Crown share a single HDB price table (Annex A1 Table A1(d)) for all flat types — both seeded with identical prices, differing only in units and (for 2-Room Flexi) real per-project pricing from Annex A3. Their 2-Room Flexi flats have two floor-area variants (36 sqm and 45 sqm) whose unit counts were only published as a launch-wide combined total (363 Type 1 + 897 Type 2 across both projects), not split per project or per size — so each project's 2-Room Flexi units are seeded as one combined row using that project's real 99-year-lease price band from Annex A3 (Type 1 min to Type 2 max). They also share one resale-comparables table (Annex A1 Table A1(e)).",
       "projects": [
         {
-          "project": "PUNGGOL POINT COVE",
-          "display_name": "Punggol Point Cove",
+          "project": "PUNGGOL POINT COVE (SEP 2019)",
+          "display_name": "Punggol Point Cove (Sep 2019)",
           "town": "PUNGGOL",
           "classification": "Non-Mature Town",
-          "location_desc": "Punggol Point district, along New Punggol Road on the eastern shoreline",
+          "location_desc": "Punggol Point district, along New Punggol Road on the eastern shoreline. HDB reused this project name for an earlier, separate BTO launch at the same site in Aug 2018 — disambiguated by launch month/year.",
           "lat": 1.419635402182583,
           "lng": 103.9128224429809,
           "waiting_months": null,
@@ -10501,6 +10501,3540 @@
               "min": 575000,
               "max": 717500,
               "note": "Nearby resale 4-room flats (85-95 sqm), about 13-16 years old (shared comparable table with Kallang Breeze)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2018-11",
+      "label": "November 2018 BTO",
+      "application_start": "2018-11-13",
+      "application_end": "2018-11-19",
+      "sources": [
+        "https://www.theonlinecitizen.com/2018/11/13/hdb-launches-7214-flats-in-november-2018-bto-and-sbf-exercise/",
+        "https://web.archive.org/web/20210726100122/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/13112018corpprannex-a1.pdf",
+        "https://web.archive.org/web/20210726100006/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/13112018corpprannex-a2.pdf",
+        "https://web.archive.org/web/20210726100710/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/13112018corpprannex-c.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This press release combined a BTO exercise (3,802 flats, seeded here) with a separate Sale of Balance Flats (SBF) exercise (not seeded); the real BTO admin-details annex was Annex C. Unlike every 2019 launch this session, no projects here share a combined price table and every flat type's unit split (including 2-Room Flexi Type 1/Type 2) is given directly per project in Annex A1 — no combined-row estimation needed for this launch.",
+      "projects": [
+        {
+          "project": "EASTGLEN @ CANBERRA",
+          "display_name": "EastGlen @ Canberra",
+          "town": "SEMBAWANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Canberra Crescent and Canberra Walk. No 2-Room Flexi flats in this project.",
+          "lat": 1.449043503267156,
+          "lng": 103.8295651615551,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 83,
+              "price_min": 165000,
+              "price_max": 204000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 131,
+              "price_min": 251000,
+              "price_max": 304000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 114,
+              "units": 96,
+              "price_min": 327000,
+              "price_max": 391000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 330000,
+              "max": 365000,
+              "note": "Nearby resale 4-room flats (85-91 sqm), about 15-19 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 348000,
+              "max": 428000,
+              "note": "Nearby resale 5-room flats (110-111 sqm), about 15-19 years old"
+            }
+          ]
+        },
+        {
+          "project": "FERNVALE ACRES",
+          "display_name": "Fernvale Acres",
+          "town": "SENGKANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Fernvale Lane, near Fernvale LRT station. No 2-Room Flexi or 3-Room flats in this project.",
+          "lat": 1.388834292919127,
+          "lng": 103.8710714239752,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 198,
+              "price_min": 270000,
+              "price_max": 353000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 132,
+              "price_min": 366000,
+              "price_max": 438000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 385000,
+              "max": 460000,
+              "note": "Nearby resale 4-room flats (92-94 sqm), about 5-8 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 442000,
+              "max": 600000,
+              "note": "Nearby resale 5-room flats (112-115 sqm), about 5-8 years old"
+            }
+          ]
+        },
+        {
+          "project": "MELODY SPRING @ YISHUN (NOV 2018)",
+          "display_name": "Melody Spring @ Yishun (Nov 2018)",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Yishun Avenue 8 and Yishun Street 44. No 2-Room Flexi flats in this project. HDB reused this project name for an earlier, separate BTO launch at the same site (OneMap geocodes both to the same coordinates) in Aug 2018 — disambiguated by launch month/year.",
+          "lat": 1.4277974336912,
+          "lng": 103.8530890840383,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 96,
+              "price_min": 170000,
+              "price_max": 200000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 252,
+              "price_min": 259000,
+              "price_max": 304000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 108,
+              "price_min": 346000,
+              "price_max": 393000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 355000,
+              "max": 455000,
+              "note": "Nearby resale 4-room flats (92-97 sqm), about 8-31 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 390000,
+              "max": 485000,
+              "note": "Nearby resale 5-room flats (111-122 sqm), about 8-31 years old"
+            }
+          ]
+        },
+        {
+          "project": "PLANTATION GROVE",
+          "display_name": "Plantation Grove",
+          "town": "TENGAH",
+          "classification": "Non-Mature Town",
+          "location_desc": "Plantation District, Tengah town, along Bukit Batok Road — the first public housing development in Tengah",
+          "lat": 1.35836009636405,
+          "lng": 103.7368365783425,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 154,
+              "price_min": 101000,
+              "price_max": 117000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 368,
+              "price_min": 120000,
+              "price_max": 150000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 119,
+              "price_min": 193000,
+              "price_max": 243000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 536,
+              "price_min": 290000,
+              "price_max": 355000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 395,
+              "price_min": 397000,
+              "price_max": 480000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 48,
+              "price_min": 423000,
+              "price_max": 475000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 370000,
+              "max": 445000,
+              "note": "Nearby resale 4-room flats (86-92 sqm), about 14-15 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 456000,
+              "max": 598000,
+              "note": "Nearby resale 5-room flats (115-118 sqm), about 14-15 years old"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENGEM",
+          "display_name": "Tampines GreenGem",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Bedok Reservoir Road and Tampines Street 96, near Tampines West MRT station. Built using PPVC.",
+          "lat": 1.342259089584395,
+          "lng": 103.9359743480471,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 43,
+              "price_min": 134000,
+              "price_max": 154000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 117,
+              "price_min": 158000,
+              "price_max": 186000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 70,
+              "units": 104,
+              "price_min": 240000,
+              "price_max": 281000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 492,
+              "price_min": 352000,
+              "price_max": 426000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 330,
+              "price_min": 472000,
+              "price_max": 550000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 298000,
+              "max": 375000,
+              "note": "Nearby resale 3-room flats (67-68 sqm), about 5-35 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 395000,
+              "max": 500000,
+              "note": "Nearby resale 4-room flats (91-105 sqm), about 5-35 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 499000,
+              "max": 607000,
+              "note": "Nearby resale 5-room flats (121-129 sqm), about 5-35 years old"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2018-08",
+      "label": "August 2018 BTO",
+      "application_start": "2018-08-28",
+      "application_end": "2018-09-03",
+      "sources": [
+        "https://www.theonlinecitizen.com/2018/08/28/hdb-launches-5101-flats-in-august-2018-bto-and-rof-exercise/",
+        "https://web.archive.org/web/20210726095549/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/28082018-bto-aug-annex-a1v.pdf",
+        "https://web.archive.org/web/20210726095426/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/28082018-bto-aug-annex-a2.pdf",
+        "https://web.archive.org/web/20210726095525/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/28082018-annex-cv.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This press release combined a BTO exercise (4,375 flats, seeded here) with a separate Re-Offer of Balance Flats (ROF) exercise (not seeded); the real BTO admin-details annex was Annex C. Two project names in this launch — Melody Spring @ Yishun and Punggol Point Cove — were reused by HDB for unrelated later launches at the same physical sites (Nov 2018 and Sep 2019 respectively, confirmed via identical OneMap coordinates); both this launch's entries and the earlier-committed later-launch entries have been disambiguated as \"(Month Year)\" per the project name-collision convention. Punggol Point Cove (Aug 2018) and Punggol Point Woods share a single HDB price table (Annex A1 Table A1(c)) for all flat types — both seeded with identical prices for 3/4/5-Room, differing only in units; 2-Room Flexi used real per-project 99-year prices from Annex A2 instead. Their 2-Room Flexi flats have two floor-area variants (36 sqm and 45 sqm) whose unit counts were only published as a combined total, not split per project or size — so each project's 2-Room Flexi units are seeded as one combined row using that project's real 99-year-lease price band (Type 1 min to Type 2 max). They also share one resale-comparables table. Yishun Glen and Melody Spring @ Yishun (Aug 2018) share a single HDB price table for 2-Room Flexi and 4/5-Room flats (3-Room belongs only to Yishun Glen, unambiguous) — same shared-pricing-table + combined-2-Room-Flexi-variant convention, using real per-project 99-year prices from Annex A2.",
+      "projects": [
+        {
+          "project": "MELODY SPRING @ YISHUN (AUG 2018)",
+          "display_name": "Melody Spring @ Yishun (Aug 2018)",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Yishun Avenue 8 and Yishun Street 42, includes an Elderly Facility. No 3-Room flats in this project. HDB reused this project name for an unrelated later BTO launch at the same site in Nov 2018 — disambiguated by launch month/year.",
+          "lat": 1.4277974336912,
+          "lng": 103.8530890840383,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 36,
+              "units": 282,
+              "price_min": 75000,
+              "price_max": 118000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 252,
+              "price_min": 248000,
+              "price_max": 317000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 36,
+              "price_min": 334000,
+              "price_max": 405000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 303000,
+              "max": 445000,
+              "note": "Nearby resale 4-room flats (92-97 sqm), about 7-31 years old (shared comparable table with Yishun Glen)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 390000,
+              "max": 483000,
+              "note": "Nearby resale 5-room flats (111-123 sqm), about 7-31 years old (shared comparable table with Yishun Glen)"
+            }
+          ]
+        },
+        {
+          "project": "YISHUN GLEN",
+          "display_name": "Yishun Glen",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Yishun Ring Road, Yishun Street 31 and Yishun Avenue 6. Built using PPVC.",
+          "lat": 1.431358651826274,
+          "lng": 103.8474007768796,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 727,
+              "price_min": 88000,
+              "price_max": 132000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 71,
+              "units": 168,
+              "price_min": 178000,
+              "price_max": 216000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 490,
+              "price_min": 248000,
+              "price_max": 317000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 308,
+              "price_min": 334000,
+              "price_max": 405000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 303000,
+              "max": 445000,
+              "note": "Nearby resale 4-room flats (92-97 sqm), about 7-31 years old (shared comparable table with Melody Spring @ Yishun)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 390000,
+              "max": 483000,
+              "note": "Nearby resale 5-room flats (111-123 sqm), about 7-31 years old (shared comparable table with Melody Spring @ Yishun)"
+            }
+          ]
+        },
+        {
+          "project": "PUNGGOL POINT COVE (AUG 2018)",
+          "display_name": "Punggol Point Cove (Aug 2018)",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by New Punggol Road and Punggol Way. HDB reused this project name for an unrelated later BTO launch at the same site in Sep 2019 — disambiguated by launch month/year.",
+          "lat": 1.419635402182583,
+          "lng": 103.9128224429809,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 504,
+              "price_min": 109000,
+              "price_max": 158000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 92,
+              "price_min": 188000,
+              "price_max": 242000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 312,
+              "price_min": 286000,
+              "price_max": 362000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 234,
+              "price_min": 393000,
+              "price_max": 489000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 30,
+              "price_min": 411000,
+              "price_max": 469000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "2 ROOM",
+              "min": 250000,
+              "max": 268000,
+              "note": "Nearby resale 2-room flats (46-47 sqm), about 6-7 years old (shared comparable table with Punggol Point Woods)"
+            },
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 300000,
+              "max": 350000,
+              "note": "Nearby resale 3-room flats (69 sqm), about 6-7 years old (shared comparable table with Punggol Point Woods)"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 398000,
+              "max": 460000,
+              "note": "Nearby resale 4-room flats (93-95 sqm), about 6-7 years old (shared comparable table with Punggol Point Woods)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 549000,
+              "max": 628000,
+              "note": "Nearby resale 5-room flats (113-120 sqm), about 6-7 years old (shared comparable table with Punggol Point Woods)"
+            }
+          ]
+        },
+        {
+          "project": "PUNGGOL POINT WOODS",
+          "display_name": "Punggol Point Woods",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by New Punggol Road and Punggol Way",
+          "lat": 1.416805160056756,
+          "lng": 103.9101006132152,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 36,
+              "units": 387,
+              "price_min": 103000,
+              "price_max": 154000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 98,
+              "price_min": 188000,
+              "price_max": 242000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 333,
+              "price_min": 286000,
+              "price_max": 362000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 122,
+              "price_min": 393000,
+              "price_max": 489000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "2 ROOM",
+              "min": 250000,
+              "max": 268000,
+              "note": "Nearby resale 2-room flats (46-47 sqm), about 6-7 years old (shared comparable table with Punggol Point Cove)"
+            },
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 300000,
+              "max": 350000,
+              "note": "Nearby resale 3-room flats (69 sqm), about 6-7 years old (shared comparable table with Punggol Point Cove)"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 398000,
+              "max": 460000,
+              "note": "Nearby resale 4-room flats (93-95 sqm), about 6-7 years old (shared comparable table with Punggol Point Cove)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 549000,
+              "max": 628000,
+              "note": "Nearby resale 5-room flats (113-120 sqm), about 6-7 years old (shared comparable table with Punggol Point Cove)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2018-05",
+      "label": "May 2018 BTO",
+      "application_start": "2018-05-22",
+      "application_end": "2018-05-28",
+      "sources": [
+        "https://theindependent.sg/hdb-launches-6992-flats-in-may-2018-bto-and-sbf-exercise/",
+        "https://web.archive.org/web/20210726095622/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/22052018-annex-a1.pdf",
+        "https://web.archive.org/web/20210726095618/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/22052018-annex-a2.pdf",
+        "https://web.archive.org/web/20210726095820/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/22052018-annex-d.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This press release combined a BTO exercise (3,970 flats, seeded here) with a separate Sale of Balance Flats (SBF) exercise (not seeded); the real BTO admin-details annex was Annex D (this launch had 5 annexes: A1/A2 pricing, B was SBF prices, C was income-assessment-deferment eligibility conditions, D was BTO/SBF admin details). No projects here share a combined price table — every flat type's unit split, including 2-Room Flexi Type 1/Type 2, is given directly per project in Annex A1.",
+      "projects": [
+        {
+          "project": "CASA SPRING @ YISHUN",
+          "display_name": "Casa Spring @ Yishun",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Yishun Street 42 and Yishun Avenue 6. No 3-Room flats in this project.",
+          "lat": 1.426027301753449,
+          "lng": 103.8511703811854,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 120,
+              "price_min": 76000,
+              "price_max": 95000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 309,
+              "price_min": 97000,
+              "price_max": 121000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 312,
+              "price_min": 256000,
+              "price_max": 295000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 180,
+              "price_min": 335000,
+              "price_max": 386000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 48,
+              "price_min": 347000,
+              "price_max": 391000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 340000,
+              "max": 409888,
+              "note": "Nearby resale 4-room flats (90 sqm), about 7-31 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 408000,
+              "max": 470000,
+              "note": "Nearby resale 5-room flats (121-127 sqm), about 7-31 years old"
+            }
+          ]
+        },
+        {
+          "project": "FERNVALE DEW",
+          "display_name": "Fernvale Dew",
+          "town": "SENGKANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Sengkang West Road and Fernvale Lane, near Fernvale LRT station. Built using PPVC.",
+          "lat": 1.389979932052057,
+          "lng": 103.8694862501861,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 154,
+              "price_min": 99000,
+              "price_max": 127000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 372,
+              "price_min": 117000,
+              "price_max": 147000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 218,
+              "price_min": 187000,
+              "price_max": 227000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 354,
+              "price_min": 279000,
+              "price_max": 342000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 90,
+              "price_min": 362000,
+              "price_max": 426000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 370000,
+              "max": 460000,
+              "note": "Nearby resale 4-room flats (92-95 sqm), about 5-8 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 510888,
+              "max": 565000,
+              "note": "Nearby resale 5-room flats (113 sqm), about 5-8 years old"
+            }
+          ]
+        },
+        {
+          "project": "KIM KEAT BEACON",
+          "display_name": "Kim Keat Beacon",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town",
+          "location_desc": "Along Kim Keat Avenue, near Toa Payoh MRT station. No 2-Room Flexi or 5-Room flats in this project.",
+          "lat": 1.332022363272277,
+          "lng": 103.8590449536342,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 101,
+              "price_min": 245000,
+              "price_max": 292000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 441,
+              "price_min": 380000,
+              "price_max": 463000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 258800,
+              "max": 293000,
+              "note": "Nearby resale 3-room flats (67 sqm), about 22-49 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 580000,
+              "max": 620000,
+              "note": "Nearby resale 4-room flats (102 sqm), about 22-49 years old"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENVINES",
+          "display_name": "Tampines GreenVines",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Tampines Street 62, Tampines Avenue 12 and Tampines North Drive 2. No 2-Room Flexi flats in this project.",
+          "lat": 1.36379955282341,
+          "lng": 103.9437620509235,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 98,
+              "price_min": 210000,
+              "price_max": 237000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 716,
+              "price_min": 312000,
+              "price_max": 358000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 457,
+              "price_min": 422000,
+              "price_max": 495000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 405000,
+              "max": 450000,
+              "note": "Nearby resale 4-room flats (99-104 sqm), about 21-23 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 485000,
+              "max": 582000,
+              "note": "Nearby resale 5-room flats (119-124 sqm), about 21-23 years old"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2018-02",
+      "label": "February 2018 BTO",
+      "application_start": "2018-02-06",
+      "application_end": "2018-02-12",
+      "sources": [
+        "https://www.herworld.com/weddings/love-nest/tampines-woodlands-3664-new-bto-flats-launched-2018/",
+        "https://web.archive.org/web/20210726095714/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/06022018-annex-a1.pdf",
+        "https://web.archive.org/web/20210726100002/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/06022018-annex-a2.pdf",
+        "https://web.archive.org/web/20210726095720/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/06022018-annex-c.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This press release combined a BTO exercise (3,664 flats, seeded here) with a separate Re-Offer of Balance Flats (ROF) exercise (717 flats, not seeded, bringing the combined press-release headline to 4,381); Annex B was the ROF flat list, the real BTO admin-details annex was Annex C. Every flat type's unit split, including 2-Room Flexi Type 1/Type 2, is given directly per project in Annex A1 — no combined-row estimation needed except for the Tampines pair's 3/4/5-Room prices. Tampines GreenDew and Tampines GreenFoliage share a single HDB price table (Annex A1 Table A1(e)) for 3/4/5-Room flats — both seeded with identical prices, differing only in units (neither has 2-Room Flexi flats, so no combined-row ambiguity here). They also share one resale-comparables table.",
+      "projects": [
+        {
+          "project": "TAMPINES GREENDEW",
+          "display_name": "Tampines GreenDew",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Tampines North, bounded by Tampines Street 62 and Tampines North Drive 2. No 2-Room Flexi flats in this project.",
+          "lat": 1.36746767108519,
+          "lng": 103.9404082694411,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 84,
+              "price_min": 205000,
+              "price_max": 234000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 334,
+              "price_min": 296000,
+              "price_max": 353000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 308,
+              "price_min": 417000,
+              "price_max": 480000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 390000,
+              "max": 455000,
+              "note": "Nearby resale 4-room flats (99-104 sqm), about 21-23 years old (shared comparable table with Tampines GreenFoliage)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 502000,
+              "max": 587000,
+              "note": "Nearby resale 5-room flats (118-124 sqm), about 21-23 years old (shared comparable table with Tampines GreenFoliage)"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENFOLIAGE",
+          "display_name": "Tampines GreenFoliage",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Tampines North, bounded by Tampines Street 62 and Tampines North Drive 2. No 2-Room Flexi or 3-Room flats in this project.",
+          "lat": 1.3657136146831,
+          "lng": 103.9422898053626,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 310,
+              "price_min": 296000,
+              "price_max": 353000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 232,
+              "price_min": 417000,
+              "price_max": 480000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 390000,
+              "max": 455000,
+              "note": "Nearby resale 4-room flats (99-104 sqm), about 21-23 years old (shared comparable table with Tampines GreenDew)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 502000,
+              "max": 587000,
+              "note": "Nearby resale 5-room flats (118-124 sqm), about 21-23 years old (shared comparable table with Tampines GreenDew)"
+            }
+          ]
+        },
+        {
+          "project": "TECK WHYE VIEW",
+          "display_name": "Teck Whye View",
+          "town": "CHOA CHU KANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Jalan Teck Whye, next to the Bukit Panjang Delivery Base (Post Office). No 5-Room flats in this project.",
+          "lat": 1.380499700029087,
+          "lng": 103.7583526075939,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 63,
+              "price_min": 89000,
+              "price_max": 114000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 189,
+              "price_min": 111000,
+              "price_max": 139000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 84,
+              "price_min": 182000,
+              "price_max": 211000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 238,
+              "price_min": 250000,
+              "price_max": 340000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 255000,
+              "max": 298000,
+              "note": "Nearby resale 3-room flats (74 sqm), about 21-40 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 295000,
+              "max": 370000,
+              "note": "Nearby resale 4-room flats (100-104 sqm), about 21-40 years old"
+            }
+          ]
+        },
+        {
+          "project": "UBI GROVE",
+          "display_name": "Ubi Grove",
+          "town": "GEYLANG",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Ubi Avenue 1, Ubi Avenue 2 and Ubi Road 3, near Ubi MRT station. No 5-Room flats in this project.",
+          "lat": 1.327853400610266,
+          "lng": 103.8994910518029,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 40,
+              "price_min": 164000,
+              "price_max": 180000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 80,
+              "price_min": 201000,
+              "price_max": 228000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 80,
+              "price_min": 308000,
+              "price_max": 337000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 993,
+              "price_min": 429000,
+              "price_max": 501000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 282000,
+              "max": 458888,
+              "note": "Nearby resale 3-room flats (60-64 sqm), about 12-34 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 363000,
+              "max": 663000,
+              "note": "Nearby resale 4-room flats (84-91 sqm), about 12-34 years old"
+            }
+          ]
+        },
+        {
+          "project": "WOODLANDS GLADE",
+          "display_name": "Woodlands Glade",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Woodlands Avenue 9 and Gambas Avenue, near Admiralty MRT station",
+          "lat": 1.449317664636856,
+          "lng": 103.8022052595741,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 90,
+              "price_min": 71000,
+              "price_max": 92000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 195,
+              "price_min": 92000,
+              "price_max": 111000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 90,
+              "price_min": 140000,
+              "price_max": 169000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 164,
+              "price_min": 225000,
+              "price_max": 268000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 90,
+              "price_min": 279000,
+              "price_max": 339000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 307000,
+              "max": 336000,
+              "note": "Nearby resale 4-room flats (91 sqm), about 21-22 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 363000,
+              "max": 440000,
+              "note": "Nearby resale 5-room flats (120-123 sqm), about 21-22 years old"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2017-11",
+      "label": "November 2017 BTO",
+      "application_start": "2017-11-14",
+      "application_end": "2017-11-20",
+      "sources": [
+        "https://www.nas.gov.sg/archivesonline/data/pdfdoc/20171114005/Nov%202017%20BTO_SBF%20Press%20Release.pdf",
+        "https://web.archive.org/web/20210726101205/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/14112017-annex-a1.pdf",
+        "https://web.archive.org/web/20210726101133/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/14112017-annex-a2.pdf",
+        "https://web.archive.org/web/20210726101455/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/14112017-annex-c.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official press release found on the National Archives of Singapore (nas.gov.sg); Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This press release combined a BTO exercise (4,829 flats, seeded here) with a separate Sale of Balance Flats (SBF) exercise (3,401 flats, not seeded); Annex B was the SBF price list, the real BTO admin-details annex was Annex C. Anchorvale Village and Fernvale Glades share a single HDB price table (Annex A1 Table A1(e)) for 2-Room Flexi and 3-Room flats. For 3-Room, both projects' real per-project unit counts are known (103 and 104) and share the identical price. For 2-Room Flexi, only the combined total per size variant is given (167 Type 1 + 470 Type 2 across both projects) — so each project's 2-Room Flexi units are seeded as one combined row using that project's real 99-year-lease price band from Annex A2 (Type 1 min to Type 2 max). 4-Room, 5-Room and 3Gen belong only to Fernvale Glades, unambiguous. They also share one resale-comparables table.",
+      "projects": [
+        {
+          "project": "ANCHORVALE VILLAGE",
+          "display_name": "Anchorvale Village",
+          "town": "SENGKANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Anchorvale Street and Anchorvale Road, near Farmway LRT station. No 4-Room, 5-Room or 3Gen flats in this project.",
+          "lat": 1.39679315311901,
+          "lng": 103.8884373447716,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 104,
+              "price_min": 99000,
+              "price_max": 139000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 103,
+              "price_min": 178000,
+              "price_max": 215000
+            }
+          ],
+          "hdb_quoted_resale": []
+        },
+        {
+          "project": "FERNVALE GLADES",
+          "display_name": "Fernvale Glades",
+          "town": "SENGKANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Sengkang West Road, Sengkang West Way and Jalan Kayu, near Fernvale LRT station. Built using PPVC.",
+          "lat": 1.39377381328966,
+          "lng": 103.8696049056266,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 533,
+              "price_min": 90000,
+              "price_max": 134000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 104,
+              "price_min": 178000,
+              "price_max": 215000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 390,
+              "price_min": 265000,
+              "price_max": 319000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 221,
+              "price_min": 336000,
+              "price_max": 402000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 119,
+              "units": 52,
+              "price_min": 369000,
+              "price_max": 408000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 330000,
+              "max": 470000,
+              "note": "Nearby resale 4-room flats (92-94 sqm), about 5-17 years old (shared comparable table with Anchorvale Village)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 515000,
+              "max": 570000,
+              "note": "Nearby resale 5-room flats (113 sqm), about 5-17 years old (shared comparable table with Anchorvale Village)"
+            }
+          ]
+        },
+        {
+          "project": "EUNOS COURT",
+          "display_name": "Eunos Court",
+          "town": "GEYLANG",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Eunos Avenue 5, Eunos Crescent and Eunos Road 2, near Eunos MRT station. No 5-Room flats in this project.",
+          "lat": 1.321328943387048,
+          "lng": 103.9010588839309,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 20,
+              "price_min": 201000,
+              "price_max": 212000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 87,
+              "price_min": 234000,
+              "price_max": 279000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 97,
+              "price_min": 367000,
+              "price_max": 408000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 538,
+              "price_min": 522000,
+              "price_max": 591000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 435000,
+              "max": 468000,
+              "note": "Nearby resale 3-room flats (60 sqm), about 12 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 638000,
+              "max": 645000,
+              "note": "Nearby resale 4-room flats (85-90 sqm), about 12 years old"
+            }
+          ]
+        },
+        {
+          "project": "NORTHSHORE EDGE",
+          "display_name": "Northshore Edge",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Punggol Northshore district, bounded by Punggol Way and Northshore Walk, near Samudera LRT station. Built using PPVC. No 2-Room Flexi or 3-Room flats in this project.",
+          "lat": 1.414427080554137,
+          "lng": 103.9007980870825,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 96,
+              "units": 192,
+              "price_min": 287000,
+              "price_max": 347000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 196,
+              "price_min": 357000,
+              "price_max": 434000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 380000,
+              "max": 538000,
+              "note": "Nearby resale 4-room flats (93-94 sqm), about 8-16 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 457000,
+              "max": 535000,
+              "note": "Nearby resale 5-room flats (110 sqm), about 8-16 years old"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENCOURT",
+          "display_name": "Tampines GreenCourt",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Tampines North Drive 2, Tampines Street 62 and Tampines Avenue 12. Built using PPVC.",
+          "lat": 1.36677140827479,
+          "lng": 103.9394871870304,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 41,
+              "units": 56,
+              "price_min": 123000,
+              "price_max": 145000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 136,
+              "price_min": 144000,
+              "price_max": 163000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 186,
+              "price_min": 216000,
+              "price_max": 246000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 92,
+              "units": 1228,
+              "price_min": 323000,
+              "price_max": 384000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 586,
+              "price_min": 438000,
+              "price_max": 516000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 402000,
+              "max": 480000,
+              "note": "Nearby resale 4-room flats (99-104 sqm), about 21-22 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 505000,
+              "max": 575000,
+              "note": "Nearby resale 5-room flats (119-124 sqm), about 21-22 years old"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2017-08",
+      "label": "August 2017 BTO",
+      "application_start": "2017-08-01",
+      "application_end": "2017-08-07",
+      "sources": [
+        "https://www.nas.gov.sg/archivesonline/data/pdfdoc/20170801011/1%20Press%20Release%20-%20Aug%202017%20BTO%20Sales%20Launch.pdf",
+        "https://web.archive.org/web/20210726101844/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/01082017-annex-a1.pdf",
+        "https://web.archive.org/web/20210726101744/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/01082017-annex-a2.pdf",
+        "https://web.archive.org/web/20210726101726/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/01082017-annex-c.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official press release found on the National Archives of Singapore (nas.gov.sg); Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This press release combined a BTO exercise (3,897 flats, seeded here) with the inaugural Re-Offer of Balance Flats (ROF) exercise (1,394 flats, not seeded); Annex B was the ROF flat list, the real BTO admin-details annex was Annex C. Sky Vista @ Bukit Batok and West Scape @ Bukit Batok share a single HDB price table (Annex A1 Table A1(c)) for 2-Room Flexi and 3-Room flats. For 3-Room, both projects' real per-project unit counts are known (134 and 118) and share the identical price. For 2-Room Flexi, only the combined total per size variant is given (190 Type 1 + 437 Type 2 across both projects) — so each project's 2-Room Flexi units are seeded as one combined row using that project's real 99-year-lease price band from Annex A2. 4-Room and 5-Room belong only to West Scape, unambiguous. They also share one resale-comparables table.",
+      "projects": [
+        {
+          "project": "SKY VISTA @ BUKIT BATOK",
+          "display_name": "Sky Vista @ Bukit Batok",
+          "town": "BUKIT BATOK",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Bukit Batok West Avenue 6. No 4-Room or 5-Room flats in this project.",
+          "lat": 1.349367502406749,
+          "lng": 103.7453473588241,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 123,
+              "price_min": 101000,
+              "price_max": 164000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 134,
+              "price_min": 171000,
+              "price_max": 246000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 271000,
+              "max": 315000,
+              "note": "Nearby resale 3-room flats (68 sqm), about 20-34 years old (shared comparable table with West Scape @ Bukit Batok)"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 380000,
+              "max": 450000,
+              "note": "Nearby resale 4-room flats (100-103 sqm), about 20-34 years old (shared comparable table with West Scape @ Bukit Batok)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 450000,
+              "max": 585000,
+              "note": "Nearby resale 5-room flats (121-123 sqm), about 20-34 years old (shared comparable table with West Scape @ Bukit Batok)"
+            }
+          ]
+        },
+        {
+          "project": "WEST SCAPE @ BUKIT BATOK",
+          "display_name": "West Scape @ Bukit Batok",
+          "town": "BUKIT BATOK",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Bukit Batok Road and Bukit Batok West Avenue 2",
+          "lat": 1.360391104717827,
+          "lng": 103.7430043243801,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 504,
+              "price_min": 87000,
+              "price_max": 133000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 118,
+              "price_min": 171000,
+              "price_max": 246000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 340,
+              "price_min": 265000,
+              "price_max": 321000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 178,
+              "price_min": 353000,
+              "price_max": 418000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 271000,
+              "max": 315000,
+              "note": "Nearby resale 3-room flats (68 sqm), about 20-34 years old (shared comparable table with Sky Vista @ Bukit Batok)"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 380000,
+              "max": 450000,
+              "note": "Nearby resale 4-room flats (100-103 sqm), about 20-34 years old (shared comparable table with Sky Vista @ Bukit Batok)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 450000,
+              "max": 585000,
+              "note": "Nearby resale 5-room flats (121-123 sqm), about 20-34 years old (shared comparable table with Sky Vista @ Bukit Batok)"
+            }
+          ]
+        },
+        {
+          "project": "RIVERVALE SHORES",
+          "display_name": "Rivervale Shores",
+          "town": "SENGKANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Sengkang East Drive, near Serangoon Reservoir and the Bakau/Rumbia LRT stations",
+          "lat": 1.386410805008615,
+          "lng": 103.9088221773977,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 352,
+              "price_min": 78000,
+              "price_max": 100000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 722,
+              "price_min": 101000,
+              "price_max": 130000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 174,
+              "price_min": 159000,
+              "price_max": 201000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 678,
+              "price_min": 252000,
+              "price_max": 331000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 574,
+              "price_min": 317000,
+              "price_max": 399000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 348000,
+              "max": 428888,
+              "note": "Nearby resale 4-room flats (90-95 sqm), about 18-19 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 380000,
+              "max": 468000,
+              "note": "Nearby resale 5-room flats (110-115 sqm), about 18-19 years old"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2017-05",
+      "label": "May 2017 BTO",
+      "application_start": "2017-05-18",
+      "application_end": "2017-05-24",
+      "sources": [
+        "https://sgbestinvestment.wordpress.com/2017/05/19/8700-hdb-flats-on-offer-in-may-bto-balance-flat-launch/",
+        "https://web.archive.org/web/20210726101653/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporate-pr-18052017-annex-a1.pdf",
+        "https://web.archive.org/web/20210726101205/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporate-pr-18052017-annex-a2.pdf",
+        "https://web.archive.org/web/20210726101208/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporate-pr-18052017-annex-c.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s)/Estates system, preserved as-is. Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This press release combined a BTO exercise (4,802 flats, seeded here — reconciles exactly to official per-project unit tables, some secondary sources round this to ~4,600 or ~8,700 including the SBF portion) with a separate Sale of Balance Flats (SBF) exercise (not seeded); Annex B was the SBF price list, the real BTO admin-details annex was Annex C. Woodleigh Hillside is in the Bidadari precinct — town set to TOA PAYOH per the established convention for Bidadari-precinct projects (matching later launches' ParkEdge @ Bidadari and Bartley GreenRise). Marsiling Grove and Woodlands Spring share a single HDB price table (Annex A1 Table A1(e)) for 3-Room and 4-Room flats — both seeded with identical prices, differing only in units (real per-project unit splits are known for every flat type here, so no combined-row estimation was needed anywhere in this pair). All of Marsiling Grove's 2-Room Flexi units (493) and none of Woodlands Spring's belong to the combined price table's 2-Room Flexi row, confirmed by the row's total (145+348=493) matching Marsiling Grove's own unit-table total exactly — Woodlands Spring has no 2-Room Flexi flats. (Caution for future PDF table extraction: this project's row in the raw table text is genuinely missing its leading 2-Room-Flexi column, which initially looked like a left-aligned '72, 100' pair for 2-Room-Flexi/3-Room before cross-checking against the table's own Total row revealed the values actually belong to 3-Room/4-Room — always verify a combined table's per-column sums against its stated Total row before trusting apparent left-alignment.) Dakota Breeze and Pine Vista also share a price table for 2-Room Flexi and 3-Room (with real per-project unit splits, no ambiguity); 4-Room belongs only to Dakota Breeze.",
+      "projects": [
+        {
+          "project": "DAKOTA BREEZE",
+          "display_name": "Dakota Breeze",
+          "town": "GEYLANG",
+          "classification": "Mature Town",
+          "location_desc": "Junction of Jalan Satu and Jalan Dua, near Dakota MRT station. No 5-Room flats in this project.",
+          "lat": 1.310444619818069,
+          "lng": 103.8878561709794,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 166,
+              "price_min": 179000,
+              "price_max": 204000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 117,
+              "price_min": 349000,
+              "price_max": 398000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 671,
+              "price_min": 489000,
+              "price_max": 604000
+            }
+          ],
+          "hdb_quoted_resale": []
+        },
+        {
+          "project": "PINE VISTA",
+          "display_name": "Pine Vista",
+          "town": "GEYLANG",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Cassia Link and Pine Lane, near Dakota MRT station. No 4-Room or 5-Room flats in this project.",
+          "lat": 1.309813646600164,
+          "lng": 103.8859660955303,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 136,
+              "price_min": 179000,
+              "price_max": 204000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 183,
+              "price_min": 349000,
+              "price_max": 398000
+            }
+          ],
+          "hdb_quoted_resale": []
+        },
+        {
+          "project": "FOREST SPRING @ YISHUN",
+          "display_name": "Forest Spring @ Yishun",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Yishun Avenue 1",
+          "lat": 1.426234544152246,
+          "lng": 103.852433796182,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 97,
+              "price_min": 77000,
+              "price_max": 93000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 223,
+              "price_min": 94000,
+              "price_max": 113000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 67,
+              "units": 85,
+              "price_min": 157000,
+              "price_max": 177000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 251,
+              "price_min": 251000,
+              "price_max": 291000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 100,
+              "price_min": 331000,
+              "price_max": 378000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 295000,
+              "max": 330000,
+              "note": "Nearby resale 4-room flats (84 sqm), about 25-31 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 435000,
+              "max": 470888,
+              "note": "Nearby resale 5-room flats (122-127 sqm), about 25-31 years old"
+            }
+          ]
+        },
+        {
+          "project": "MARSILING GROVE",
+          "display_name": "Marsiling Grove",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Marsiling Road and Woodlands Street 13, near Marsiling MRT station. 3-Room/4-Room price shared with Woodlands Spring in the official price table.",
+          "lat": 1.436771604923712,
+          "lng": 103.7740524323047,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 145,
+              "price_min": 73000,
+              "price_max": 105000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 348,
+              "price_min": 94000,
+              "price_max": 129000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 87,
+              "price_min": 145000,
+              "price_max": 189000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 421,
+              "price_min": 236000,
+              "price_max": 318000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 187,
+              "price_min": 312000,
+              "price_max": 401000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 58,
+              "price_min": 320000,
+              "price_max": 403000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 280000,
+              "max": 303000,
+              "note": "Nearby resale 3-room flats (73 sqm), about 5-33 years old (shared comparable table with Woodlands Spring)"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 312000,
+              "max": 440000,
+              "note": "Nearby resale 4-room flats (90-94 sqm), about 5-33 years old (shared comparable table with Woodlands Spring)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 430000,
+              "max": 452000,
+              "note": "Nearby resale 5-room flats (121-123 sqm), about 5-33 years old (shared comparable table with Woodlands Spring)"
+            }
+          ]
+        },
+        {
+          "project": "WOODLANDS SPRING",
+          "display_name": "Woodlands Spring",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Woodlands Drive 60 and Woodlands Avenue 6, near Admiralty MRT station. No 2-Room Flexi, 5-Room or 3Gen flats in this project — 3-Room/4-Room price shared with Marsiling Grove in the official price table.",
+          "lat": 1.446649480143798,
+          "lng": 103.7997285550925,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 72,
+              "price_min": 145000,
+              "price_max": 189000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 100,
+              "price_min": 236000,
+              "price_max": 318000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 280000,
+              "max": 303000,
+              "note": "Nearby resale 3-room flats (73 sqm), about 5-33 years old (shared comparable table with Marsiling Grove)"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 312000,
+              "max": 440000,
+              "note": "Nearby resale 4-room flats (90-94 sqm), about 5-33 years old (shared comparable table with Marsiling Grove)"
+            }
+          ]
+        },
+        {
+          "project": "WOODLEIGH HILLSIDE",
+          "display_name": "Woodleigh Hillside",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town",
+          "location_desc": "Bidadari precinct, bounded by Bidadari Park Drive and Bartley Road, near Woodleigh MRT station",
+          "lat": 1.341947178532977,
+          "lng": 103.8744378933025,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 28,
+              "price_min": 169000,
+              "price_max": 192000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 130,
+              "price_min": 213000,
+              "price_max": 240000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 143,
+              "price_min": 328000,
+              "price_max": 368000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 680,
+              "price_min": 475000,
+              "price_max": 550000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 326,
+              "price_min": 579000,
+              "price_max": 681000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 48,
+              "price_min": 622000,
+              "price_max": 646000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 340000,
+              "max": 448000,
+              "note": "Nearby resale 3-room flats (74 sqm), about 33-35 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 515000,
+              "max": 590000,
+              "note": "Nearby resale 4-room flats (103-111 sqm), about 33-35 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 508000,
+              "max": 800000,
+              "note": "Nearby resale 5-room flats (119-143 sqm), about 33-35 years old"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2017-02",
+      "label": "February 2017 BTO",
+      "application_start": "2017-02-14",
+      "application_end": "2017-02-20",
+      "sources": [
+        "https://www.homeanddecor.com.sg/design/news/hdb-bto-feb-2017-launch-4056-flats-in-clementi-tampines-and-punggol",
+        "https://web.archive.org/web/20210726101502/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporate-pr-14022017-annex-a.pdf",
+        "https://web.archive.org/web/20210726101227/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporate-pr-14022017-annex-b.pdf",
+        "https://web.archive.org/web/20210726101331/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/coporate-pr-14022017-annex-c.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This was a standalone BTO exercise (not bundled with SBF/ROF) — 4,056 flats, reconciles exactly. Northshore Cove and Waterway Sunrise II share a single HDB price table (Annex A Table A(4)) for 2-Room Flexi/3-Room/4-Room flats. 3-Room and 4-Room have real per-project unit splits sharing identical prices. 2-Room Flexi units are only given as a combined total (212 Type 1 + 501 Type 2 across both) — seeded as one combined row per project using that project's real 99-year-lease price band from Annex B. 5-Room belongs only to Northshore Cove, unambiguous. Tampines GreenBloom and Tampines GreenFlora share one price table for 4-Room/5-Room/3Gen — all with known per-project unit splits and shared prices, no ambiguity. Clementi NorthArc and Clementi Peaks share one price table for 3-Room/4-Room/5-Room — known per-project unit splits, shared prices. 3Gen belongs only to NorthArc. Clementi Peaks comprises 4 blocks (1,104 units total) but only 2 blocks (424 units) were offered in this BTO exercise — the other 2 blocks were set aside for SERS rehousing of West Coast Road residents and are correctly excluded here.",
+      "projects": [
+        {
+          "project": "CLEMENTI NORTHARC",
+          "display_name": "Clementi NorthArc",
+          "town": "CLEMENTI",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Clementi Avenue 6 and Commonwealth Avenue West, near Clementi MRT station. No 2-Room Flexi flats in this project.",
+          "lat": 1.322908925125937,
+          "lng": 103.7631556162638,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 148,
+              "price_min": 293000,
+              "price_max": 344000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 529,
+              "price_min": 432000,
+              "price_max": 550000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 404,
+              "price_min": 571000,
+              "price_max": 694000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 98,
+              "price_min": 549000,
+              "price_max": 709000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 520000,
+              "max": 785000,
+              "note": "Nearby resale 4-room flats (90-100 sqm), about 5-39 years old (shared comparable table with Clementi Peaks)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 645000,
+              "max": 905000,
+              "note": "Nearby resale 5-room flats (110-121 sqm), about 5-39 years old (shared comparable table with Clementi Peaks)"
+            }
+          ]
+        },
+        {
+          "project": "CLEMENTI PEAKS",
+          "display_name": "Clementi Peaks",
+          "town": "CLEMENTI",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Clementi Avenue 1 and Avenue 2. Only 2 of 4 blocks (424 of 1,104 total units) offered in this exercise — the other 2 blocks were set aside for SERS rehousing of West Coast Road residents. No 2-Room Flexi or 3Gen flats among the units offered.",
+          "lat": 1.311057699923095,
+          "lng": 103.7684984892833,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 70,
+              "price_min": 293000,
+              "price_max": 344000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 237,
+              "price_min": 432000,
+              "price_max": 550000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 117,
+              "price_min": 571000,
+              "price_max": 694000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 520000,
+              "max": 785000,
+              "note": "Nearby resale 4-room flats (90-100 sqm), about 5-39 years old (shared comparable table with Clementi NorthArc)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 645000,
+              "max": 905000,
+              "note": "Nearby resale 5-room flats (110-121 sqm), about 5-39 years old (shared comparable table with Clementi NorthArc)"
+            }
+          ]
+        },
+        {
+          "project": "NORTHSHORE COVE",
+          "display_name": "Northshore Cove",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Punggol Northshore district, along Northshore Drive",
+          "lat": 1.419510944313281,
+          "lng": 103.9066622956312,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 310,
+              "price_min": 83000,
+              "price_max": 140000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 114,
+              "price_min": 163000,
+              "price_max": 210000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 207,
+              "price_min": 257000,
+              "price_max": 365000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 170,
+              "price_min": 383000,
+              "price_max": 498000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 360000,
+              "max": 440000,
+              "note": "Nearby resale 4-room flats (90-95 sqm), about 14-15 years old (shared comparable table with Waterway Sunrise II)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 512000,
+              "max": 555000,
+              "note": "Nearby resale 5-room flats (110 sqm), about 14-15 years old (shared comparable table with Waterway Sunrise II)"
+            }
+          ]
+        },
+        {
+          "project": "WATERWAY SUNRISE II",
+          "display_name": "Waterway Sunrise II",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Punggol East and Punggol Drive, along My Waterway@Punggol near Serangoon Reservoir. No 5-Room flats in this project.",
+          "lat": 1.39689499381856,
+          "lng": 103.9208778100233,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 403,
+              "price_min": 81000,
+              "price_max": 129000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 95,
+              "price_min": 163000,
+              "price_max": 210000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 516,
+              "price_min": 257000,
+              "price_max": 365000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 360000,
+              "max": 440000,
+              "note": "Nearby resale 4-room flats (90-95 sqm), about 14-15 years old (shared comparable table with Northshore Cove)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 512000,
+              "max": 555000,
+              "note": "Nearby resale 5-room flats (110 sqm), about 14-15 years old (shared comparable table with Northshore Cove)"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENBLOOM",
+          "display_name": "Tampines GreenBloom",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Along Tampines Avenue 8. No 2-Room Flexi or 3-Room flats in this project.",
+          "lat": 1.352680357438462,
+          "lng": 103.9299319328048,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 153,
+              "price_min": 299000,
+              "price_max": 347000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 111,
+              "price_min": 397000,
+              "price_max": 469000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 55,
+              "price_min": 409000,
+              "price_max": 475000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 395000,
+              "max": 460000,
+              "note": "Nearby resale 4-room flats (103-107 sqm), about 28-32 years old (shared comparable table with Tampines GreenFlora)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 455000,
+              "max": 618000,
+              "note": "Nearby resale 5-room flats (121-127 sqm), about 28-32 years old (shared comparable table with Tampines GreenFlora)"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENFLORA",
+          "display_name": "Tampines GreenFlora",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Along Tampines Avenue 8. No 2-Room Flexi or 3-Room flats in this project.",
+          "lat": 1.35462980931459,
+          "lng": 103.9312726383234,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 153,
+              "price_min": 299000,
+              "price_max": 347000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 125,
+              "price_min": 397000,
+              "price_max": 469000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 41,
+              "price_min": 409000,
+              "price_max": 475000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 395000,
+              "max": 460000,
+              "note": "Nearby resale 4-room flats (103-107 sqm), about 28-32 years old (shared comparable table with Tampines GreenBloom)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 455000,
+              "max": 618000,
+              "note": "Nearby resale 5-room flats (121-127 sqm), about 28-32 years old (shared comparable table with Tampines GreenBloom)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2016-11",
+      "label": "November 2016 BTO",
+      "application_start": "2016-11-22",
+      "application_end": "2016-11-28",
+      "sources": [
+        "https://www.nas.gov.sg/archivesonline/data/pdfdoc/20161122001/Press%20Release_Nov%202016%20BTO%20SBF%20Exercise%20.pdf",
+        "https://www.nas.gov.sg/archivesonline/data/pdfdoc/20161122001/Annex%20A1%20-%20Nov%20BTO.pdf",
+        "https://web.archive.org/web/20220203134143/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporate-pr-21112016-annex-a2.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s)/Estates system, preserved as-is. Official press release and Annex A1 found directly on the National Archives of Singapore (nas.gov.sg); Annex A2 (2-Room Flexi lease-tenure pricing) recovered via Wayback Machine from hdb.gov.sg (dated one day earlier, 21 Nov 2016, than the 22 Nov press release — an embargo/preview timestamp quirk). This was HDB's largest joint BTO+SBF exercise of 2016 (10,118 total) but only the BTO portion (5,110 flats, reconciles exactly) is seeded; the SBF portion (5,008 flats) is not. Woodleigh Glen and Woodleigh Village are in the Bidadari precinct — town set to TOA PAYOH per the established convention for Bidadari-precinct projects. Bedok Beacon, Bedok North Vale and Bedok South Horizon share one price table (Annex A1 Table A1(d)). 4-Room is shared between Bedok Beacon and Bedok South Horizon with known unit splits; 3-Room belongs only to Bedok North Vale, 5-Room only to Bedok South Horizon (unambiguous). 2-Room Flexi units are only given as a combined total across all three (154 Type 1 + 376 Type 2) — each project's known unit count is seeded as one combined row using that project's real 99-year-lease price band from Annex A2. Matilda Sundeck, Northshore Trio and Waterway Sunrise I share one price table. 4-Room and 5-Room are shared with known unit splits; 3Gen belongs only to Waterway Sunrise I. 2-Room Flexi belongs only to Northshore Trio and Waterway Sunrise I (Matilda Sundeck has none) but only the combined total across those two is given — each seeded as one combined row using real per-project 99-year prices from Annex A2. Woodleigh Glen and Woodleigh Village share one price table for 3-Room/4-Room with known unit splits. All 2-Room Flexi units (130) belong to Woodleigh Glen alone — Woodleigh Village has none — so the combined table's Type 1/Type 2 split (32/98) is unambiguously Woodleigh Glen's own real split, no estimation needed.",
+      "projects": [
+        {
+          "project": "BEDOK BEACON",
+          "display_name": "Bedok Beacon",
+          "town": "BEDOK",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Bedok North Avenue 1 and New Upper Changi Road, near Bedok MRT station. No 3-Room or 5-Room flats in this project.",
+          "lat": 1.325004604599697,
+          "lng": 103.9277703143595,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 200,
+              "price_min": 159000,
+              "price_max": 236000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 92,
+              "units": 300,
+              "price_min": 407000,
+              "price_max": 527000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 490000,
+              "max": 650888,
+              "note": "Nearby resale 4-room flats (94-105 sqm), about 8-40 years old (shared comparable table with Bedok North Vale/South Horizon)"
+            }
+          ]
+        },
+        {
+          "project": "BEDOK NORTH VALE",
+          "display_name": "Bedok North Vale",
+          "town": "BEDOK",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Bedok North Road and Bedok North Avenue 1. No 4-Room or 5-Room flats in this project.",
+          "lat": 1.329938512897832,
+          "lng": 103.9260931071866,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 121,
+              "price_min": 144000,
+              "price_max": 196000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 94,
+              "price_min": 276000,
+              "price_max": 308000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 388000,
+              "max": 498000,
+              "note": "Nearby resale 3-room flats (62 sqm), about 8-40 years old (shared comparable table with Bedok Beacon/South Horizon)"
+            }
+          ]
+        },
+        {
+          "project": "BEDOK SOUTH HORIZON",
+          "display_name": "Bedok South Horizon",
+          "town": "BEDOK",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Upper East Coast Road and Bedok South Road. No 3-Room flats in this project.",
+          "lat": 1.317678176847591,
+          "lng": 103.9473974562766,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 209,
+              "price_min": 135000,
+              "price_max": 198000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 92,
+              "units": 457,
+              "price_min": 407000,
+              "price_max": 527000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 274,
+              "price_min": 503000,
+              "price_max": 578000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 490000,
+              "max": 650888,
+              "note": "Nearby resale 4-room flats (94-105 sqm), about 8-40 years old (shared comparable table with Bedok Beacon/North Vale)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 635000,
+              "max": 748000,
+              "note": "Nearby resale 5-room flats (120-123 sqm), about 8-40 years old (shared comparable table with Bedok Beacon/North Vale)"
+            }
+          ]
+        },
+        {
+          "project": "KALLANG RESIDENCES",
+          "display_name": "Kallang Residences",
+          "town": "KALLANG/WHAMPOA",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Sims Avenue and Lorong 1 Geylang, near Kallang MRT station. No 2-Room Flexi or 5-Room flats in this project.",
+          "lat": 1.311478464349721,
+          "lng": 103.8726876948279,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 85,
+              "price_min": 350000,
+              "price_max": 411000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 158,
+              "price_min": 497000,
+              "price_max": 584000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 420000,
+              "max": 488000,
+              "note": "Nearby resale 3-room flats (67 sqm), about 6-11 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 636000,
+              "max": 685000,
+              "note": "Nearby resale 4-room flats (90-93 sqm), about 6-11 years old"
+            }
+          ]
+        },
+        {
+          "project": "MATILDA SUNDECK",
+          "display_name": "Matilda Sundeck",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Matilda district, bounded by Punggol Field, Sumang Crescent and Sumang Lane. No 2-Room Flexi or 3-Room flats in this project.",
+          "lat": 1.403762443386553,
+          "lng": 103.891553728412,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 295,
+              "price_min": 258000,
+              "price_max": 331000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 195,
+              "price_min": 329000,
+              "price_max": 412000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 380000,
+              "max": 440000,
+              "note": "Nearby resale 4-room flats (85-95 sqm), about 12-16 years old (shared comparable table with Northshore Trio/Waterway Sunrise I)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 408000,
+              "max": 488000,
+              "note": "Nearby resale 5-room flats (109-112 sqm), about 12-16 years old (shared comparable table with Northshore Trio/Waterway Sunrise I)"
+            }
+          ]
+        },
+        {
+          "project": "NORTHSHORE TRIO",
+          "display_name": "Northshore Trio",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Punggol Northshore district, bounded by Northshore Drive and Punggol Way, near Punggol Point LRT station. No 5-Room or 3Gen flats in this project.",
+          "lat": 1.418311106046376,
+          "lng": 103.9057562272529,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 198,
+              "price_min": 82000,
+              "price_max": 139000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 94,
+              "price_min": 164000,
+              "price_max": 209000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 117,
+              "price_min": 258000,
+              "price_max": 331000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 380000,
+              "max": 440000,
+              "note": "Nearby resale 4-room flats (85-95 sqm), about 12-16 years old (shared comparable table with Matilda Sundeck/Waterway Sunrise I)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 408000,
+              "max": 488000,
+              "note": "Nearby resale 5-room flats (109-112 sqm), about 12-16 years old (shared comparable table with Matilda Sundeck/Waterway Sunrise I)"
+            }
+          ]
+        },
+        {
+          "project": "WATERWAY SUNRISE I",
+          "display_name": "Waterway Sunrise I",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Punggol East, bounded by Serangoon Reservoir and My Waterway@Punggol",
+          "lat": 1.398203735651707,
+          "lng": 103.9218022898093,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 671,
+              "price_min": 80000,
+              "price_max": 126000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 80,
+              "price_min": 164000,
+              "price_max": 209000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 341,
+              "price_min": 258000,
+              "price_max": 331000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 138,
+              "price_min": 329000,
+              "price_max": 412000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 123,
+              "units": 65,
+              "price_min": 348000,
+              "price_max": 409000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 380000,
+              "max": 440000,
+              "note": "Nearby resale 4-room flats (85-95 sqm), about 12-16 years old (shared comparable table with Matilda Sundeck/Northshore Trio)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 408000,
+              "max": 488000,
+              "note": "Nearby resale 5-room flats (109-112 sqm), about 12-16 years old (shared comparable table with Matilda Sundeck/Northshore Trio)"
+            }
+          ]
+        },
+        {
+          "project": "WOODLEIGH GLEN",
+          "display_name": "Woodleigh Glen",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town",
+          "location_desc": "Bidadari precinct, bounded by Upper Serangoon Road and Bidadari Park Drive, near Woodleigh MRT station. No 5-Room flats in this project.",
+          "lat": 1.341817816311737,
+          "lng": 103.8725778031014,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 32,
+              "price_min": 181000,
+              "price_max": 194000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 98,
+              "price_min": 218000,
+              "price_max": 246000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 67,
+              "units": 130,
+              "price_min": 335000,
+              "price_max": 397000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 92,
+              "units": 428,
+              "price_min": 468000,
+              "price_max": 569000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 400000,
+              "max": 432800,
+              "note": "Nearby resale 3-room flats (74 sqm), about 33 years old (shared comparable table with Woodleigh Village)"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 523000,
+              "max": 570000,
+              "note": "Nearby resale 4-room flats (103-104 sqm), about 33 years old (shared comparable table with Woodleigh Village)"
+            }
+          ]
+        },
+        {
+          "project": "WOODLEIGH VILLAGE",
+          "display_name": "Woodleigh Village",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town",
+          "location_desc": "Bidadari precinct, bounded by Upper Serangoon Road and Bidadari Park Drive, near Woodleigh MRT station. No 2-Room Flexi or 5-Room flats in this project.",
+          "lat": 1.340497441701833,
+          "lng": 103.8722828588605,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 67,
+              "units": 171,
+              "price_min": 335000,
+              "price_max": 397000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 92,
+              "units": 159,
+              "price_min": 468000,
+              "price_max": 569000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 400000,
+              "max": 432800,
+              "note": "Nearby resale 3-room flats (74 sqm), about 33 years old (shared comparable table with Woodleigh Glen)"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 523000,
+              "max": 570000,
+              "note": "Nearby resale 4-room flats (103-104 sqm), about 33 years old (shared comparable table with Woodleigh Glen)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2016-08",
+      "label": "August 2016 BTO",
+      "application_start": "2016-08-17",
+      "application_end": "2016-08-23",
+      "sources": [
+        "https://www.hdb.gov.sg/cs/infoweb/about-us/news-and-publications/press-releases/hdb-launches-4841-flats-in-august-2016-bto-exercise",
+        "https://web.archive.org/web/20220204024616/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corppr17082016annex-ainformation-on-aug-2016-bto-projects.pdf",
+        "https://web.archive.org/web/20220204024628/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corppr17082016annex-bprice-range-for-2room-flexi-flats.pdf",
+        "https://web.archive.org/web/20220204024839/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corppr17082016-annex-cadministrative-details.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This was a standalone BTO exercise (not bundled with SBF/ROF) — 4,841 flats, reconciles exactly. Every flat type's unit split, including 2-Room Flexi Type 1/Type 2, is given directly per project in Annex A — no combined-row estimation needed anywhere in this launch. Tampines GreenVerge and Tampines GreenView share a single HDB price table (Annex A Table A(1)(b)) for 3-Room/4-Room/5-Room — both with known per-project unit splits, shared prices, no ambiguity. 3Gen belongs only to GreenVerge.",
+      "projects": [
+        {
+          "project": "BUANGKOK WOODS",
+          "display_name": "Buangkok Woods",
+          "town": "HOUGANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Buangkok Crescent and Buangkok Link, near Buangkok MRT station",
+          "lat": 1.385621999419377,
+          "lng": 103.8837680158515,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 112,
+              "price_min": 79000,
+              "price_max": 100000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 252,
+              "price_min": 106000,
+              "price_max": 127000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 97,
+              "price_min": 165000,
+              "price_max": 201000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 250,
+              "price_min": 255000,
+              "price_max": 314000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 330000,
+              "max": 388000,
+              "note": "Nearby resale 4-room flats (90 sqm), about 14-15 years old"
+            }
+          ]
+        },
+        {
+          "project": "EASTDELTA @ CANBERRA",
+          "display_name": "EastDelta @ Canberra",
+          "town": "SEMBAWANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Canberra Way and Canberra Street, near Sungei Simpang Kiri. No 2-Room Flexi or 3-Room flats in this project.",
+          "lat": 1.445158804237829,
+          "lng": 103.8349813187578,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 304,
+              "price_min": 240000,
+              "price_max": 300000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 266,
+              "price_min": 311000,
+              "price_max": 389000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 340000,
+              "max": 375000,
+              "note": "Nearby resale 4-room flats (85-90 sqm), about 13-17 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 380000,
+              "max": 425000,
+              "note": "Nearby resale 5-room flats (110-111 sqm), about 13-17 years old"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENVERGE",
+          "display_name": "Tampines GreenVerge",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Along Tampines Avenue 6. No 2-Room Flexi flats in this project.",
+          "lat": 1.362482809642557,
+          "lng": 103.9406809640135,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 244,
+              "price_min": 202000,
+              "price_max": 253000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 1106,
+              "price_min": 289000,
+              "price_max": 368000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 612,
+              "price_min": 398000,
+              "price_max": 501000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 119,
+              "units": 60,
+              "price_min": 428000,
+              "price_max": 499000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 380000,
+              "max": 475000,
+              "note": "Nearby resale 4-room flats (99-104 sqm), about 21 years old (shared comparable table with Tampines GreenView)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 470000,
+              "max": 595000,
+              "note": "Nearby resale 5-room flats (119-120 sqm), about 21 years old (shared comparable table with Tampines GreenView)"
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENVIEW",
+          "display_name": "Tampines GreenView",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Along Tampines Avenue 6. No 2-Room Flexi or 3Gen flats in this project.",
+          "lat": 1.366081228978984,
+          "lng": 103.9360083250336,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 112,
+              "price_min": 202000,
+              "price_max": 253000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 395,
+              "price_min": 289000,
+              "price_max": 368000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 207,
+              "price_min": 398000,
+              "price_max": 501000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 380000,
+              "max": 475000,
+              "note": "Nearby resale 4-room flats (99-104 sqm), about 21 years old (shared comparable table with Tampines GreenVerge)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 470000,
+              "max": 595000,
+              "note": "Nearby resale 5-room flats (119-120 sqm), about 21 years old (shared comparable table with Tampines GreenVerge)"
+            }
+          ]
+        },
+        {
+          "project": "VALLEY SPRING @ YISHUN",
+          "display_name": "Valley Spring @ Yishun",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Yishun Avenue 6 and Avenue 8",
+          "lat": 1.429102178498093,
+          "lng": 103.8511386880564,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 117,
+              "price_min": 79000,
+              "price_max": 98000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 299,
+              "price_min": 98000,
+              "price_max": 123000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 67,
+              "units": 100,
+              "price_min": 156000,
+              "price_max": 190000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 308,
+              "price_min": 251000,
+              "price_max": 297000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 300000,
+              "max": 355000,
+              "note": "Nearby resale 4-room flats (84 sqm), about 30 years old"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2016-05",
+      "label": "May 2016 BTO",
+      "application_start": "2016-05-24",
+      "application_end": "2016-05-30",
+      "sources": [
+        "https://www.nas.gov.sg/archivesonline/data/pdfdoc/20160524001/Press%20Release%20-%20May%202016%20BTO%20and%20SBF%20Exercise%20(24%20May%202016).pdf",
+        "https://www.nas.gov.sg/archivesonline/data/pdfdoc/20160524001/Annex%20A1%20-%20May%202016%20BTO%20EXERCISE%20(Final).pdf",
+        "https://web.archive.org/web/20220204055653/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporatepr24052016annex-a2.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s) system, preserved as-is. Official press release and Annex A1 found on the National Archives of Singapore (nas.gov.sg); Annex A2 (2-Room Flexi lease-tenure pricing) recovered via Wayback Machine from hdb.gov.sg. This press release combined a BTO exercise (3,770 flats, seeded here, reconciles exactly) with a separate Sale of Balance Flats (SBF) exercise (5,170 flats, not seeded). Senja Heights, Senja Ridges and Senja Valley share a single HDB price table (Annex A1 Table A1(b)). 3-Room is shared between Senja Heights and Senja Valley with known splits; 4-Room shared among all three; 5-Room shared between Senja Ridges and Senja Valley; 3Gen belongs only to Senja Ridges. 2-Room Flexi belongs only to Senja Heights and Senja Valley (Senja Ridges has none) but only the combined total across those two is given — each seeded as one combined row using real per-project 99-year prices from Annex A2. (Caution: Senja Ridges' raw table row has TWO leading blank columns — no 2-Room Flexi AND no 3-Room — so its three printed numbers (106, 62, 62) initially looked like a 3-Room/4-Room/5-Room triple before cross-checking against the table's own Total row proved they are actually 4-Room/5-Room/3Gen. Always verify column assignment against the printed Total row when a project's populated-cell count is less than the header width.)",
+      "projects": [
+        {
+          "project": "ANG MO KIO COURT",
+          "display_name": "Ang Mo Kio Court",
+          "town": "ANG MO KIO",
+          "classification": "Mature Town",
+          "location_desc": "Bounded by Ang Mo Kio Street 22 and Street 23. No 3-Room flats in this project.",
+          "lat": 1.368034523483097,
+          "lng": 103.8394255988815,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 52,
+              "price_min": 142000,
+              "price_max": 175000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 104,
+              "price_min": 176000,
+              "price_max": 214000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 234,
+              "price_min": 382000,
+              "price_max": 501000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 148,
+              "price_min": 515000,
+              "price_max": 626000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 52,
+              "price_min": 541000,
+              "price_max": 632000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 510000,
+              "max": 750000,
+              "note": "Nearby resale 4-room flats (85-96 sqm), about 11-17 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 580000,
+              "max": 888000,
+              "note": "Nearby resale 5-room flats (110-121 sqm), about 11-17 years old"
+            }
+          ]
+        },
+        {
+          "project": "BEDOK NORTH WOODS",
+          "display_name": "Bedok North Woods",
+          "town": "BEDOK",
+          "classification": "Mature Town",
+          "location_desc": "Along Bedok North Road, near Bedok Integrated Transport Hub. No 2-Room Flexi or 5-Room flats in this project.",
+          "lat": 1.329700004988613,
+          "lng": 103.9329909952738,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 110,
+              "price_min": 272000,
+              "price_max": 318000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 94,
+              "units": 247,
+              "price_min": 408000,
+              "price_max": 467000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 420000,
+              "max": 480000,
+              "note": "Nearby resale 3-room flats (62-69 sqm), about 8-9 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 600000,
+              "max": 663000,
+              "note": "Nearby resale 4-room flats (94 sqm), about 8-9 years old"
+            }
+          ]
+        },
+        {
+          "project": "EASTCREEK @ CANBERRA",
+          "display_name": "EastCreek @ Canberra",
+          "town": "SEMBAWANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Sembawang Road and Canberra Street, near Sungei Simpang Kiri",
+          "lat": 1.451738928033243,
+          "lng": 103.8304541062801,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 172,
+              "price_min": 74000,
+              "price_max": 93000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 438,
+              "price_min": 92000,
+              "price_max": 116000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 116,
+              "price_min": 151000,
+              "price_max": 181000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 350,
+              "price_min": 235000,
+              "price_max": 289000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 176,
+              "price_min": 313000,
+              "price_max": 392000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 353000,
+              "max": 385888,
+              "note": "Nearby resale 4-room flats (85-90 sqm), about 12-17 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 400000,
+              "max": 472000,
+              "note": "Nearby resale 5-room flats (110 sqm), about 12-17 years old"
+            }
+          ]
+        },
+        {
+          "project": "SENJA HEIGHTS",
+          "display_name": "Senja Heights",
+          "town": "BUKIT PANJANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Senja Road, near the Kranji Expressway. No 5-Room or 3Gen flats in this project — 3-Room/4-Room price shared with Senja Valley in the official price table.",
+          "lat": 1.387126671343536,
+          "lng": 103.7619601816822,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 253,
+              "price_min": 77000,
+              "price_max": 139000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 85,
+              "price_min": 147000,
+              "price_max": 210000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 214,
+              "price_min": 239000,
+              "price_max": 336000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 335000,
+              "max": 401000,
+              "note": "Nearby resale 4-room flats (85-91 sqm), about 16 years old (shared comparable table with Senja Ridges/Valley)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 410000,
+              "max": 470000,
+              "note": "Nearby resale 5-room flats (110-111 sqm), about 16 years old (shared comparable table with Senja Ridges/Valley)"
+            }
+          ]
+        },
+        {
+          "project": "SENJA RIDGES",
+          "display_name": "Senja Ridges",
+          "town": "BUKIT PANJANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Senja Road, near the Kranji Expressway. No 2-Room Flexi or 3-Room flats in this project — 4-Room/5-Room price shared with Senja Heights/Valley in the official price table.",
+          "lat": 1.388441737901517,
+          "lng": 103.7610452557399,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 106,
+              "price_min": 239000,
+              "price_max": 336000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 110,
+              "units": 62,
+              "price_min": 315000,
+              "price_max": 410000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 62,
+              "price_min": 316000,
+              "price_max": 407000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 335000,
+              "max": 401000,
+              "note": "Nearby resale 4-room flats (85-91 sqm), about 16 years old (shared comparable table with Senja Heights/Valley)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 410000,
+              "max": 470000,
+              "note": "Nearby resale 5-room flats (110-111 sqm), about 16 years old (shared comparable table with Senja Heights/Valley)"
+            }
+          ]
+        },
+        {
+          "project": "SENJA VALLEY",
+          "display_name": "Senja Valley",
+          "town": "BUKIT PANJANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Along Senja Road, near the Kranji Expressway. No 3Gen flats in this project — 3-Room/4-Room/5-Room price shared with Senja Heights/Ridges in the official price table.",
+          "lat": 1.388366586539617,
+          "lng": 103.7627195299523,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Types 1 & 2 combined, 99-year lease)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 400,
+              "price_min": 73000,
+              "price_max": 133000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 105,
+              "price_min": 147000,
+              "price_max": 210000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 205,
+              "price_min": 239000,
+              "price_max": 336000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 79,
+              "price_min": 315000,
+              "price_max": 410000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 335000,
+              "max": 401000,
+              "note": "Nearby resale 4-room flats (85-91 sqm), about 16 years old (shared comparable table with Senja Heights/Ridges)"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 410000,
+              "max": 470000,
+              "note": "Nearby resale 5-room flats (110-111 sqm), about 16 years old (shared comparable table with Senja Heights/Ridges)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2016-02",
+      "label": "February 2016 BTO",
+      "application_start": "2016-02-24",
+      "application_end": "2016-03-01",
+      "sources": [
+        "https://www.hdb.gov.sg/cs/infoweb/about-us/news-and-publications/press-releases/feb-2016-bto-exercise-24022016",
+        "https://web.archive.org/web/20210508095054/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporate-pr-24022016-annex-a.pdf",
+        "https://web.archive.org/web/20210508093605/https://www.hdb.gov.sg/cs/infoweb/-/media/doc/PressReleases/corporate-pr-24022016-annex-b.pdf"
+      ],
+      "_curation_note": "Predates HDB's Oct 2024 Standard/Plus/Prime classification framework — used the older Non-Mature/Mature Town(s)/Estate system, preserved as-is. Official Annex A recovered via Wayback Machine (live hdb.gov.sg URLs are dead). This was a standalone BTO exercise (not bundled with SBF/ROF) — 4,170 flats, reconciles exactly. Every project has its own standalone price table with direct 2-Room Flexi Type 1/Type 2 splits — no shared price tables or combined-row estimation needed anywhere in this launch. Alkaff Oasis is the second housing development in the Bidadari precinct — town set to TOA PAYOH per the established convention.",
+      "projects": [
+        {
+          "project": "WEST PLAINS @ BUKIT BATOK",
+          "display_name": "West Plains @ Bukit Batok",
+          "town": "BUKIT BATOK",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Bukit Batok West Avenue 5, Avenue 8 and Avenue 9, near Bukit Batok MRT station",
+          "lat": 1.356331624193062,
+          "lng": 103.7421945896279,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 188,
+              "price_min": 85000,
+              "price_max": 113000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 486,
+              "price_min": 105000,
+              "price_max": 134000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 187,
+              "price_min": 163000,
+              "price_max": 202000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 410,
+              "price_min": 266000,
+              "price_max": 325000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 384,
+              "price_min": 367000,
+              "price_max": 424000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 280000,
+              "max": 307000,
+              "note": "Nearby resale 3-room flats (68 sqm), about 18-32 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 387000,
+              "max": 500000,
+              "note": "Nearby resale 4-room flats (100-103 sqm), about 18-32 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 508000,
+              "max": 585500,
+              "note": "Nearby resale 5-room flats (120-122 sqm), about 18-32 years old"
+            }
+          ]
+        },
+        {
+          "project": "ANCHORVALE PLAINS",
+          "display_name": "Anchorvale Plains",
+          "town": "SENGKANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Bounded by Sengkang East Way and Anchorvale Lane, near Punggol Reservoir",
+          "lat": 1.393906633314163,
+          "lng": 103.8845068179018,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 128,
+              "price_min": 80000,
+              "price_max": 108000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 320,
+              "price_min": 105000,
+              "price_max": 137000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 96,
+              "price_min": 171000,
+              "price_max": 202000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 260,
+              "price_min": 267000,
+              "price_max": 330000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 117,
+              "price_min": 324000,
+              "price_max": 402000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 365000,
+              "max": 415000,
+              "note": "Nearby resale 4-room flats (90-95 sqm), about 14-16 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 380000,
+              "max": 481000,
+              "note": "Nearby resale 5-room flats (110-113 sqm), about 14-16 years old"
+            }
+          ]
+        },
+        {
+          "project": "ALKAFF OASIS",
+          "display_name": "Alkaff Oasis",
+          "town": "TOA PAYOH",
+          "classification": "Mature Town",
+          "location_desc": "Bidadari precinct (second housing development there), junction of Bidadari Park Drive and Alkaff Crescent",
+          "lat": 1.333484161789856,
+          "lng": 103.8731471766112,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 38,
+              "units": 66,
+              "price_min": 154000,
+              "price_max": 187000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 152,
+              "price_min": 195000,
+              "price_max": 244000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 68,
+              "units": 340,
+              "price_min": 303000,
+              "price_max": 356000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 800,
+              "price_min": 440000,
+              "price_max": 521000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 165,
+              "price_min": 546000,
+              "price_max": 633000
+            },
+            {
+              "bto_label": "3Gen",
+              "resale_flat_type": "MULTI-GENERATION",
+              "floor_area_sqm": 120,
+              "units": 71,
+              "price_min": 553000,
+              "price_max": 639000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 363000,
+              "max": 420000,
+              "note": "Nearby resale 3-room flats (74 sqm), about 22-33 years old"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 530000,
+              "max": 560000,
+              "note": "Nearby resale 4-room flats (104-111 sqm), about 22-33 years old"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 570000,
+              "max": 838000,
+              "note": "Nearby resale 5-room flats (119-155 sqm), about 22-33 years old"
             }
           ]
         }

@@ -1,9 +1,9 @@
-# Punggol Point Cove
+# Punggol Point Cove (Sep 2019)
 
 - **Launch**: September 2019 BTO (`2019-09`)
 - **Town**: PUNGGOL
 - **Classification**: Non-Mature Town
-- **Location**: Punggol Point district, along New Punggol Road on the eastern shoreline
+- **Location**: Punggol Point district, along New Punggol Road on the eastern shoreline. HDB reused this project name for an earlier, separate BTO launch at the same site in Aug 2018 — disambiguated by launch month/year.
 - **Coordinates**: 1.419635402182583, 103.9128224429809
 - **Estimated waiting time**: not published for this launch
 - **Application window**: 2019-09-11 to 2019-09-17

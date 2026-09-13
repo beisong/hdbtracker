@@ -1,5 +1,141 @@
 # Active Context: WorthIt
 
+## Recent Changes (Sep 2026 — BTO historical backfill batch: Feb 2017 → May 2016) — LOCAL ONLY, NOT YET COMMITTED
+
+Continued the backfill autonomously through four more launches per explicit user instruction
+("continue all the way until you face any error and pause and let me know"):
+
+- **Feb 2017** (6 projects: Clementi NorthArc/Peaks, Northshore Cove, Waterway Sunrise II, Tampines
+  GreenBloom/GreenFlora — 4,056 units). Clementi Peaks only offered 424 of its 1,104 total units in
+  this exercise (the rest went to SERS rehousing) — correctly excluded.
+- **Nov 2016** (9 projects: Bedok Beacon/North Vale/South Horizon, Kallang Residences, Matilda
+  Sundeck, Northshore Trio, Waterway Sunrise I, Woodleigh Glen/Village — 5,110 units). Woodleigh
+  Glen/Village are Bidadari-precinct → town TOA PAYOH per established convention.
+- **Aug 2016** (5 projects: Buangkok Woods, EastDelta @ Canberra, Tampines GreenVerge/GreenView,
+  Valley Spring @ Yishun — 4,841 units). Fully clean data, no combined-row estimation needed.
+- **May 2016** (6 projects: Ang Mo Kio Court, Bedok North Woods, EastCreek @ Canberra, Senja
+  Heights/Ridges/Valley — 3,770 units). **Caught a second real instance of the column-misalignment
+  bug** (first found May 2017/Woodlands Spring): Senja Ridges' raw table row has TWO leading blank
+  columns (no 2-Room Flexi, no 3-Room) — its three printed numbers initially looked like
+  3-Room/4-Room/5-Room but cross-checking against the table's Total row proved they're actually
+  4-Room/5-Room/3Gen. Caught before writing any data, using the exact verification method now
+  documented in the `seed-bto-launch` skill file.
+
+All four launches: official press releases/annexes sourced from a mix of the National Archives of
+Singapore (nas.gov.sg — several pre-2017 press releases and Annex A1s are hosted there directly,
+no Wayback needed) and Wayback Machine captures of hdb.gov.sg for the 2-Room-Flexi lease-tenure
+annexes. Every launch reconciled exactly to its official headline BTO-flat count (separate from any
+bundled SBF exercise, which is never seeded). No new project-name collisions across any of the four.
+`npm test` green throughout (240 tests, no test file changes). Dataset now spans **May 2016 → June
+2026**, 39 launches total. **None of this batch is committed, pushed, or deployed** — continuing
+further back per the user's standing instruction; will stop and report if/when a real blocker (not
+just a recoverable annex-hunting hiccup) is hit.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2017) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2017 BTO launch** (6 projects: Dakota Breeze and Pine Vista in Geylang — Mature;
+Forest Spring @ Yishun, Marsiling Grove and Woodlands Spring in Woodlands — Non-Mature; Woodleigh
+Hillside — Mature, in the Bidadari precinct, town set to TOA PAYOH per the established
+Bidadari-precinct convention — 4,802 units total, reconciles exactly to the official per-project
+unit tables; secondary sources round this to ~4,600 or ~8,700-with-SBF, both wrong/misleading).
+**Caught a genuine PDF-table-extraction bug before writing any data**: Woodlands Spring's row in
+the combined Marsiling-Grove/Woodlands-Spring unit table has no 2-Room-Flexi units, so its raw
+extracted values ("72, 100") looked like a left-aligned 2-Room-Flexi/3-Room pair, but cross-checking
+against the table's own printed Total row proved they actually belong to 3-Room/4-Room (Woodlands
+Spring has zero 2-Room Flexi flats). **General lesson recorded for future extractions**: whenever a
+combined multi-project table has a row with fewer populated cells than the full header, always
+verify the assignment against the table's stated Total row sum before writing data — left-alignment
+is only safe when the *missing* columns are at the end, not when an early column (like 2-Room
+Flexi) is the one that's blank. Dataset now spans **May 2017 → June 2026**, 35 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Aug 2017) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **August 2017 BTO launch** (3 projects: Sky Vista @ Bukit Batok and West Scape @ Bukit
+Batok in Bukit Batok, Rivervale Shores in Sengkang — all Non-Mature — 3,897 units total, reconciles
+exactly, official press release again sourced from nas.gov.sg). Sky Vista/West Scape share one
+price table: 3-Room prices are identical with real per-project unit splits, 2-Room Flexi uses the
+standard combined-row technique with real per-project 99-year prices from Annex A2. Rivervale
+Shores is fully standalone. Same recurring bundled-ROF pattern (this was the *inaugural* ROF
+exercise, 1,394 flats, not seeded); Annex B was the ROF list, Annex C the real BTO admin annex.
+No new name collisions. Dataset now spans **August 2017 → June 2026**, 34 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2017) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2017 BTO launch** (5 projects: Anchorvale Village and Fernvale Glades in
+Sengkang — Non-Mature; Eunos Court in Geylang, Tampines GreenCourt in Tampines — Mature; Northshore
+Edge in Punggol — Non-Mature — 4,829 units total, reconciles exactly to the official press release
+sourced from the National Archives of Singapore, nas.gov.sg, rather than a Wayback capture of
+hdb.gov.sg). Anchorvale Village/Fernvale Glades share one price table: their 3-Room prices are
+identical with real per-project unit splits (no ambiguity), while their 2-Room Flexi units use the
+by-now-standard combined-row technique (real per-project 99-year price from Annex A2, since only
+the launch-wide Type 1/Type 2 total was published). **Hit and recovered from a genuine download
+truncation**: the first `curl --compressed` fetch of Annex A1 silently produced a file that `file`
+reported as a valid-looking PDF but which `pypdf` rejected as "Stream has ended unexpectedly" — the
+byte count matched the previous *attempt's* content-length but not the actual complete file; a
+plain re-fetch (no backgrounding) produced a file ending in a proper `%%EOF` marker and parsed
+cleanly. Lesson: `file`'s PDF magic-byte check is not proof of a complete download — for any file
+that fails to parse, re-fetch once before assuming the source itself is broken. Dataset now spans
+**November 2017 → June 2026**, 33 launches total. `npm test` green (240 tests, no test file
+changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Feb 2018) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **February 2018 BTO launch** (5 projects: Teck Whye View in Choa Chu Kang and Woodlands
+Glade in Woodlands — Non-Mature; Tampines GreenDew, Tampines GreenFoliage, and Ubi Grove in
+Geylang — Mature — 3,664 units total, reconciles exactly). Fully clean data: every flat type
+including 2-Room Flexi Type 1/Type 2 given per-project directly, except the Tampines pair's shared
+3/4/5-Room price table (handled per the standard shared-pricing convention — no ambiguity since
+neither project has 2-Room Flexi). Same recurring bundled-ROF-exercise pattern (717 flats, not
+seeded); Annex B was the ROF list, Annex C the real BTO admin annex. No new name collisions.
+Dataset now spans **February 2018 → June 2026**, 32 launches total. `npm test` green (240 tests,
+no test file changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2018) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2018 BTO launch** (4 projects: Casa Spring @ Yishun and Fernvale Dew — Non-Mature;
+Kim Keat Beacon in Toa Payoh and Tampines GreenVines in Tampines — Mature — 3,970 units total,
+reconciles exactly). Clean like Nov 2018: no shared price tables, every flat type (including
+2-Room Flexi Type 1/Type 2) given per-project directly in Annex A1 — no combined-row estimation
+needed. This launch had 5 annexes with an unusual letter assignment: A1/A2 pricing, B was SBF
+prices (not seeded), **C was income-assessment-deferment eligibility conditions (not an admin or
+pricing annex at all)**, D was the real BTO/SBF admin-details annex — worth remembering that annex
+letters on pre-2020 launches carry no fixed meaning and must be opened to identify, not assumed.
+No new name collisions this launch. Dataset now spans **May 2018 → June 2026**, 31 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Aug 2018) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **August 2018 BTO launch** (4 projects: Melody Spring @ Yishun (Aug 2018) and Yishun Glen
+in Yishun, Punggol Point Cove (Aug 2018) and Punggol Point Woods in Punggol — all Non-Mature — 4,375
+units total, reconciles exactly). **Two new project-name collisions found and fixed**: HDB reused
+both "Melody Spring @ Yishun" (this launch vs the already-committed Nov 2018 entry) and "Punggol
+Point Cove" (this launch vs the already-committed Sep 2019 entry) for unrelated launches at the same
+physical sites — confirmed via identical OneMap coordinates. Both pairs disambiguated as
+"(Month Year)" per the standing collision convention: edited the two already-committed JSON entries
+(`scripts/bto_launches.json` lines ~9774 `PUNGGOL POINT COVE` → `PUNGGOL POINT COVE (SEP 2019)`, and
+~10615 `MELODY SPRING @ YISHUN` → `MELODY SPRING @ YISHUN (NOV 2018)`), regenerated their
+`bto_launches_info/` reference `.md` files under the new slugs, and deleted the old un-suffixed
+files. **This means the previous commit's data for those two projects has technically changed** —
+worth mentioning if the user asks why already-committed files show as modified/renamed in the next
+`git status`. Dataset now spans **August 2018 → June 2026**, 30 launches total. `npm test` green
+(240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2018) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2018 BTO launch** (5 projects: EastGlen @ Canberra in Sembawang, Fernvale
+Acres in Sengkang, Melody Spring @ Yishun in Yishun, Plantation Grove in Tengah — all Non-Mature;
+Tampines GreenGem — Mature — 3,802 units total, reconciles exactly to the press-release headline).
+Notably cleaner than every 2019 launch: no shared/combined price tables between projects, and even
+2-Room Flexi Type 1/Type 2 unit splits are given directly per project in Annex A1 — no combined-row
+estimation technique needed here. Same recurring pattern of a bundled Sale of Balance Flats (SBF)
+exercise under the same press release (not seeded); real BTO admin annex was Annex C. This session's
+first launch already fully committed and pushed (`7010a1d`, covering Feb 2019 → Feb 2020) — this
+Nov 2018 entry is queued alongside it, not yet committed. Dataset now spans **November 2018 → June
+2026**, 29 launches total. `npm test` green (240 tests, no test file changes). **Not yet committed,
+pushed, or deployed.**
+
 ## Recent Changes (Sep 2026 — BTO historical backfill: Feb 2019) — LOCAL ONLY, NOT YET COMMITTED
 
 Added the **February 2019 BTO launch** (5 projects: Boon Lay Glade and Jurong West Jewel in Jurong

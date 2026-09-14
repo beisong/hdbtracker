@@ -1,5 +1,436 @@
 # Active Context: WorthIt
 
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2010, gap-fill) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2010 BTO launch** (1 entry: Yishun Greenwalk — 1,176 units, reconciles exactly).
+Another gap-fill: not in kendata12345.wordpress.com's own roadmap index (which jumped straight from
+Oct 2010 to Jan 2011). Recovered the full press release via Wayback Machine. By this launch, HDB had
+offered ~16,700 new flats under BTO+SBF since the start of 2010. Previewed a December 2010 Punggol
+launch (1,010 flats) — yet another gap to fill next, before reaching kendata's next indexed launch
+(May 2010, Boon Lay Grove). Dataset now spans **November 2010 → June 2026**, 69 launches total. `npm
+test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.** Given how
+many gaps have turned up in kendata's index near the 2010/2011 boundary, should treat every "next
+launch preview" sentence in a recovered press release as authoritative over any third-party roadmap
+index — the roadmap is a helpful starting point, not a complete list.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Oct 2010) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **October 2010 BTO launch** (2 entries: Senja Parc View — Bukit Panjang, Standard;
+Anchorvale Horizon — Sengkang, Premium — 1,322 units total, reconciles exactly). Full press release
+recovered via kendata12345.wordpress.com with exact unit counts and price ranges. By this launch, HDB
+had offered 15,527 new flats under BTO+SBF since the start of 2010. The source previewed a November
+2010 Yishun launch (~1,170 flats) that isn't in kendata's own roadmap index — another gap to fill,
+same pattern as February 2011. Dataset now spans **October 2010 → June 2026**, 68 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+Continuing to backfill further back per the standing instruction — need to find and fill the November
+2010 gap before reaching May 2010 (Boon Lay Grove) and January 2010 (Limbang Green, Buangkok Vale)
+per the kendata12345 roadmap.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Feb 2011, gap-fill) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **February 2011 BTO launch** (3 entries: Fernvale Flora & Fernvale Gardens — Sengkang;
+Segar Vale — Bukit Panjang — 1,593 units total, reconciles exactly). This was a **gap-fill**: the
+January 2011 press release (already added) previewed this launch, revealing it fell chronologically
+between the already-added January and March 2011 launches — added out of strict backward order to
+close the gap before continuing further back. Segar Vale's per-type breakdown was reconstructed by
+subtraction (secondary source's copy was truncated exactly at Segar Vale's project-description
+paragraph) — 690-unit total independently confirmed against btohq.com. Dataset now spans **February
+2011 → June 2026**, 67 launches total. `npm test` green (240 tests, no test file changes). **Not yet
+committed, pushed, or deployed.** Continuing to backfill further back per the standing instruction —
+next target is 2010 (Jan: Limbang Green + Buangkok Vale; May: Boon Lay Grove; Oct: Senja Parc View),
+per the kendata12345 roadmap. Should also double check no other such gaps exist before Jan 2011.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jan 2011) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **January 2011 BTO launch** (3 entries: Golden Daisy — Bukit Batok, Studio Apartment only,
+targeted at elderly right-sizers; Orchid Spring @ Yishun & Vista Spring @ Yishun — kept standalone
+despite a shared price table — 1,728 units total, reconciles exactly). Full press release recovered
+via kendata12345.wordpress.com with exact unit counts and price ranges. The source previewed the next
+(February 2011) launch: ~1,600 flats in Bukit Panjang and Sengkang — not yet found in kendata's own
+index, to search for directly next. Dataset now spans **January 2011 → June 2026**, 66 launches
+total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or
+deployed.** Continuing to backfill further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Mar 2011) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **March 2011 BTO launch** (2 entries: Boon Lay Fields — Jurong West, Standard; Compassvale
+Ancilla — Sengkang, Premium — 1,527 units total, reconciles exactly). Recovered the full press
+release via Wayback Machine, with exact per-project unit counts AND exact price ranges (both min and
+max — better than April 2011's tier-only pricing). Introduced two policy changes: BTO
+application-to-selection turnaround halved, and a Mobile@HDB iPhone app. Correcting a mislabel found
+in kendata12345.wordpress.com's own category index (which filed this cluster under "Jul 2011") — the
+actual press release confirms 24 Mar 2011. Floor area (sqm) remains unconfirmed for this launch (the
+small Annex PDFs were never crawled by Wayback) — recorded null, same pattern as April 2011.
+Compassvale Ancilla's 224 Studio Apartment units are a single un-split row (no per-size breakdown
+published this time). Dataset now spans **March 2011 → June 2026**, 65 launches total. `npm test`
+green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.** Continuing to
+backfill further back per the standing instruction — next is January 2011 (Golden Daisy, Bukit
+Batok), per the kendata12345 roadmap.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Apr 2011) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **April 2011 BTO launch** (4 entries: Anchorvale Cove — Sengkang, Premium; Hougang
+Parkview — Standard; Montreal Ville — Sembawang, Standard; Waterway Terraces II — Punggol, Premium —
+3,185 units total, reconciles exactly). "The largest supply of BTO flats in a single launch since
+2002" at the time. Recovered the full press release (not just an Annex table) via
+kendata12345.wordpress.com, with exact per-project unit counts given in prose. **New partial-data
+pattern**: unlike the null-placeholder cases (where the per-type split itself was unknown), here the
+split and flat types ARE exact and confirmed, but neither floor_area_sqm nor price_max is published
+anywhere recoverable (only tier-level 'from' prices — Standard vs Premium) — recorded with
+floor_area_sqm/price_max null but resale_flat_type/price_min set normally, confirmed via
+`/api/bto/project-overview` spot-check to render and compute resale comparisons gracefully (comps
+logic degrades cleanly, discount_pct shows null, no crash). Dataset now spans **April 2011 → June
+2026**, 64 launches total. `npm test` green (240 tests, no test file changes). **Not yet committed,
+pushed, or deployed.** Continuing to backfill further back per the standing instruction — next is
+March 2011 (Boon Lay Fields & Compassvale Ancilla), per a full kendata12345 index built this session
+covering every launch back to January 2010.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2011) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2011 BTO launch** (7 entries: Anchorvale Harvest & Fernvale Rivergrove —
+Sengkang; Golden Peony — Jurong West; Teban View — Jurong East; Waterway Brooks & Waterway Woodcress
+— Punggol; Yio Chu Kang Vista — Ang Mo Kio, Mature — 5,415 units total, reconciles exactly). **Full
+official Annex A1 recovered** via kendata12345.wordpress.com (archived as
+`bto_launches_info/2011-09-annex-a1-flat-supply.pdf`). Notable pattern: two project pairs share one
+combined *pricing* table in the official Table A1a, but the Annex's own prose paragraphs give exact,
+independently-verified unit counts per project — recorded as four standalone entries (not two
+combined ones, unlike every other combined case in this backfill) to preserve accurate per-project
+locations for mapping/search, with only the price range staying blended across each pair (documented
+in the curation note). Part of a bumper joint BTO+SBF launch (8,200+ flats); the 2,847-unit SBF
+portion excluded per convention. Dataset now spans **September 2011 → June 2026**, 63 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+Continuing to backfill further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2011) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2011 BTO launch** (7 entries: Acacia Breeze @ Yishun; Golden Cassia — Bedok,
+Mature; Hougang Capeview & Hougang DewCourt — kept standalone despite a shared official pricing
+table, since real per-project tender-contract data exists for both; Waterway Ridges & Waterway Banks
+— Punggol; Fajar Spring — Bukit Panjang — 4,235 units total, reconciles exactly). Corrected Acacia
+Breeze's 5-Room price_min from an internally-inconsistent $227,000 (an OCR misread in the
+kendata12345 source image — lower than the 4-Room minimum, which can't be right) to $277,000,
+cross-checked against singpromos's independently-sourced summary table. **Third and fourth
+unrecoverable-split cases**: Waterway Banks (1,016 units) and Fajar Spring (264 units) both have
+confirmed totals but no discoverable per-type split — same null-placeholder pattern as Punggol Edge
+and Ping Yi Greens. Dataset now spans **November 2011 → June 2026**, 62 launches total. `npm test`
+green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.** Continuing to
+backfill further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jan 2012) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **January 2012 BTO launch** (4 entries: Fernvale Lea — Sengkang; Sunshine Gardens — Choa
+Chu Kang; Tampines Alcoves & Tampines GreenTerrace combined — Mature; Waterway Sunbeam — Punggol —
+3,923 units total, reconciles exactly). This was HDB's first BTO launch of 2012. **Full official
+Annex A recovered** — kendata12345.wordpress.com hosts the actual HDB press-release PDF (not a
+rasterized cost-analysis image like other nearby launches), archived as
+`bto_launches_info/2012-01-annex-a-flat-supply.pdf`, giving exact data for every project with zero
+reconstruction needed. Tampines Alcoves & Tampines GreenTerrace combined per HDB's own official
+table: Studio Apartment rows are Tampines-Alcoves-exclusive, the 4-Room row is
+Tampines-GreenTerrace-exclusive, but the 3-Room row is explicitly shared across both in the official
+Table A1. Dataset now spans **January 2012 → June 2026**, 61 launches total. `npm test` green (240
+tests, no test file changes). **Not yet committed, pushed, or deployed.** Continuing to backfill
+further back per the standing instruction — HDB's BTO system was introduced in 2002, so roughly a
+decade of history remains.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Mar 2012) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **March 2012 BTO launch** (7 entries: Skyline I & II @ Bukit Batok combined; Fajar Hills —
+Bukit Panjang; Golden Kismis — Bukit Timah, Mature; Clementi Ridges — Mature; MacPherson Residency —
+Geylang, Mature; Golden Clover — Toa Payoh, Mature; Ping Yi Greens — Bedok, Mature — 4,153 units
+total, reconciles exactly). Note: the singpromos.com source URL is mis-dated ("28 May – 3 Apr 2012")
+but the article body confirms this is genuinely March 2012 (28 Mar – 3 Apr). Recovered full
+official-quality data for 6 of 7 clusters via kendata12345.wordpress.com's rasterized cost-analysis
+images (archived as `bto_launches_info/2012-03-*-source.jpg`). **Second unrecoverable-split case**
+(same pattern as Punggol Edge, May 2012): Ping Yi Greens — HDB's first-ever Multi-Generation Priority
+Scheme (MGPS) pilot — has a confirmed 418-unit total and per-type 'from' prices but no discoverable
+2-Room/3-Room/4-Room split; recorded with the same null-placeholder pattern. Dataset now spans
+**March 2012 → June 2026**, 60 launches total. `npm test` green (240 tests, no test file changes).
+**Not yet committed, pushed, or deployed.** Continuing to backfill further back per the standing
+instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2012) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2012 BTO launch** (6 entries: Keat Hong Pride — Choa Chu Kang; Punggol Edge &
+Waterway SunDew — Punggol; Bendemeer Light & McNair Towers — Kallang/Whampoa, Mature; Compassvale
+Boardwalk — Sengkang — 4,627 units total, reconciles exactly). Recovered full official-quality data
+for 5 of 6 projects via rasterized tender-cost-analysis images on kendata12345.wordpress.com
+(archived as `bto_launches_info/2012-05-*-source.jpg`). **First genuine unrecoverable-split case in
+the entire backfill**: Punggol Edge (an integrated 688-unit BTO + 446-unit rental development) has a
+confirmed total (matches both the reconciliation gap and btohq.com independently) and confirmed
+per-type 'from' prices, but no source anywhere publishes its 3-Room/4-Room/5-Room unit split despite
+exhaustive search — recorded as a single row with `resale_flat_type`/`floor_area_sqm`/`price_min`/
+`price_max` all `null` (the schema's existing placeholder-row pattern, confirmed via
+`/api/bto/project-overview` spot-check to render safely with no crash — frontend shows 'Price TBD'
+and '-- sqft' gracefully) rather than fabricating a split. Dataset now spans **May 2012 → June
+2026**, 59 launches total. `npm test` green (240 tests, no test file changes). **Not yet committed,
+pushed, or deployed.** Continuing to backfill further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jul 2012) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **July 2012 BTO launch** (7 standalone entries: Keat Hong Axis — Choa Chu Kang; Punggol
+Opal & Waterway Cascadia — Punggol; Clementi Gateway — Mature; Depot Heights & Telok Blangah
+Ridgeview — Bukit Merah, Mature; GreenTops @ Sims Place — Geylang, Mature — 4,191 units total,
+reconciles exactly). Official Annex A PDF was linked in the Wayback-archived press release but the
+PDF itself was never actually crawled — reconstructed from singpromos.com instead. Clementi Gateway
+had the same secondary-source gap seen with Nov 2012's Keat Hong Mirage (only a price summary, no
+per-type unit counts) — recovered its exact 134×3-Room / 144×4-Room split from a rasterized official
+cost-analysis table image on kendata12345.wordpress.com (archived as
+`bto_launches_info/2012-07-clementi-gateway-unit-split-source.jpg`), whose price ranges matched
+singpromos's figures exactly, confirming it traces back to the real Annex A. GreenTops @ Sims Place's
+Studio Apartments are 36/46 sqm rather than the usual 37/47 sqm — verified directly in the source
+table. Dataset now spans **July 2012 → June 2026**, 58 launches total. `npm test` green (240 tests,
+no test file changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further
+back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2012) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2012 BTO launch** (7 standalone entries: Keat Hong Quad — Choa Chu Kang;
+Golden Saffron & TreeTrail @ Woodlands — Woodlands; Cheng San Court & Teck Ghee Parkview — Ang Mo
+Kio, Mature; Tampines GreenLace — Mature; Tenteram Peak — Kallang/Whampoa, Mature — 3,727 units
+total, reconciles exactly). Official Annex A1 DOCX referenced by the press release was linked in the
+Wayback-archived press-release page but the DOCX itself was never actually crawled (404/dedup-revisit
+stub) — reconstructed from singpromos.com's full detailed table instead, which reconciled exactly.
+Concurrent SBF exercise (3,328 balance flats) excluded per convention. Teck Ghee Parkview piloted
+HDB's first 'open kitchen' layout concept. Fixed a naming-convention bug caught via the API
+resolve spot-check: TreeTrail @ Woodlands was initially keyed as 'TREETRAIL@WOODLANDS' (no spaces,
+copied verbatim from OneMap's compact building-name format) which silently broke `/api/resolve`
+exact-match lookups — corrected to 'TREETRAIL @ WOODLANDS' matching the ' @ ' spacing convention
+used by every other `@`-named project in the dataset (e.g. 'OAK VILLE @ AMK'). Dataset now spans
+**September 2012 → June 2026**, 57 launches total. `npm test` green (240 tests, no test file
+changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further back per the
+standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2012) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2012 BTO launch** (7 standalone entries: Keat Hong Mirage — Choa Chu Kang;
+Compassvale Mast & Rivervale Delta — Sengkang; Fengshan GreenVille — Bedok, Mature; Ghim Moh Edge —
+Queenstown, Mature; Joo Seng Green & Toa Payoh Crest — Toa Payoh, Mature — 6,463 units total,
+reconciles exactly). Largest annual BTO supply since the system's 2002 introduction (27,084 units for
+2012). Notable recovery: found and downloaded the actual **official Annex A PDF** via Wayback Machine
+CDX search on the old hdb.gov.sg Lotus Notes domain (`fi10297p.nsf/ImageView/...`) — archived as
+`bto_launches_info/2012-11-annex-a-flat-supply.pdf`. This superseded an initial singpromos.com-based
+reconstruction that had grouped some projects under shared page headers (e.g. 'Rivervale Delta &
+Compassvale Mast'), which looked like the partial-combine pattern seen elsewhere in this backfill —
+the official Annex A revealed all 7 projects actually have fully independent, standalone unit-supply
+tables, so no combined entries were needed after all. Lesson: a secondary source's shared table
+formatting can look like a genuine multi-project combine when it's actually just page layout —
+always keep searching for the primary source before concluding a combine is necessary. Joo Seng
+Green resolves to Toa Payoh town per HDB's own press-release text, despite being geographically
+closer to Potong Pasir/Woodleigh. Dataset now spans **November 2012 → June 2026**, 56 launches
+total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or
+deployed.** Continuing to backfill further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jan 2013) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **January 2013 BTO launch** (6 standalone entries: Hougang ParkEdge; Keat Hong Colours —
+Choa Chu Kang; Oleander Breeze @ Yishun; Kebun Baru Court — Ang Mo Kio, Mature; Tampines GreenForest
+— Mature; Whampoa Dew — Kallang/Whampoa, Mature — 3,346 units total, reconciles exactly). First
+tranche of HDB's planned 23,000 BTO flats for 2013. Introduced the Parenthood Priority Scheme (PPS),
+announced 2013-01-21, setting aside 30%/50% of BTO/SBF supply for first-timer married couples with a
+young child. No 2-Room flats offered anywhere in this launch. All 6 projects standalone — no
+combined entries needed. Dataset now spans **January 2013 → June 2026**, 55 launches total. `npm
+test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.** Reached
+the start of 2013 — continuing to backfill into 2012 and earlier per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Mar 2013) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **March 2013 BTO launch** (4 standalone entries: Compassvale Cape & Compassvale Helm —
+Sengkang; Matilda Portico — Punggol; SkyPeak @ Bukit Batok — 3,898 units total, reconciles exactly).
+No combined entries needed — every project has its own standalone unit/price table. Compassvale Cape
+and Compassvale Helm each have two Studio Apartment size variants. Dataset now spans **March 2013 →
+June 2026**, 54 launches total. `npm test` green (240 tests, no test file changes). **Not yet
+committed, pushed, or deployed.** Continuing to backfill further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2013) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2013 BTO launch** (6 entries: EastBrook, EastWave & EastBank @ Canberra combined —
+Sembawang; Golden Mint — Hougang/Buangkok; Hougang Crimson; Keat Hong Crest — Choa Chu Kang; Spring
+Haven @ Jurong — Jurong West; Woodlands Pasture I & II combined — 4,900 units total, reconciles
+exactly). Combined with a Sale of Balance Flats (SOBF) exercise — SBF excluded per convention.
+Introduced three new first-timer/second-timer/elderly housing measures from the 2013 Committee of
+Supply debate. EastBrook/EastWave/EastBank @ Canberra is the first 3-way partial-combine seen in
+this backfill: 2-Room/3-Room exclusive to EastBrook, 4-Room shared across all three, 5-Room shared
+between EastWave and EastBank only — no further split published. Dataset now spans **May 2013 → June
+2026**, 53 launches total. `npm test` green (240 tests, no test file changes). **Not yet committed,
+pushed, or deployed.** Continuing to backfill further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jul 2013) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **July 2013 BTO launch** (3 entries: Vine Grove @ Yishun & Angsana Breeze @ Yishun
+combined; Fernvale Riverwalk — Sengkang; Telok Blangah ParcView — Bukit Merah, Mature Estate —
+3,861 units total, reconciles exactly). This was the launch that introduced HDB's first-ever direct
+BTO purchase pathway for singles (previously resale-only) — a 519-unit table of new-project (301) +
+previous-exercise-balance (218) 2-Room flats for singles was excluded per the established
+balance-flat convention, matching the press release's own stated breakdown exactly. Vine Grove &
+Angsana Breeze combined per the same partial-combine pattern as Boon Lay View & Yung Kuang Court
+(Nov 2013). Dataset now spans **July 2013 → June 2026**, 52 launches total. `npm test` green (240
+tests, no test file changes). **Not yet committed, pushed, or deployed.** Continuing to backfill
+further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2013) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2013 BTO launch** (4 entries: Matilda Edge — Punggol; The Verandah @ Matilda &
+Waterway View combined — Punggol; Khatib Court — Yishun; Palm Breeze @ Yishun & Saraca Breeze @
+Yishun combined — 4,156 units total, reconciles exactly). Two Non-Mature towns only (Punggol,
+Yishun). A separate 1,137-unit "additional 2-Room" balance-flat table spanning 8 towns was excluded
+per the established balance-flat convention (not tied to a discrete BTO project). Both combined
+entries follow the same partial-combine pattern first seen with Boon Lay View & Yung Kuang Court
+(Nov 2013): one project has an exclusive flat-type row while the larger types are jointly labeled
+across both projects with no further split published. Dataset now spans **September 2013 → June
+2026**, 51 launches total. `npm test` green (240 tests, no test file changes). **Not yet committed,
+pushed, or deployed.** Continuing to backfill further back per the standing instruction.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2013) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2013 BTO launch** (5 projects: Admiralty Grove — Woodlands; Boon Lay View &
+Yung Kuang Court combined — Jurong West; EastLawn @ Canberra — Sembawang; Hougang Meadow; West
+Ridges @ Bukit Batok — 4,978 units total, reconciles exactly). No official Annex recoverable via any
+channel (live URL, Wayback CDX, NAS) — reconstructed from singpromos.com's full per-project supply
+table. First 3Gen flats ever offered in a BTO launch, exclusive to Boon Lay View. Boon Lay View &
+Yung Kuang Court is a new twist on the combined-entry convention: HDB's own summary table names
+3-Room/3Gen as belonging solely to Boon Lay View while jointly labeling only the 4-Room/5-Room rows
+across both projects — cross-checked against btohq.com project specs (Boon Lay View 810 units,
+Yung Kuang Court 528 units, sum matches this table's combined total exactly) to confirm these are
+genuinely two separate developments, not a naming quirk, before deciding to combine (same pattern as
+Marsiling Greenview & Admiralty Flora, May 2014). This was HDB's largest joint BTO+SBF exercise to
+date (8,952 total flats); SBF portion excluded per convention. Dataset now spans **November 2013 →
+June 2026**, 50 launches total. `npm test` green (240 tests, no test file changes). **Not yet
+committed, pushed, or deployed** — 10 launches now queued since the last commit (`80dc085`).
+Continuing to backfill further back per the standing instruction, next target October/earlier 2013.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jan 2014) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **January 2014 BTO launch** (6 projects, all standalone — no combined entries needed:
+Woodlands Glen, Punggol Vue, Punggol BayView, Golden Lavender — Jurong West, Bukit Gombak Vista —
+Bukit Batok, Golden Ginger — Serangoon/Mature — 3,139 units total, reconciles exactly). First
+launch to introduce HDB's now-standard eco-features suite. Punggol BayView is a "Premium Flats"
+project with distinct "Typical" and "Special" (balcony/enlarged master bedroom) unit variants,
+handled as separate flat rows within one project entry — verified this renders correctly via
+`/api/bto/project-overview`. Dataset now spans **January 2014 → June 2026**, 49 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed** — 10
+launches now queued since the last commit (`80dc085`).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Mar 2014) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **March 2014 BTO launch** (3 entries: EastLace @ Canberra & EastCrown @ Canberra
+combined — Sembawang; Fern Grove @ Yishun; Anchorvale Parkview — Sengkang — 3,497 units total,
+reconciles exactly). All-Non-Mature launch (no mature-town project this time). Standalone exercise,
+no bundled SBF. Dataset now spans **March 2014 → June 2026**, 48 launches total. `npm test` green
+(240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2014) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2014 BTO launch** (2 combined entries: Marsiling Greenview & Admiralty Flora —
+Woodlands; West Valley @ Bukit Batok & West Crest @ Bukit Batok — 3,071 units total, reconciles
+exactly). Notably this source's price table names exactly which project(s) each flat-type row
+belongs to (e.g. "3-Room belongs only to West Valley, 5-Room only to West Crest, 2-Room/4-Room
+shared") — more granular than most pre-2015 launches, but still not granular enough to fully split
+the shared rows, so both pairs remain combined per the established convention. Dataset now spans
+**May 2014 → June 2026**, 47 launches total. `npm test` green (240 tests, no test file changes).
+**Not yet committed, pushed, or deployed** — accumulated queue since the last commit (`80dc085`) is
+now 7 launches (Feb/Nov/Sep/Jul/May 2014, Feb/Nov 2015 plus May 2015 — will keep going per the
+standing instruction to backfill without stopping absent a real blocker).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jul 2014) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **July 2014 BTO launch** (5 entries: Sun Natura — Sembawang; Park Grove @ Yishun; Waterway
+Sunray & Matilda Court combined — Punggol; Kampung Admiralty — Woodlands; Toa Payoh Apex — Mature —
+3,841 units total, reconciles exactly). Kampung Admiralty here is specifically the residential
+(Studio-Apartment-only) component of Singapore's first-ever integrated eldercare/medical/hawker/
+retail development — a notable historical landmark project. Dataset now spans **July 2014 → June
+2026**, 46 launches total. `npm test` green (240 tests, no test file changes). **Not yet committed,
+pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2014) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2014 BTO launch** (4 entries: Yung Ho Spring I & II combined — Jurong West;
+Buangkok Square & Buangkok Edgeview combined — Hougang; West Terra @ Bukit Batok; St George's
+Towers — Kallang/Whampoa — 4,630 units total, reconciles exactly). Same multi-phase combined-entry
+and Studio-Apartment-with-null-resale-type patterns as prior pre-2015 launches. Reconstructed
+entirely from singpromos.com; official annex unrecoverable via any channel. Dataset now spans
+**September 2014 → June 2026**, 45 launches total. `npm test` green (240 tests, no test file
+changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2014) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2014 BTO launch** (5 entries: Meadow Spring @ Yishun & Blossom Spring @
+Yishun combined; Sun Breeze — Sembawang; Anchorvale Fields — Sengkang; Tampines GreenEdge; Tampines
+GreenRidges — 4,277 units total, reconciles exactly). Tampines GreenRidges was the first housing
+development in Tampines North and the first project ever to offer 3Gen flats in a mature town.
+Reconstructed entirely from singpromos.com (official annex unrecoverable via any channel), which
+this time had a genuine per-project unit-type table (not just "From" minimums) reconciling exactly
+— **note for future backfill work**: HDB's pre-2015 sales cadence was noticeably higher-frequency
+than the later roughly-quarterly pattern (2014 alone had launches in Feb, May/Jun, Jul, Sep, and
+Nov — five in one year, not four) — don't assume a quarterly gap when searching for the next
+earlier launch; search broadly for every month. Dataset now spans **November 2014 → June 2026**, 44
+launches total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or
+deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Feb 2015) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **February 2015 BTO launch** (3 entries: West Edge @ Bukit Batok & West Rock @ Bukit
+Batok combined; Buangkok ParkVista & Buangkok Tropica combined; MacPherson Spring standalone —
+3,995 units total, reconciles exactly). Same "Costa Riviera I & II" combined-entry treatment as May
+2015's EastLink/Northshore pairs — HDB's press release calls these "five projects" with real,
+independently-known total-unit counts per project (found via btohq.com project specs, all
+reconciling exactly to the group totals), but the official flat-supply table only published each
+pair's *combined* per-flat-type units, with no 4-Room/5-Room split between West Edge and West Rock
+found anywhere (only the flat types wholly owned by one half of each pair are certain — documented
+in the curation note). Rather than fabricate a split, combined into one entry per pair, consistent
+with the established convention. MacPherson Spring repeats the "Studio Apartment, resale_flat_type:
+null" pattern from May 2015. Official Annex again fully unrecoverable via live URL/Wayback
+CDX/NAS — reconstructed from singpromos.com, verified against the press-release headline. Dataset
+now spans **February 2015 → June 2026**, 43 launches total. `npm test` green (240 tests, no test
+file changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2015) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2015 BTO launch** (4 projects: EastLink I & II @ Canberra — Sembawang; Northshore
+Residences I & II — Punggol; both Non-Mature; Tampines GreenWeave, Clementi Crest — Mature —
+4,044 units total, reconciles exactly). Predates the 2-Room Flexi scheme itself — flats are plain
+"2-Room" here. Official Annex A was fully unrecoverable this time (live URL dead, broad Wayback CDX
+search for every May-2015 date-stamp guess came up empty, NAS search found nothing) — reconstructed
+from a secondary source (singpromos.com) that's clearly a verbatim transcript of the real annex (it
+cross-references "Table A1(4)" by name), reconciling exactly to the press release's own headline.
+"EastLink I & II" and "Northshore Residences I & II" are each two phases sharing one combined
+flat-supply table with no published per-phase split — combined into one project entry each, per the
+existing "Costa Riviera I & II" convention already used elsewhere in this dataset (not a new
+pattern). Tampines GreenWeave includes 224 "Studio Apartment" units (30-year lease, elderly-only, a
+flat type later retired) — no direct `resale_flat_type` equivalent exists, so those two rows use
+`resale_flat_type: null` (verified this doesn't break `/api/bto/project-overview`, which correctly
+skips null types in the comparison calc). Dataset now spans **May 2015 → June 2026**, 42 launches
+total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2015) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2015 BTO launch** (10 projects: Alkaff CourtView/LakeView/Vista in the newly-
+opened Bidadari precinct — Mature/Toa Payoh; Fernvale Woods — Sengkang; Hougang RiverCourt;
+Northshore StraitsView + Waterfront I & II @ Northshore — Punggol; Teck Whye Vista — Choa Chu Kang;
+West Quarry @ Bukit Batok — all Non-Mature — 7,061 units total, reconciles exactly). This was
+HDB's largest-ever joint BTO+SBF exercise (12,411 combined; only the 7,061-unit BTO portion is
+seeded) and the launch that introduced the modern 2-Room Flexi scheme + raised income ceilings.
+
+**Initially looked unrecoverable** — this launch used "Annex B1" instead of the usual "Annex A1"
+naming, and it wasn't findable via the normal channels (live hdb.gov.sg URL dead; broad Wayback CDX
+search under the standard `cs/infoweb/-/media/doc/PressReleases/` prefix came up empty for every
+2015-11-dated guess; NAS direct search found nothing; the legacy `www20.hdb.gov.sg` InfoWEB domain
+no longer resolves and has zero Wayback captures). Started building the launch via the
+housingmap.sg-brochure fallback (8 brochures downloaded, unit-mix/sqm data partially extracted from
+Teck Whye Vista and Fernvale Woods) before a differently-phrased web search surfaced the exact
+official filename (`annexb1nov2015btoexercise.pdf`) — which the Wayback CDX API turned out to have
+archived all along, just under a name my systematic CDX guesses never tried. **Lesson recorded**: a
+failed broad Wayback CDX search doesn't prove a page was never archived — HDB's own annex-naming
+conventions varied enough era-to-era (prefix-date vs suffix-date, `annexA` vs `annexB1`, no fixed
+separator) that a documented capture can still be missed by prefix-based CDX guessing; try a plain
+web search for the literal filename before concluding "unrecoverable" and falling back to
+housingmap.sg. Once found, the official Annex B1 had complete real per-project unit splits for
+every flat type (no combined-row estimation needed for units at all) — only the Punggol trio's
+2-Room Flexi Type 1/Type 2 split within each project remains combined (real per-project 99-year
+price wasn't separately published this era, so the shared group price band is used, with Waterfront
+I correctly flagged as Type-2-only per the annex's own footnote). Dataset now spans **November
+2015 → June 2026**, 41 launches total. `npm test` green (240 tests, no test file changes).
+**Not yet committed, pushed, or deployed.**
+
 ## Recent Changes (Sep 2026 — BTO historical backfill batch: Feb 2017 → May 2016) — LOCAL ONLY, NOT YET COMMITTED
 
 Continued the backfill autonomously through four more launches per explicit user instruction

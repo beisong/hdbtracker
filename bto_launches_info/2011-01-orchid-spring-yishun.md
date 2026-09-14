@@ -1,0 +1,21 @@
+# Orchid Spring @ Yishun
+
+**Launch:** January 2011 BTO (2011-01-25 to 2011-02-07)
+**Town:** YISHUN (Non-Mature Town)
+**Location:** Yishun Avenue 11. No 5-Room or Studio Apartment flats in this project. Shares a combined official price table with Vista Spring @ Yishun for 4-Room (see launch curation note). Exact floor area not published — see launch curation note.
+
+## Flat Supply
+
+| Type | Floor Area (sqm) | Units | Price Range |
+|---|---|---|---|
+| 2-Room | -- | 192 | $93,000 - $112,000 |
+| 3-Room | -- | 252 | $150,000 - $183,000 |
+| 4-Room | -- | 504 | $230,000 - $278,000 |
+
+## Curation Note
+
+Predates HDB's Oct 2024 Standard/Plus/Prime classification framework AND predates the 2-Room Flexi scheme. Full official press release recovered via kendata12345.wordpress.com, giving exact per-project unit counts and exact price ranges (min and max) in prose — verified to sum exactly to the press release's own 1,728-unit headline (180 Studio Apartments, 192×2-Room, 252×3-Room, 828×4-Room, 276×5-Room). Orchid Spring @ Yishun and Vista Spring @ Yishun are adjacent standard-tier projects sharing one combined price table for their overlapping flat types (both list 4-Room at the same $230,000-$278,000 range) — kept as two standalone entries since exact independent unit counts are given in prose (same approach as Sep 2011's Anchorvale Harvest/Fernvale Rivergrove and Waterway Brooks/Woodcress). Golden Daisy is Studio-Apartment-only (180 units), targeted at elderly right-sizers. Floor area (sqm) not published in this recovered source — recorded null, consistent with Mar/Apr 2011. The press release previewed the next (Feb 2011) BTO launch: ~1,600 flats in Bukit Panjang and Sengkang.
+
+## Sources
+
+- https://kendata12345.wordpress.com/wp-content/uploads/2014/07/s2011-01jan-launch.pdf

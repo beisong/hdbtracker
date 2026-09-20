@@ -19,3 +19,5 @@ Predates HDB's Oct 2024 Standard/Plus/Prime classification framework AND predate
 
 - https://singpromos.com/housing/hdb-launches-six-bto-projects-30-may-5-jun-2012-33527/
 - https://kendata12345.wordpress.com/2014/08/01/hdb-2012-may-jul-bto-price-cost-analysis/
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2012-05/Punggol_Edge_Maps&Plans.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2012-05/PunggolEdge_WaterwaySunDew_General_Info.pdf

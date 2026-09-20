@@ -2,13 +2,15 @@
 
 **Launch:** May 2012 BTO (2012-05-30 to 2012-06-05)
 **Town:** PUNGGOL (Non-Mature Town)
-**Location:** Edgedale Plains / Tampines Expressway. Integrated BTO project: 688 homeownership flats across 5 blocks plus a separate 446-unit rental block (rental portion excluded, per convention). Exact 3-Room/4-Room/5-Room unit split could not be recovered from any source despite exhaustive search — see launch curation note.
+**Location:** Edgedale Plains / Tampines Expressway. Integrated BTO project: 688 home-ownership flats across 5 blocks (120A/120B/121A/122A/122B) plus a separate 446-unit rental block (170x1-Room + 276x2-Room rental, excluded per convention). Exact unit split recovered from housingmap.sg's Maps & Plans brochure.
 
 ## Flat Supply
 
 | Type | Floor Area (sqm) | Units | Price Range |
 |---|---|---|---|
-| 3-Room / 4-Room / 5-Room (split unrecoverable) | -- | 688 | TBD |
+| 3-Room | 68 | 128 | $163,000 - -- |
+| 4-Room | 93 | 400 | $260,000 - -- |
+| 5-Room | 113 | 160 | $326,000 - -- |
 
 ## Curation Note
 
@@ -18,3 +20,5 @@ Predates HDB's Oct 2024 Standard/Plus/Prime classification framework AND predate
 
 - https://singpromos.com/housing/hdb-launches-six-bto-projects-30-may-5-jun-2012-33527/
 - https://kendata12345.wordpress.com/2014/08/01/hdb-2012-may-jul-bto-price-cost-analysis/
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2012-05/Punggol_Edge_Maps&Plans.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2012-05/PunggolEdge_WaterwaySunDew_General_Info.pdf

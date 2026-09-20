@@ -2,13 +2,15 @@
 
 **Launch:** March 2012 BTO (2012-03-28 to 2012-04-03)
 **Town:** BEDOK (Mature Estate)
-**Location:** Chai Chee Road. HDB's first-ever Multi-Generation Priority Scheme (MGPS) pilot project. Exact 2-Room/3-Room/4-Room unit split could not be recovered from any source despite exhaustive search — see launch curation note.
+**Location:** Chai Chee Street / Chai Chee Road. HDB's first-ever Multi-Generation Priority Scheme (MGPS) pilot project. Only 3 of 6 blocks (807A, 808A, 808B) were sold under this BTO exercise — blocks 807B, 807C, 808C were set aside for SERS rehousing, not sold to the public.
 
 ## Flat Supply
 
 | Type | Floor Area (sqm) | Units | Price Range |
 |---|---|---|---|
-| 2-Room / 3-Room / 4-Room (split unrecoverable) | -- | 418 | TBD |
+| 2-Room | 47 | 98 | $174,000 - $202,000 |
+| 3-Room | 68 | 84 | $281,000 - $317,000 |
+| 4-Room | 93 | 236 | $400,000 - $464,000 |
 
 ## Curation Note
 
@@ -18,3 +20,5 @@ Predates HDB's Oct 2024 Standard/Plus/Prime classification framework AND predate
 
 - https://singpromos.com/housing/hdb-launches-mar-2012-sobf-exercise-8-bto-projects-28-may-3-apr-2012-28408/
 - https://kendata12345.wordpress.com/2014/08/01/hdb-2012-jan-mar-bto-price-cost-analysis/
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2012-03/Ping%20Yi%20Greens_General_Info.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2012-03/Ping%20Yi%20Greens_Maps&Plans.pdf

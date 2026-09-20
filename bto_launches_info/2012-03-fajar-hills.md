@@ -20,3 +20,5 @@ Predates HDB's Oct 2024 Standard/Plus/Prime classification framework AND predate
 
 - https://singpromos.com/housing/hdb-launches-mar-2012-sobf-exercise-8-bto-projects-28-may-3-apr-2012-28408/
 - https://kendata12345.wordpress.com/2014/08/01/hdb-2012-jan-mar-bto-price-cost-analysis/
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2012-03/Ping%20Yi%20Greens_General_Info.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2012-03/Ping%20Yi%20Greens_Maps&Plans.pdf

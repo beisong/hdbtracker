@@ -1,42 +1,58 @@
 # Active Context: WorthIt
 
-## Recent Changes (Sep 2026 — post-completion audit + 2010 gap-fill, PARTIAL) — LOCAL ONLY, NOT YET COMMITTED
+## Recent Changes (Sep 2026 — post-completion audit + full 2010/2011 gap-fill, DONE) — committed `e5a0709` (through 2010-06), remaining 2010-07/08/09 + 2011-05/07 LOCAL ONLY, NOT YET COMMITTED
 
-Ran the user-requested double-check after the "ROADMAP COMPLETE" claim below: a full systematic
+Ran the user-requested double-check after the earlier "ROADMAP COMPLETE" claim: a full systematic
 re-fetch of housingmap.sg (2001-2026, year-batches, cross-referencing project *counts* not just
 names) plus a battery of data-integrity checks (duplicate coordinates, null-type/non-null-price
 rows, price_min>price_max, schema validation). Result: **zero data errors**, but the "complete"
 claim was wrong — found a real gap of **8 missing months**: 2010 (Mar, Apr, Jun, Jul, Aug, Sep) and
-2011 (May, Jul). Also updated `CLAUDE.md` with a new "Historical dataset coverage" section
-documenting the null-date/null-geocode conventions and the naming-disambiguation pattern for future
-sessions.
+2011 (May, Jul). Updated `CLAUDE.md` with a new "Historical dataset coverage" section documenting
+the null-date/null-geocode conventions and the naming-disambiguation pattern.
 
-Filled **3 of the 8** gap months so far, also updated CLAUDE.md with the two brochure-format eras
-discovered along the way:
-- **2010-03**: Fernvale Ridge (522 units) + Sembawang RiverLodge (306 of 432 built units actually
-  offered — 126 2-Room units withheld). Full official price tables recovered from brochure.
-- **2010-04**: Punggol Emerald (856) + Punggol Waves (573). **First brochures found with no price
-  table at all** (format changed from Mar 2010) — unit counts instead sourced from each project's
-  Maps&Plans.pdf block-distribution table and independently cross-checked against an archived HDB
-  e-service application-count page (exact match on every figure). Only min prices recoverable from
-  secondary sources; `price_max: null` throughout (precedented pattern).
-- **2010-06**: Waterway Terraces I (1072, first-ever waterfront/Premium-flat BTO) + Fernvale Foliage
-  (504) + Rivervale Arc (1120). Same no-price-table brochure format; unit counts from Maps&Plans.pdf,
-  totals reconcile exactly. Prices from secondary sources — full min-max for Waterway Terraces I and
-  Fernvale Foliage, min-only for Rivervale Arc (`price_max: null`). `application_end` left null
-  (only "closed in July 2010" sourced, not an exact date) — precedented per the null-date convention.
+Filled all 8, across two work sessions (first session — 2010-03/04/06 — committed and pushed as
+`e5a0709`; second session — 2010-07/08/09 + 2011-05/07 — completed in one pass per explicit user
+instruction to stop going launch-by-launch and just finish the backlog):
 
-Dataset now at **116 launches**. `npm test` green (240 passed / 1 skipped) after each addition.
-**Not yet committed, pushed, or deployed.**
+- **2010-03**: Fernvale Ridge (522) + Sembawang RiverLodge (306 of 432 built units actually offered,
+  126 2-Room withheld). Full official price tables from brochure.
+- **2010-04**: Punggol Emerald (856) + Punggol Waves (573). First brochures with **no price table at
+  all**; unit counts from Maps&Plans.pdf block tables, cross-checked against an archived HDB
+  e-service application-count page (exact match). Min-only prices (`price_max: null`).
+- **2010-06**: Waterway Terraces I (1072, first waterfront/Premium-flat BTO) + Fernvale Foliage (504)
+  + Rivervale Arc (1120). Same brochure format; full min-max for 2 of 3 projects.
+- **2010-07**: Corporation Tiara (Jurong West, Premium) + Senja Gateway (Bukit Panjang). Corporation
+  Tiara is a second "offered vs built" case like Sembawang RiverLodge: its brochure table footnotes
+  190 Studio Apartment units as "reserved for future sale" — recorded only the 275 actually-offered
+  4-/5-Room units, independently corroborated by a secondary source's exact "275 units offered"
+  statement.
+- **2010-08**: Yishun Riverwalk (1408, single project).
+- **2010-09**: Woodlands Dew (789) + Woodlands Meadow (540), directly across the street from each
+  other, same exercise.
+- **2011-05**: Costa Ris, Golden Lily, Punggol Parcvista, Tampines GreenLeaf, Tampines GreenWood,
+  Woodlands Peak — HDB's largest BTO launch to that date (3,957 combined units across the six
+  projects' own tables). Full min-max + floor areas recovered for 3 of 6 (Costa Ris, Tampines
+  GreenLeaf, Woodlands Peak).
+- **2011-07**: Yishun Natura, Segar Meadows (Jul 2011), Segar Palmview, Anchorvale Isles, Fernvale
+  Riverbow, Golden Carnation, Golden Orchid. **Naming collision resolved**: the new Segar Meadows
+  exercise (blocks 459-461) geocodes to the *same* 'Segar Meadows' OneMap building/coordinates as the
+  existing 2007-11 entry (block 455) — confirmed as one HDB-branded precinct extended across two BTO
+  exercises, not a coincidental name clash. Recorded as `SEGAR MEADOWS (JUL 2011)` per the
+  `(<MONTH YEAR>)` disambiguation convention; both entries resolve independently via `/api/resolve`.
 
-**Remaining pending work** (stopped here per explicit user instruction — "don't go through them one
-by one, do a quick check and get ready for commit"): **2010-07** (Corporation Tiara, Senja Gateway),
-**2010-08** (Yishun Riverwalk), **2010-09** (Woodlands Dew, Woodlands Meadow), **2011-05** (Costa
-Ris, Golden Lily, Punggol Parcvista, Tampines GreenLeaf, Tampines GreenWood, Woodlands Peak),
-**2011-07** (Yishun Natura, Segar Meadows [name collision with existing Nov 2007 "Segar Meadows" —
-needs a disambiguation suffix], Segar Palmview, Anchorvale Isles, Fernvale Riverbow, Golden
-Carnation, Golden Orchid) — 5 more launch months, ~16 more projects. The "ROADMAP COMPLETE" claim in
-the section below is therefore **superseded/incorrect** until these are filled.
+For every 2010-04-and-later project, none of the General_Info.pdf brochures contain a price table
+(a format change from Mar 2010 and earlier) — unit counts throughout this whole gap-fill instead
+came from each project's own Maps&Plans.pdf block-distribution table (every single one reconciled
+exactly to housingmap.sg's total), and prices came from aggregated secondary sources rather than an
+official HDB table, with `price_max: null` wherever only a minimum could be sourced (a
+long-precedented pattern already used for 2009-and-earlier entries).
+
+**Dataset now at 121 launches, span April 2001 → June 2026, with zero remaining gaps** — the full
+housingmap.sg roadmap has been worked through completely. `npm test` green (240 passed / 1 skipped)
+throughout. The first 3 additions (through 2010-06) are committed and pushed to `origin/main` as
+`e5a0709`; the remaining 5 launches (2010-07/08/09, 2011-05, 2011-07 — 18 projects, 18 reference
+`.md` files + source PDFs in `bto_launches_info/`) are complete locally but **not yet committed,
+pushed, or deployed** — per standing convention, awaiting explicit user instruction to commit.
 
 ## Recent Changes (Sep 2026 — BTO historical backfill: Apr 2001, ROADMAP COMPLETE) — LOCAL ONLY, NOT YET COMMITTED
 

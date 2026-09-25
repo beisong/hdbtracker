@@ -1,0 +1,28 @@
+# Woodlands Peak — May 2011 BTO
+
+- **Town**: WOODLANDS (Non-Mature Town)
+- **Application period**: 2011-05-27 to (not precisely sourced)
+- **Location**: Woodlands Street 31, near Marsiling MRT station. Studio Apartments + 3-Room.
+- **Coordinates**: 1.431855587494867, 103.7752940444384
+
+## Flat types
+
+| Type | Floor Area (sqm) | Units | Price (from) | Price (to) |
+|---|---|---|---|---|
+| Studio Apartment (Type A) | 37 | 64 | $76,000 | $90,000 |
+| Studio Apartment (Type B) | 47 | 63 | $95,000 | $112,000 |
+| 3-Room | 67 | 95 | $167,000 | $221,000 |
+| **Total** | | **222** | | |
+
+## Curation note
+
+**Gap-fill**: caught during the same systematic housingmap.sg completeness re-check as the other 2010/2011 gaps. Six projects launched together 27 May 2011 (HDB's largest-ever BTO launch to that date, 3,157 combined units) across Pasir Ris (Costa Ris, Golden Lily), Punggol (Punggol Parcvista), Tampines (GreenLeaf, GreenWood) and Woodlands (Woodlands Peak). Unit counts from each project's own Maps&Plans.pdf block-distribution table, all six reconciling exactly to housingmap.sg's totals (1386+185+682+960+522+222=3957 — note: housingmap.sg's per-project figures sum to 3957, not the 'largest-ever' 3,157 headline quoted by a secondary source, which appears to be a typo/transposition in that source, not a dataset error; the per-block table totals are the authoritative source here and were independently verified against each project's own brochure). Prices from aggregated secondary sources: full min-max recovered for Costa Ris, Tampines GreenLeaf and Woodlands Peak (the latter two also yielding floor areas); min-only (price_max: null) for Golden Lily, Punggol Parcvista and Tampines GreenWood. Application close date not precisely sourced; application_end left null.
+
+## Sources
+
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Costa_Ris_Maps%26Plans.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Golden_Lily_Maps%26Plans.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Punggol_Parcvista_Maps%26Plans.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Tampines_GreenLeaf_Maps%26Plans.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Tampines_GreenWood_Maps%26Plans.pdf
+- https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Woodlands_Peak_Maps%26Plans.pdf

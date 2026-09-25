@@ -2869,6 +2869,224 @@
       ]
     },
     {
+      "launch_id": "2010-07",
+      "label": "July 2010 BTO",
+      "application_start": "2010-07-29",
+      "application_end": null,
+      "sources": [
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2010-07/Corporation_Tiara_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2010-07/Senja_Gateway_Maps%26Plans.pdf"
+      ],
+      "_curation_note": "**Gap-fill**: caught during the same systematic housingmap.sg completeness re-check as 2010-03/04/06. Two projects launched together 29 Jul 2010, Jurong West (Corporation Tiara, Premium flats) and Bukit Panjang (Senja Gateway, Standard flats). Unit counts from each project's Maps&Plans.pdf block-distribution table. Corporation Tiara is a special case like Sembawang RiverLodge (2010-03): its own table footnote states verbatim '190 units of Studio Apartments are reserved for future sale' — i.e. NOT part of this July 2010 exercise — so only the 275 actually-offered units (171x4-Room + 104x5-Room) are recorded here, not housingmap.sg's full 465 (which includes the 190 withheld Studio units); independently corroborated by a secondary source explicitly stating '275 units of 4-room and 5-room Premium flats were offered for sale' in this exercise, an exact match. Senja Gateway has no such reservation note — recorded at its full table total of 741 (124 Studio Type A + 130 Studio Type B + 313 4-Room + 174 5-Room). Prices are min-only from aggregated secondary sources (not an official HDB table); price_max: null throughout, per this dataset's existing convention. Application close date not precisely sourced; application_end left null.",
+      "projects": [
+        {
+          "project": "CORPORATION TIARA",
+          "display_name": "Corporation Tiara",
+          "town": "JURONG WEST",
+          "classification": "Non-Mature Town",
+          "location_desc": "Yung Kuang Road, Jurong West. Premium flats. Development also includes 190 Studio Apartment units (95 Type A, 95 Type B) reserved for future sale, not offered in this exercise.",
+          "lat": 1.331952223157433,
+          "lng": 103.7215139511787,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room Premium",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 171,
+              "price_min": 242000,
+              "price_max": null
+            },
+            {
+              "bto_label": "5-Room Premium",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 104,
+              "price_min": 304000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "SENJA GATEWAY",
+          "display_name": "Senja Gateway",
+          "town": "BUKIT PANJANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Senja Road, Bukit Panjang. Standard flats.",
+          "lat": 1.386602752375775,
+          "lng": 103.7577104678676,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "Studio Apartment",
+              "resale_flat_type": null,
+              "floor_area_sqm": null,
+              "units": 254,
+              "price_min": 67000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 313,
+              "price_min": 242000,
+              "price_max": null
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 174,
+              "price_min": 308000,
+              "price_max": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2010-08",
+      "label": "August 2010 BTO",
+      "application_start": "2010-08-31",
+      "application_end": null,
+      "sources": [
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2010-08/Yishun_Riverwalk_Maps%26Plans.pdf"
+      ],
+      "_curation_note": "**Gap-fill**: caught during the same systematic housingmap.sg completeness re-check. Single project, Yishun Riverwalk, launched 31 Aug 2010, Standard flats. Unit counts from the Maps&Plans.pdf block-distribution table (254 Studio Apartment + 250 3-Room + 652 4-Room + 252 5-Room = 1408), matching housingmap.sg's total exactly. Prices are min-only from aggregated secondary sources; price_max: null throughout. Application close date not precisely sourced; application_end left null.",
+      "projects": [
+        {
+          "project": "YISHUN RIVERWALK",
+          "display_name": "Yishun Riverwalk",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Yishun Street 31 / Yishun Avenue 6, near Khatib Bongsu Park Connector. Standard flats.",
+          "lat": 1.432537020156632,
+          "lng": 103.8456430347031,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "Studio Apartment",
+              "resale_flat_type": null,
+              "floor_area_sqm": null,
+              "units": 254,
+              "price_min": 63000,
+              "price_max": null
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 250,
+              "price_min": 141000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 652,
+              "price_min": 214000,
+              "price_max": null
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 252,
+              "price_min": 287000,
+              "price_max": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2010-09",
+      "label": "September 2010 BTO",
+      "application_start": "2010-09-21",
+      "application_end": null,
+      "sources": [
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2010-09/Woodlands_Dew_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2010-09/Woodlands_Meadow_Maps%26Plans.pdf"
+      ],
+      "_curation_note": "**Gap-fill**: caught during the same systematic housingmap.sg completeness re-check. Two adjacent projects launched together 21 Sep 2010 in Woodlands (Woodlands Dew and Woodlands Meadow are directly across the street from each other; each brochure's site plan cross-references the other by name, confirming they're the same exercise). Both Standard flats. Unit counts from each project's Maps&Plans.pdf block-distribution table: Woodlands Dew 330x2-Room + 145x3-Room + 314x4-Room = 789; Woodlands Meadow 75x3-Room + 255x4-Room + 210x5-Room = 540. Both totals match housingmap.sg exactly. Prices are min-only from aggregated secondary sources; price_max: null throughout. Application close date not precisely sourced; application_end left null.",
+      "projects": [
+        {
+          "project": "WOODLANDS DEW",
+          "display_name": "Woodlands Dew",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Woodlands Crescent / Woodlands Avenue 9. Standard flats.",
+          "lat": 1.448341550296822,
+          "lng": 103.8010571435432,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": null,
+              "units": 330,
+              "price_min": 78000,
+              "price_max": null
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 145,
+              "price_min": 139000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 314,
+              "price_min": 224000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "WOODLANDS MEADOW",
+          "display_name": "Woodlands Meadow",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Woodlands Crescent / Gambas Avenue, opposite Woodlands Dew. Standard flats.",
+          "lat": 1.448226355372735,
+          "lng": 103.8035797365708,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 75,
+              "price_min": 136000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 255,
+              "price_min": 232000,
+              "price_max": null
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 210,
+              "price_min": 270000,
+              "price_max": null
+            }
+          ]
+        }
+      ]
+    },
+    {
       "launch_id": "2010-10",
       "label": "October 2010 BTO",
       "application_start": "2010-10-26",
@@ -3525,6 +3743,461 @@
             }
           ],
           "hdb_quoted_resale": []
+        }
+      ]
+    },
+    {
+      "launch_id": "2011-05",
+      "label": "May 2011 BTO",
+      "application_start": "2011-05-27",
+      "application_end": null,
+      "sources": [
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Costa_Ris_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Golden_Lily_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Punggol_Parcvista_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Tampines_GreenLeaf_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Tampines_GreenWood_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-05/Woodlands_Peak_Maps%26Plans.pdf"
+      ],
+      "_curation_note": "**Gap-fill**: caught during the same systematic housingmap.sg completeness re-check as the other 2010/2011 gaps. Six projects launched together 27 May 2011 (HDB's largest-ever BTO launch to that date, 3,157 combined units) across Pasir Ris (Costa Ris, Golden Lily), Punggol (Punggol Parcvista), Tampines (GreenLeaf, GreenWood) and Woodlands (Woodlands Peak). Unit counts from each project's own Maps&Plans.pdf block-distribution table, all six reconciling exactly to housingmap.sg's totals (1386+185+682+960+522+222=3957 — note: housingmap.sg's per-project figures sum to 3957, not the 'largest-ever' 3,157 headline quoted by a secondary source, which appears to be a typo/transposition in that source, not a dataset error; the per-block table totals are the authoritative source here and were independently verified against each project's own brochure). Prices from aggregated secondary sources: full min-max recovered for Costa Ris, Tampines GreenLeaf and Woodlands Peak (the latter two also yielding floor areas); min-only (price_max: null) for Golden Lily, Punggol Parcvista and Tampines GreenWood. Application close date not precisely sourced; application_end left null.",
+      "projects": [
+        {
+          "project": "COSTA RIS",
+          "display_name": "Costa Ris",
+          "town": "PASIR RIS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Pasir Ris Drive 1 / Pasir Ris Street 51, near Coral Secondary School. Standard flats.",
+          "lat": 1.371279693473656,
+          "lng": 103.94771493702,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": null,
+              "units": 257,
+              "price_min": 120000,
+              "price_max": 143000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 224,
+              "price_min": 194000,
+              "price_max": 225000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 688,
+              "price_min": 294000,
+              "price_max": 347000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 217,
+              "price_min": 362000,
+              "price_max": 436000
+            }
+          ]
+        },
+        {
+          "project": "GOLDEN LILY",
+          "display_name": "Golden Lily",
+          "town": "PASIR RIS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Pasir Ris Drive 4, near Pasir Ris East CC/Polyclinic. Studio Apartments only, for those aged 55 and above.",
+          "lat": 1.368094110972085,
+          "lng": 103.9601726100036,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "Studio Apartment",
+              "resale_flat_type": null,
+              "floor_area_sqm": null,
+              "units": 185,
+              "price_min": 76000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "PUNGGOL PARCVISTA",
+          "display_name": "Punggol Parcvista",
+          "town": "PUNGGOL",
+          "classification": "Non-Mature Town",
+          "location_desc": "Sumang Link / Sentul Crescent, near Nibong LRT station and My Waterway@Punggol. Standard flats.",
+          "lat": 1.410819269000959,
+          "lng": 103.9003716777816,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 172,
+              "price_min": 166000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 338,
+              "price_min": 264000,
+              "price_max": null
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 172,
+              "price_min": 335000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENLEAF",
+          "display_name": "Tampines GreenLeaf",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Tampines Avenue 9 / Tampines Central 7. Standard flats.",
+          "lat": 1.357822766331484,
+          "lng": 103.9390848091118,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "2-Room",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 47,
+              "units": 96,
+              "price_min": 120000,
+              "price_max": 149000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 67,
+              "units": 160,
+              "price_min": 186000,
+              "price_max": 236000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 92,
+              "units": 384,
+              "price_min": 288000,
+              "price_max": 361000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 320,
+              "price_min": 371000,
+              "price_max": 444000
+            }
+          ]
+        },
+        {
+          "project": "TAMPINES GREENWOOD",
+          "display_name": "Tampines GreenWood",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Tampines Avenue 5 / Avenue 8. Studio Apartments + Standard flats.",
+          "lat": 1.355446817709982,
+          "lng": 103.9325442780989,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "Studio Apartment",
+              "resale_flat_type": null,
+              "floor_area_sqm": null,
+              "units": 144,
+              "price_min": 81000,
+              "price_max": null
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 158,
+              "price_min": 186000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 220,
+              "price_min": 288000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "WOODLANDS PEAK",
+          "display_name": "Woodlands Peak",
+          "town": "WOODLANDS",
+          "classification": "Non-Mature Town",
+          "location_desc": "Woodlands Street 31, near Marsiling MRT station. Studio Apartments + 3-Room.",
+          "lat": 1.431855587494867,
+          "lng": 103.7752940444384,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "Studio Apartment (Type A)",
+              "resale_flat_type": null,
+              "floor_area_sqm": 37,
+              "units": 64,
+              "price_min": 76000,
+              "price_max": 90000
+            },
+            {
+              "bto_label": "Studio Apartment (Type B)",
+              "resale_flat_type": null,
+              "floor_area_sqm": 47,
+              "units": 63,
+              "price_min": 95000,
+              "price_max": 112000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 67,
+              "units": 95,
+              "price_min": 167000,
+              "price_max": 221000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "launch_id": "2011-07",
+      "label": "July 2011 BTO",
+      "application_start": "2011-07-14",
+      "application_end": null,
+      "sources": [
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-07/Yishun_Natura_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-07/Segar_Meadows_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-07/Segar_Palmview_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-07/Anchorvale_Isles_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-07/Fernvale_Riverbow_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-07/Golden_Carnation_Maps%26Plans.pdf",
+        "https://www.housingmap.sg/hdb-brochures/bto-launch-2011-07/Golden_Orchid_Maps%26Plans.pdf"
+      ],
+      "_curation_note": "**Gap-fill, closes the full 2010/2011 gap**: caught during the same systematic housingmap.sg completeness re-check as the other 2010/2011 entries. Seven projects launched together 14 Jul 2011 across Yishun, Bukit Panjang, Sengkang (Anchorvale/Fernvale) and Tampines/Jurong West (Studio Apartments). Unit counts from each project's own Maps&Plans.pdf block-distribution table, all seven reconciling exactly to housingmap.sg's totals. **Naming collision**: 'SEGAR MEADOWS' already exists in this dataset at 2007-11 (blk 455 Segar Road). This 2011-07 launch (blocks 459/460/461 Segar Road, 300 units of 3-/4-Room Premium flats) geocodes in OneMap to the *same* 'SEGAR MEADOWS' building name and near-identical coordinates as the 2007 entry, confirming this is the same HDB-branded precinct extended across two separate BTO exercises (like the existing 'THE CORIS (PHASE 1)'/'(PHASE 2)' or 'CORALINUS' pattern), not a coincidental name reuse on an unrelated site. Recorded here as 'SEGAR MEADOWS (JUL 2011)' per the dataset's `(<MONTH YEAR>)` disambiguation convention, distinct from the 2007-11 entry's `lat`/`lng` (this exercise's actual blocks, 459-461, geocoded individually) so both remain independently resolvable. Prices: full min-max recovered for Fernvale Riverbow; min-only (price_max: null) for the other six. Application close date not precisely sourced; application_end left null. **This is the last of the 8 gap months identified by the completeness audit — the dataset's 2001-2026 coverage is now genuinely complete.**",
+      "projects": [
+        {
+          "project": "YISHUN NATURA",
+          "display_name": "Yishun Natura",
+          "town": "YISHUN",
+          "classification": "Non-Mature Town",
+          "location_desc": "Yishun Ring Road / Yishun Street 31, near Khatib Bongsu Park Connector. Premium flats.",
+          "lat": 1.429918917534858,
+          "lng": 103.8443674698174,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room Premium",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 112,
+              "price_min": 164000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room Premium",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 140,
+              "price_min": 246000,
+              "price_max": null
+            },
+            {
+              "bto_label": "5-Room Premium",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 112,
+              "price_min": 319000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "SEGAR MEADOWS (JUL 2011)",
+          "display_name": "Segar Meadows (Jul 2011)",
+          "town": "BUKIT PANJANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Segar Road (blocks 459-461), Bukit Panjang. Premium flats. Same 'Segar Meadows' HDB precinct as the separate Nov 2007 launch (blk 455) — see 2007-11 SEGAR MEADOWS — disambiguated by launch month.",
+          "lat": 1.387611611938327,
+          "lng": 103.7717174249569,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room Premium",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 60,
+              "price_min": 157000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room Premium",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 240,
+              "price_min": 217000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "SEGAR PALMVIEW",
+          "display_name": "Segar Palmview",
+          "town": "BUKIT PANJANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Segar Road / Bukit Panjang Ring Road, near Kranji Expressway. Standard flats.",
+          "lat": 1.389112062464436,
+          "lng": 103.767301515652,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 119,
+              "price_min": 137000,
+              "price_max": null
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 350,
+              "price_min": 217000,
+              "price_max": null
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 213,
+              "price_min": 274000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "ANCHORVALE ISLES",
+          "display_name": "Anchorvale Isles",
+          "town": "SENGKANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Anchorvale Link, near Sengkang East Way. Standard flats.",
+          "lat": 1.394845108847578,
+          "lng": 103.8923480120941,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 405,
+              "price_min": 246000,
+              "price_max": null
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 270,
+              "price_min": 298000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "FERNVALE RIVERBOW",
+          "display_name": "Fernvale Riverbow",
+          "town": "SENGKANG",
+          "classification": "Non-Mature Town",
+          "location_desc": "Fernvale Link, along Punggol Reservoir. Standard flats.",
+          "lat": 1.389319849659263,
+          "lng": 103.8805011653296,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": null,
+              "units": 168,
+              "price_min": 157000,
+              "price_max": 189000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": null,
+              "units": 539,
+              "price_min": 246000,
+              "price_max": 337000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": null,
+              "units": 447,
+              "price_min": 298000,
+              "price_max": 421000
+            }
+          ]
+        },
+        {
+          "project": "GOLDEN CARNATION",
+          "display_name": "Golden Carnation",
+          "town": "TAMPINES",
+          "classification": "Mature Town",
+          "location_desc": "Tampines Street 11. Studio Apartments only.",
+          "lat": 1.345235924644803,
+          "lng": 103.9461976245053,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "Studio Apartment",
+              "resale_flat_type": null,
+              "floor_area_sqm": null,
+              "units": 149,
+              "price_min": 89000,
+              "price_max": null
+            }
+          ]
+        },
+        {
+          "project": "GOLDEN ORCHID",
+          "display_name": "Golden Orchid",
+          "town": "JURONG WEST",
+          "classification": "Non-Mature Town",
+          "location_desc": "Jurong West Street 41. Studio Apartments only.",
+          "lat": 1.348638568088364,
+          "lng": 103.7250867251839,
+          "waiting_months": null,
+          "flats": [
+            {
+              "bto_label": "Studio Apartment",
+              "resale_flat_type": null,
+              "floor_area_sqm": null,
+              "units": 232,
+              "price_min": 83000,
+              "price_max": null
+            }
+          ]
         }
       ]
     },

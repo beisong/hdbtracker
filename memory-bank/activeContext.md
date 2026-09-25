@@ -1,6 +1,438 @@
 # Active Context: WorthIt
 
-## Recent Changes (Sep 2026 — BTO historical backfill: Feb 2008, completes 2008) — LOCAL ONLY, NOT YET COMMITTED
+## Recent Changes (Sep 2026 — post-completion audit + 2010 gap-fill, PARTIAL) — LOCAL ONLY, NOT YET COMMITTED
+
+Ran the user-requested double-check after the "ROADMAP COMPLETE" claim below: a full systematic
+re-fetch of housingmap.sg (2001-2026, year-batches, cross-referencing project *counts* not just
+names) plus a battery of data-integrity checks (duplicate coordinates, null-type/non-null-price
+rows, price_min>price_max, schema validation). Result: **zero data errors**, but the "complete"
+claim was wrong — found a real gap of **8 missing months**: 2010 (Mar, Apr, Jun, Jul, Aug, Sep) and
+2011 (May, Jul). Also updated `CLAUDE.md` with a new "Historical dataset coverage" section
+documenting the null-date/null-geocode conventions and the naming-disambiguation pattern for future
+sessions.
+
+Filled **3 of the 8** gap months so far, also updated CLAUDE.md with the two brochure-format eras
+discovered along the way:
+- **2010-03**: Fernvale Ridge (522 units) + Sembawang RiverLodge (306 of 432 built units actually
+  offered — 126 2-Room units withheld). Full official price tables recovered from brochure.
+- **2010-04**: Punggol Emerald (856) + Punggol Waves (573). **First brochures found with no price
+  table at all** (format changed from Mar 2010) — unit counts instead sourced from each project's
+  Maps&Plans.pdf block-distribution table and independently cross-checked against an archived HDB
+  e-service application-count page (exact match on every figure). Only min prices recoverable from
+  secondary sources; `price_max: null` throughout (precedented pattern).
+- **2010-06**: Waterway Terraces I (1072, first-ever waterfront/Premium-flat BTO) + Fernvale Foliage
+  (504) + Rivervale Arc (1120). Same no-price-table brochure format; unit counts from Maps&Plans.pdf,
+  totals reconcile exactly. Prices from secondary sources — full min-max for Waterway Terraces I and
+  Fernvale Foliage, min-only for Rivervale Arc (`price_max: null`). `application_end` left null
+  (only "closed in July 2010" sourced, not an exact date) — precedented per the null-date convention.
+
+Dataset now at **116 launches**. `npm test` green (240 passed / 1 skipped) after each addition.
+**Not yet committed, pushed, or deployed.**
+
+**Remaining pending work** (stopped here per explicit user instruction — "don't go through them one
+by one, do a quick check and get ready for commit"): **2010-07** (Corporation Tiara, Senja Gateway),
+**2010-08** (Yishun Riverwalk), **2010-09** (Woodlands Dew, Woodlands Meadow), **2011-05** (Costa
+Ris, Golden Lily, Punggol Parcvista, Tampines GreenLeaf, Tampines GreenWood, Woodlands Peak),
+**2011-07** (Yishun Natura, Segar Meadows [name collision with existing Nov 2007 "Segar Meadows" —
+needs a disambiguation suffix], Segar Palmview, Anchorvale Isles, Fernvale Riverbow, Golden
+Carnation, Golden Orchid) — 5 more launch months, ~16 more projects. The "ROADMAP COMPLETE" claim in
+the section below is therefore **superseded/incorrect** until these are filled.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Apr 2001, ROADMAP COMPLETE) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **April 2001 BTO launch** — **the very first BTO exercise HDB ever ran** (15 Apr 2001,
+pilot scheme, ~2,500 flats across 4 sites in Sengkang and Sembawang, before BTO fully replaced the
+Registration for Flats System in Jan 2002). Two Sengkang projects fully geocoded and unit-confirmed:
+Compassvale Arcadia (961 units) and Rivervale Green (776 units), both 4-Room/5-Room split
+unrecoverable. The two Sembawang projects, Flowing Greenery (410 units) and River Edge (447 units),
+could not be geocoded — **confirmed via a direct re-query of housingmap.sg that both are explicitly
+marked "Cancelled"** on their own roadmap, meaning neither was ever built, which is exactly why
+neither resolves in OneMap (third and fourth null-geocode cases this backfill, after Dec 2004's
+Anthias/Coral Green). housingmap.sg's page also states verbatim "Build-To-Order was introduced in
+April 2001" and directly confirmed these four launches are the earliest entries on their entire
+roadmap — **there is nothing earlier**.
+
+**This closes out the full historical backfill.** Every launch on housingmap.sg's roadmap from April
+2001 through the present has now been worked through. Session totals: dataset grew from 90 → **113
+launches** (449 projects), span April 2001 → June 2026. Notable milestones this session: discovered
+HDB's legacy VSF microsite archive in Wayback (2006-2009 sweet spot for rich plain-text price
+tables); the landmark Pinnacle@Duxton (May 2004); four housingmap.sg total discrepancies caught and
+resolved by preferring corroborated secondary sources; two "combined vs split" project-naming
+judgment calls (Atrina, Aspella) where housingmap's multi-row split didn't match the actual press/
+building history; four null-geocode cases (two cancelled-and-never-built, two simply delisted); and
+one mid-session naming-collision fix (The Coris Phase 1/2). `npm test` green (240 tests, no test
+file changes) throughout. **Not yet committed, pushed, or deployed** — this entire session's 23 new
+launches remain local-only, per the "commit only when explicitly asked" convention (the prior
+90-launch state was already committed as `141dd36` in an earlier session). No further backfill work
+remains per the standing instruction — the task is complete pending user review/commit.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Dec 2002, completes 2002) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **December 2002 BTO launch** (3 standalone projects, all confirmed all-4-Room via current
+listings: Edgedale Green — Punggol — 582 units; The Periwinkle — Punggol — 450 units; The Coris
+(Phase 1) — Sengkang — 434 units). **Caught and fixed a naming collision from earlier this
+session**: the Sept 2003 launch's project had been named plain 'THE CORIS' before this Dec 2002
+'Phase 1' was discovered — renamed the Sept 2003 entry to 'THE CORIS (PHASE 2)' and regenerated its
+reference file. The two phases' totals cross-validate cleanly against a current merged listing
+(434+448=882 total units, matching exactly). All totals confirmed via current real-estate listings;
+no pricing or exact dates recoverable for any of the three. This completes **every 2002 BTO launch**
+(only this one Dec 2002 entry, per housingmap.sg's roadmap — no other 2002 launches listed).
+Dataset now spans **December 2002 → June 2026**, 112 launches total. `npm test` green (240 tests,
+no test file changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further
+back per the standing instruction — the **only remaining target is April 2001** (four launches:
+Compassvale Arcadia, Rivervale Green, Flowing Greenery, River Edge — per housingmap.sg's roadmap,
+apparently the very start of the BTO system itself, since no earlier launches are listed). This is
+the absolute frontier the user's earlier "same rigor" answer anticipated might have no recoverable
+source at all — once this is attempted (successfully or not), the entire housingmap.sg roadmap back
+to 2001 will have been worked through.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Dec 2003, completes 2003) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **December 2003 BTO launch** (1 standalone entry: Aspella — Sengkang — 862 units, all
+4-Room Premium). Same treatment as Atrina: housingmap.sg splits this into "Aspella 1"/"Aspella 2"
+(429+433=862), but every secondary source describes one 8-block, 862-unit development with no
+mention of two launches, so recorded as a single project. Notable: a Premium contract priced 15-20%
+above standard BTO of the era, later cited as one of the most profitable BTO projects ever on a
+percentage basis. No pricing or exact dates recoverable. This completes **every 2003 BTO launch**
+(Sep, Dec — 2 launch entries, 4 projects). Dataset now spans **December 2003 → June 2026**, 111
+launches total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or
+deployed.** Continuing to backfill further back per the standing instruction — 2003 is complete; per
+housingmap.sg's earlier-extracted roadmap, the remaining tail is December 2002 (three launches: The
+Coris 1, The Periwinkle, Edgedale Green) and finally April 2001 (four launches: Compassvale Arcadia,
+Rivervale Green, Flowing Greenery, River Edge — apparently the very start of the BTO system). This is
+the exact territory the user's earlier "Continue with same rigor" answer anticipated might have no
+recoverable source at all — every launch found from here on may end up as a housingmap-total-only
+placeholder, or may be entirely unrecoverable.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2003) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2003 BTO launch** (3 projects launched together 4-24 Sep 2003: The Sundial —
+Punggol — 903 units all 4-Room, price_min $138,000; The Coris — Sengkang — 448 units all 4-Room,
+price_min $157,000; Spring Lodge — Sembawang — 447 units, 4-Room/5-Room split unrecoverable).
+**Untangled a genuinely confusing source conflict** for Spring Lodge: housingmap.sg lists "432 & 447
+units" for this launch, and a secondary source notes a 2003-listed Spring Lodge phase (block 465)
+was cancelled while a different block (466) was actually built — used the confirmed-built total
+(447) and documented the ambiguity rather than guessing which reading is authoritative. Both Sundial
+and Coris only have a confirmed *minimum* price (partial-data pattern, price_max null). Dataset now
+spans **September 2003 → June 2026**, 110 launches total. `npm test` green (240 tests, no test file
+changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further back per the
+standing instruction — per housingmap.sg's roadmap, next is December 2003 (Aspella 1 & 2, Sengkang,
+429 & 433 units), then the roadmap moves into December 2002 (The Coris 1, Edgedale Green, The
+Periwinkle) and finally April 2001 (four launches, likely the start of the BTO system itself) — this
+is the territory the user's earlier "same rigor" answer anticipated might have no recoverable source
+at all.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Mar 2004, completes 2004) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **March 2004 BTO launch** (1 standalone entry: Atrina — Sengkang — 760 units, all
+4-Room). **Judgment call**: housingmap.sg's roadmap lists this as two separate entries ("Atrina 1"
+and "Atrina 2", 424+366=790 units), but a contemporaneous Straits Times article (25 Mar 2004)
+describes one single press event for "Atrina" with no mention of two phases, and current real-estate
+listings describe one merged 760-unit development across 8 blocks — recorded as a single launch/
+project (760 units) rather than following housingmap's split, since the primary press coverage and
+built-development evidence both point to one exercise. This completes **every 2004 BTO launch**
+(Mar, May, Aug, Dec — 4 launch entries, 6 projects, including the landmark Pinnacle@Duxton). Dataset
+now spans **March 2004 → June 2026**, 109 launches total. `npm test` green (240 tests, no test file
+changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further back per the
+standing instruction — 2004 is now complete; the roadmap moves into **2001-2003** next (10 launches
+per the earlier-extracted list: The Coris 2 Sep 2003, Spring Lodge Sep 2003, The Sundial Sep 2003,
+Aspella 1 & 2 Dec 2003, The Coris 1 Dec 2002, The Periwinkle Dec 2002, Edgedale Green Dec 2002, then
+the four April 2001 launches that appear to mark the actual start of the BTO system: Compassvale
+Arcadia, Rivervale Green, Flowing Greenery, River Edge) — this is the territory the user's earlier
+'Continue with same rigor' answer specifically anticipated might have no recoverable source at all.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2004, Pinnacle@Duxton) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2004 BTO launch** (1 standalone entry: **Pinnacle @ Duxton** — Central Area, Mature
+Estate — 1,848 units, S1/4-Room-equivalent 1,232 + S2/5-Room-equivalent 616). As anticipated, this
+landmark project (seven 50-storey towers, world's tallest public housing at completion, multiple
+architecture awards) is far better documented than the surrounding thin 2004-2005 entries — full
+price/unit breakdown confirmed across multiple independent sources. Notable historical detail: HDB
+initially released only 528 of the 1,848 units, but overwhelming demand (3,149 applications within
+one day) led it to release the remaining 1,320 units immediately rather than phase the rollout —
+final tally 5,171 applications for 1,848 units. Live spot-check showed the comps ladder computing a
+striking ~73-74% BTO-to-resale discount (median resale ~$1.3-1.46M vs. the ~$335K original price),
+a nice real-world confirmation of the well-known "Pinnacle million-dollar flat" story. Application
+close date not found precisely (only "by July 2004 the launch had closed") — left null, launch date
+firmly confirmed so status still computes correctly. Dataset now spans **May 2004 → June 2026**, 108
+launches total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or
+deployed.** Continuing to backfill further back per the standing instruction — next per
+housingmap.sg's roadmap is March 2004 (Atrina 1 & 2, Sengkang, 424 & 366 units), which completes
+2004 and moves the roadmap into 2001-2003 territory (10 launches, per the earlier-extracted list).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Aug 2004) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **August 2004 BTO launch** (1 standalone entry: Fernvale Grove — Sengkang — 398 units,
+116×3-Room + 282×4-Room). **Fourth housingmap.sg total discrepancy found this backfill** (after
+Jade Spring, Segar Meadows, and implicitly others): housingmap says 508 units, but a detailed
+per-block breakdown (48+20+48 3-Room across 3 blocks, 86+100+96 4-Room) from a real-estate database
+sums to 398 exactly and was trusted instead, given its internal consistency at the block level. No
+pricing or exact dates recoverable — same "total + type only" tier as the last several 2004-2005
+launches. Dataset now spans **August 2004 → June 2026**, 107 launches total. `npm test` green (240
+tests, no test file changes). **Not yet committed, pushed, or deployed.** Continuing to backfill
+further back per the standing instruction — next per housingmap.sg's roadmap is May 2004
+(**Pinnacle@Duxton**, Central Area, 1,848 units) — a landmark, extensively-documented project (tallest
+public housing in the world at completion, won multiple architecture awards), expected to have much
+richer sourcing than the surrounding Sengkang/Punggol launches despite being from the same era.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Dec 2004, first null-geocode case) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **December 2004 BTO launch** (2 projects launched together 28 Dec 2004, confirmed via
+NLB's NewspaperSG archive index for Straits Times/Today/Berita Harian: Anthias — Punggol — 734 units,
+134×3-Room + 600×4-Room; Coral Green — Sengkang — 655 units, all 4-Room). Both totals match
+housingmap.sg exactly. Application originally closed 16 Jan 2005 but HDB extended it to 23 Jan 2005
+— used the extended date. **First-ever null-geocode case in this dataset**: neither project could be
+found in OneMap under any name variant tried (confirmed the API itself still works via a known-good
+control query) — both precinct names appear to have been fully delisted/superseded in OneMap's
+current index, unlike every other project so far. Verified this is safe before proceeding: the comps
+endpoint (`server/index.js:2244`) already guards `head.lat == null || head.lng == null`, falling
+through to the town-level fallback, and this was confirmed live — both projects' `/api/bto/project-
+overview` returned full town-level comps with no crash. The frontend map code also already guards
+`resolvedData.lat && resolvedData.lng` before placing a marker. No pricing was recoverable for
+either project despite the strong date/unit-count sourcing. Dataset now spans **December 2004 → June
+2026**, 106 launches total. `npm test` green (240 tests, no test file changes). **Not yet committed,
+pushed, or deployed.** Continuing to backfill further back per the standing instruction — next per
+housingmap.sg's roadmap is August 2004 (Fernvale Grove, Sengkang, 508 units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Mar 2005, completes 2005) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **March 2005 BTO launch** (1 standalone entry: Tivela — Sengkang — 374 units, all
+4-Room). Same data-poor 2005 pattern as the prior three launches — total and flat type confirmed via
+a current listing, everything else (price, floor area, exact dates) unrecoverable. This completes
+**every 2005 BTO launch** (Mar, Jun, Sep — 3 launch entries, 3 projects; all three share the same
+"total-only" data-quality tier). Dataset now spans **March 2005 → June 2026**, 105 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+Continuing to backfill further back per the standing instruction — per housingmap.sg's
+earlier-extracted roadmap, next is December 2004 (two launches: Coral Green, Sengkang, 655 units;
+Anthias, Punggol, 734 units), then August 2004 (Fernvale Grove, 508 units), then May 2004
+(**Pinnacle@Duxton**, Central Area, 1,848 units — a landmark, extensively-documented project, likely
+much better-sourced than the surrounding Sengkang/Punggol launches despite being older), then March
+2004 (Atrina 1 & 2, Sengkang, 424 & 366 units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jun 2005) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **June 2005 BTO launch** (1 standalone entry: Coralinus (Phase 1) — Punggol — 369 units,
+all 4-Room). Completes the Coralinus pair (Phase 2 already in dataset as `2006-02`, 734 combined
+units reconciling exactly against current merged listings). Same data-poor pattern as Phase 2 and
+Sep 2005's Fernvale Court: VSF price pages exist in Wayback's index but are empty image-based pages
+with the underlying images never captured — only the confirmed total and flat type survive. This is
+now the **third consecutive launch** with this same "total confirmed, everything else null" profile,
+confirming 2005 is a genuine data-quality cliff for this backfill (expected and pre-approved by the
+user's earlier 'same rigor' response). Dataset now spans **June 2005 → June 2026**, 104 launches
+total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or
+deployed.** Continuing to backfill further back per the standing instruction — next per
+housingmap.sg's roadmap is March 2005 (Tivela, Sengkang, 374 units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2005, archive coverage thins sharply) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2005 BTO launch** (1 standalone entry: Fernvale Court — Sengkang — 500 units,
+3-Room and 4-Room, split unrecoverable). **Confirms the expected 2005-and-earlier archive cliff**:
+this project's legacy VSF microsite has almost no Wayback captures at all (a single nav page, no
+price/steps content ever crawled) — a much sharper coverage drop than 2006, where at least some
+price data was usually recoverable. No secondary source covering this specific launch was found
+either. Only the confirmed total and flat-type composition survive; price, floor area, unit split,
+and application dates are all null/approximated. This is expected and pre-approved — matches exactly
+what the user's earlier 'Continue with same rigor' response anticipated ('more null-placeholder
+entries, possibly no source at all for the very earliest launches'). Dataset now spans **September
+2005 → June 2026**, 103 launches total. `npm test` green (240 tests, no test file changes). **Not
+yet committed, pushed, or deployed.** Continuing to backfill further back per the standing
+instruction — next per housingmap.sg's roadmap is June 2005 (Coralinus 1, Punggol, 369 units — the
+earlier phase completing the Coralinus pair whose Phase 2 was added as `2006-02`).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Feb 2006, completes 2006) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **February 2006 BTO launch** (1 standalone entry: Coralinus (Phase 2) — Punggol — 365
+units, all 4-Room). **The most data-poor launch found in this entire backfill**: the VSF's price
+table was itself a JPEG image, and that image was never captured by Wayback at all (a new failure
+mode — the containing HTML page WAS archived, but its embedded image wasn't, confirmed via a CDX
+search returning zero hits for the image URL at any timestamp) — distinct from every other gap
+pattern found so far (crawled-but-empty, never-crawled-at-all, or genuinely 404'd). No steps/date
+page and no secondary source (one promising forum thread is itself now a dead link with no Wayback
+capture) could be found either. Only the confirmed total (365, cross-validated against the current
+merged Coralinus listing: 369 Phase 1 + 365 this launch = 734, matching exactly) and flat type
+(4-Room) survived — price, floor area, and application dates are all unrecoverable;
+`application_start` uses the least-confident approximation in this dataset (first of the
+housingmap-designated month, with no confirmed close date to anchor backward from, unlike every
+other approximated date so far). This completes **every 2006 BTO launch** (Feb, Jul, Sep×2, Oct,
+Nov — 6 launch entries, 7 projects). Dataset now spans **February 2006 → June 2026**, 102 launches
+total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or
+deployed.** Continuing to backfill further back per the standing instruction — per housingmap.sg's
+earlier-extracted roadmap, next is September 2005 (Fernvale Court, Sengkang, 500 units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Jul 2006) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **July 2006 BTO launch** (1 standalone entry: Fernvale Vista (Phase 1) — Sengkang — 508
+units, fully confirmed: 86×2-Room + 92×3-Room + 330×4-Room). No VSF price page was ever crawled for
+this one, but a contemporaneous wedding-forum thread that actively tracked the launch in real time
+gave the complete official breakdown, independently corroborated by the VSF's own steps page for the
+application dates (24 Jul - 14 Aug 2006 — a rare pre-2008 launch with a fully-confirmed, not
+approximated, `application_start`). Cross-validated against current live listings for the merged
+Fernvale Vista site: 508 (Phase 1) + 678 (Phase 2, already in dataset) = 1,186, matching exactly.
+Dataset now spans **July 2006 → June 2026**, 101 launches total. `npm test` green (240 tests, no
+test file changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further back
+per the standing instruction — next per housingmap.sg's roadmap is February 2006 (Coralinus 2,
+Punggol, 365 units), the last 2006 entry before the roadmap moves into 2005.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2006, 100-launch milestone) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2006 BTO launch** (2 projects sharing one monthly VSF exercise folder:
+Sembawang Green — 471 units, all 4-Room, fully confirmed via its price table; Golden Jasmine —
+Bishan, Mature Town — 176 units, all elderly-only Studio Apartments, price/floor-area genuinely
+unrecoverable, single null-price placeholder row). **Dataset reaches 100 launches** (span: September
+2006 → June 2026). `npm test` green (240 tests, no test file changes). **Not yet committed, pushed,
+or deployed** — this entire session's work (11 new launches, 90→100, spanning Feb 2008 down through
+Sep 2006) remains uncommitted; the prior session's 90-launch state (through Feb 2008) was already
+committed as `141dd36` and pushed. Continuing to backfill further back per the standing instruction —
+next per housingmap.sg's roadmap is July 2006 (Fernvale Vista 1, Sengkang, 508 units — an earlier
+phase of the project whose Phase 2 was already added as `2007-05`), then February 2006 (Coralinus 2,
+Punggol, 365 units), which per the previously-extracted roadmap is the last 2006 entry before 2005.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Oct 2006) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **October 2006 BTO launch** (1 standalone entry: Sri Geylang Serai — Geylang, Mature
+Town — 447 units, all 4-Room Standard flats, $230,000-$292,000) — a SERS-linked mature-town BTO
+site per secondary sources (remaining flats after SERS resettlement re-offered via BTO). Fully
+confirmed via its legacy VSF price table; application close (15 Nov 2006) confirmed, start
+approximated per the established pattern. Dataset now spans **October 2006 → June 2026**, 99
+launches total. `npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or
+deployed.** Continuing to backfill further back per the standing instruction — next per
+housingmap.sg's roadmap is September 2006 (two launches: Sembawang Green 471 units, Golden Jasmine
+[Bishan, mature town] 176 units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2006, start of 2006) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2006 BTO launch** (1 standalone entry: Compassvale View — Sengkang — 390 units,
+fully confirmed: 105×3-Room + 285×4-Room). Recovered from its legacy VSF price table. Application
+close (18 Dec 2006) confirmed; launch start approximated (`2006-11-27`) per the established pattern
+since no exact day was found. This is the first 2006 launch in the dataset. Dataset now spans
+**November 2006 → June 2026**, 98 launches total. `npm test` green (240 tests, no test file
+changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further back per the
+standing instruction — per housingmap.sg's earlier-extracted roadmap, next is October 2006 (Sri
+Geylang Serai, Geylang, 447 units — a mature-town BTO site), then September 2006 (two launches:
+Sembawang Green 471 units, Golden Jasmine [Bishan] 176 units), then July 2006 (Fernvale Vista 1, 508
+units — Phase 1 of the project whose Phase 2 was already added as `2007-05`), then February 2006
+(Coralinus 2, Punggol, 365 units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Mar 2007, completes 2007) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **March 2007 BTO launch** (1 standalone entry: Treelodge @ Punggol — 712 units, fully
+confirmed: 98×3-Room + 600×4-Room + 14×5-Room Loft) — Singapore's first eco-precinct public housing
+development and first Green Mark Platinum Award public housing project, a well-documented landmark
+project. Fully confirmed via its legacy VSF price table (hosted this time on plain `www.hdb.gov.sg`
+rather than the `www69`/`www101` subdomains seen for other 2007 launches) plus independently
+corroborated launch date (28 Mar 2007) from multiple secondary sources, since this project is far
+more widely written about than most other launches from this era. **Also caught and fixed** the same
+`@`-spacing bug documented earlier this session (OneMap returned `TREELODGE@PUNGGOL` with no spaces;
+renamed to `TREELODGE @ PUNGGOL` per the dataset's established convention). This completes **every
+2007 BTO launch** (Mar, May, Aug, Sep, Oct, Nov, Dec — 7 launch entries, 9 projects, for the year).
+Dataset now spans **March 2007 → June 2026**, 97 launches total. `npm test` green (240 tests, no
+test file changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further back
+per the standing instruction — per housingmap.sg's earlier-extracted roadmap, 2007 is now complete;
+next is 2006 (6 launches: Fernvale Vista 1 Jul 2006/508 units, Compassvale View Nov 2006/390 units,
+Sembawang Green Sep 2006/471 units, Golden Jasmine Sep 2006/176 units [Bishan — a mature-town BTO
+site], Sri Geylang Serai Oct 2006/447 units [Geylang], Coralinus 2 Feb 2006/365 units [Punggol]).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: May 2007) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **May 2007 BTO launch** (1 standalone entry: Fernvale Vista (Phase 2) — Sengkang — 678
+units, fully confirmed: 164×2-Room + 174×3-Room + 340×4-Room). A later phase distinct from Fernvale
+Vista 1 (Jul 2006, not yet added) — uses `FERNVALE VISTA (PHASE 2)` as the project key pre-emptively,
+same disambiguation convention as Jade Spring's two phases. Application dates (30 May - 13 Jun 2007)
+have unusually high confidence for a pre-2008 launch: the close date came directly from the VSF steps
+page, and the start date is corroborated by the earliest Wayback capture of the project's microsite
+being dated exactly 30 May 2007 (not just inferred from the 14-day pattern). Dataset now spans **May
+2007 → June 2026**, 96 launches total. `npm test` green (240 tests, no test file changes). **Not yet
+committed, pushed, or deployed.** Continuing to backfill further back per the standing instruction —
+next per housingmap.sg's roadmap is March 2007 (Treelodge, Punggol, 712 units) — no April 2007
+launch was listed.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Aug 2007) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **August 2007 BTO launch** (1 standalone entry: Punggol Vista — 628 units, all confirmed:
+105×2-Room + 210×3-Room + 313×4-Room). Application close (3 Sep 2007) confirmed from the VSF steps
+page; launch/start date not found anywhere, so `application_start` uses the same "approximate,
+2-weeks-before-the-confirmed-close-date" pattern established for Nov 2007, corroborated by the
+earliest Wayback capture of this project's site (27 Aug 2007) confirming it was live by then.
+Dataset now spans **August 2007 → June 2026**, 95 launches total. `npm test` green (240 tests, no
+test file changes). **Not yet committed, pushed, or deployed.** Continuing to backfill further back
+per the standing instruction — per housingmap.sg's earlier-extracted roadmap, the next entry after
+August 2007 is May 2007 (Fernvale Vista 2, Sengkang, 678 units) — no launches were listed for June
+or July 2007.
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Sep 2007) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **September 2007 BTO launch** (1 standalone entry: Coral Spring — Sengkang — 698 units,
+all 4-Room Premium flats, 92 sqm internal, $188,000-$252,000). Fully confirmed via its legacy VSF
+price table, with application dates (20 Sep - 9 Oct 2007) independently cross-confirmed by both the
+VSF's own steps page and a contemporaneous Straits Times article. One flaky test failure observed
+on this run (`npm test` reported 1 failed test on a first pass, then 240/240 green on immediate
+retry with no code change) — treated as a transient flake, not a regression, since the diff was
+purely additive JSON data with no logic changes. Dataset now spans **September 2007 → June 2026**,
+94 launches total. `npm test` green (240/240, after the one flaky retry). **Not yet committed,
+pushed, or deployed.** Continuing to backfill further back per the standing instruction — next per
+housingmap.sg's roadmap is August 2007 (Punggol Vista, 628 units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Oct 2007) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **October 2007 BTO launch** (2 projects launched together, 25 Oct - 14 Nov 2007, both
+fully confirmed with complete official data): Telok Blangah Towers — Bukit Merah, Mature Town, a
+notable rare in-town/near-CBD BTO site — 400 units (90 Studio Apartment + 100×3-Room + 210×4-Room);
+Punggol Lodge — Punggol — 516 units (52×3-Room + 464×4-Room). Recovered from two property-blog
+reproductions of the actual HDB press release and a Straits Times article, together giving every
+figure including Studio Apartment and 3-Room prices that the press-release copy alone omitted — no
+Wayback/VSF data was needed at all for this one (its microsite exists but was never crawled beyond
+frame pages, same gap pattern as Dec 2007's two projects). Floor area wasn't published anywhere
+found, left null for all rows. Dataset now spans **October 2007 → June 2026**, 93 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed.**
+Continuing to backfill further back per the standing instruction — next per housingmap.sg's roadmap
+is September 2007 (Coral Spring, Sengkang, 698 units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Nov 2007) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **November 2007 BTO launch** (2 projects: Compassvale Beacon — Sengkang — 750 units, fully
+confirmed via its legacy VSF price table; Segar Meadows — Bukit Panjang — unit-type split
+unrecoverable, single placeholder row). **Second housingmap.sg total discrepancy found**: housingmap
+lists Segar Meadows as 412 units, but srx.com.sg and stackproperty.sg both independently report 712
+— went with 712 (multiple independent sources vs. housingmap's one, and housingmap already had one
+proven error this backfill). **First use of an approximate `application_start`**: neither project's
+exact launch day nor close date was recoverable anywhere, so `application_start` was set to
+`2007-11-01` as a documented month-only approximation purely so `launchStatus()` still reports
+'closed' rather than 'upcoming' for an 18-year-old launch — verified the frontend never actually
+displays `application_start` for a closed launch (only `application_end`, via `app.js:1681-1682`),
+so this approximation carries no risk of showing a fabricated date to users. This is a new pattern
+for this dataset (every prior null-date case left the field `null` outright); documented clearly in
+the curation note as an approximation, not a discovered fact. Dataset now spans **November 2007 →
+June 2026**, 92 launches total. `npm test` green (240 tests, no test file changes). **Not yet
+committed, pushed, or deployed.** Continuing to backfill further back per the standing instruction —
+next per housingmap.sg's roadmap is October 2007 (Punggol Lodge 516 units, Telok Blangah Towers 400
+units).
+
+## Recent Changes (Sep 2026 — BTO historical backfill: Dec 2007) — LOCAL ONLY, NOT YET COMMITTED
+
+Added the **December 2007 BTO launch** (2 projects launched together, 27 Dec 2007: Damai Grove —
+Punggol — 738 units, Jade Spring @ Yishun Phase 1 — 384 units). **Naming collision resolved**: this
+is a different, earlier phase from the already-seeded March 2008 "Jade Spring @ Yishun" (Phase 2) —
+both geocode to the same OneMap result, so this phase uses `project: "JADE SPRING @ YISHUN (PHASE
+1)"` to stay distinct, following the existing `TANJONG TREE RESIDENCES @ HOUGANG (FEB 2024)` /
+`(NOV 2021)` disambiguation precedent already in the dataset. **First genuine VSF-crawl gap**: HDB's
+legacy microsite exists in Wayback's CDX index for both projects but only the outer frame page was
+ever actually crawled (no price/steps/flats text pages) — distinct from the earlier "200-status but
+unfetchable" Punggol Spring case, this is a real "never crawled" gap. Recovered from a contemporaneous
+Business Times article: combined totals (1,122 flats: 110×3-Room + 1,012×4-Room) plus each project's
+exact 4-Room price range (Damai Grove $195k-$240k, Jade Spring 1 $183k-$246k). The 3-Room unit split
+per project (62 for Damai Grove, 48 for Jade Spring 1) was derived arithmetically by subtracting each
+project's confirmed 4-Room count from its housingmap.sg total — the two derived numbers summed to
+exactly the article's combined 110, corroborating the derivation. No 3-Room pricing or any floor area
+was published anywhere found — both left null (partial-data pattern). Also discovered mid-session
+that port 3000 was occupied by an unrelated NestJS app (`dist/main.js`, PID from a different
+project) — switched to `PORT=3001` for local spot-checks rather than touching a process not
+recognized as this project's. Dataset now spans **December 2007 → June 2026**, 91 launches total.
+`npm test` green (240 tests, no test file changes). **Not yet committed, pushed, or deployed** (the
+prior 90-launch state, through Feb 2008, WAS already committed as `141dd36` and pushed to
+`origin/main` in the previous session — only this Dec 2007 addition is new/uncommitted). Continuing
+to backfill further back per the standing instruction — next per housingmap.sg's roadmap is November
+2007 (Compassvale Beacon, Segar Meadows), part of a much longer remaining tail (33 launches total
+back to April 2001, per the previous session's full roadmap extraction).
 
 Added the **February 2008 BTO launch** (1 standalone entry: Punggol Spring — 494 units, all 4-Room
 Standard flats, $204,000-$259,000) — HDB's own "first BTO development for 2008" per a contemporaneous

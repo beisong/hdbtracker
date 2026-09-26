@@ -1,6 +1,33 @@
 # Active Context: WorthIt
 
-## Recent Changes (2026-09-26 — same-origin API proxy for Googlebot rendering) — DEPLOYED (frontend, v=26), NOT YET COMMITTED
+## Recent Changes (2026-09-27 — BTO project resale after MOP) — DEPLOYED (API + frontend, v=27)
+
+Each post-MOP BTO page now shows the project's *own* resale transactions. Block mapping comes from
+OneMap's `BUILDING` field (exact HDB precinct name) — researched alternatives (housingmap.sg paid DB,
+SRX/99.co/StackProperty portals, data.gov.sg) and none offer a free project→block dataset; a
+radius + lease-year heuristic was tried first and mis-assigned blocks in dense estates.
+- New `scripts/fetch_bto_blocks.py` → `scripts/bto_project_blocks.json` (262 projects plausibly
+  past MOP, all matched; Pinnacle @ Duxton is a manual entry). Throttled/incremental; name
+  splitting for `&`/`I & II`/comma lists, `ST`→`SAINT` and `THE ` fallbacks, lease-year filter
+  drops reused precinct names (e.g. Cheng San Court's 1979 blocks), shared names split only when
+  launches ≥3y apart (Segar Meadows) — close phases (Coralinus/Fernvale Vista/Jade Spring/The Coris
+  Phase 1+2) share the whole precinct.
+- `server/index.js`: `BTO_PROJECT_BLOCKS` (in-memory; `BTO_BLOCKS_PATH` env), `btoProjectResale()`
+  → `project_resale` on `/api/bto/project-overview`; MOP gate = remaining lease < 95y (user's
+  suggestion). SEO: post-MOP `/bto/<slug>` title becomes "<Project> Resale Prices", + resale FAQ
+  and latest-10 table.
+- Frontend: `#bto-resale-container` + `renderBtoProjectResale()` (summary vs launch midpoint,
+  latest 10 + "Show all"); `_onResultsShown()` now clears both BTO containers (fixes stale "BTO vs
+  Nearby Resale" table lingering after navigating from a BTO page to another search).
+- Result: 219/262 projects show a resale section. The rest are genuinely pre-MOP (Nov 2016+
+  launches, Waterfront II @ Northshore) or 30-year-lease Studio Apartment projects (never <95y).
+- Studio-only projects (14: Golden ___ series + Kampung Admiralty) get a note instead — 30-year lease,
+  no open-market resale (confirmed via PropertyGuru Mar 2015); shown on the page and in bot SEO content.
+- Tests: 247 pass (fixture block map + BEDOK NORTH GROVE / PUNGGOL FRESHVIEW / GOLDEN CLOVER fixtures).
+**Deployed** 2026-09-27 (API + frontend v=27); verified live (Alkaff CourtView 128 resales, bot title "Resale Prices").
+Re-run `python scripts/fetch_bto_blocks.py` periodically as more projects reach MOP (incremental).
+
+## Previous (2026-09-26 — same-origin API proxy for Googlebot rendering) — DEPLOYED (frontend, v=26), committed `207e6de`
 
 GSC Live Test of `/bto/bedok-bayshore-ii` rendered a full-screen "Something went wrong — Failed to load:
 Failed to fetch": the SPA's startup `Promise.all([getStatus, getTowns])` (`app.js` init) failed when

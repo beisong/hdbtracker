@@ -150,7 +150,11 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   const insertAll = db.transaction((rows) => {
     for (const row of rows) insertTx.run(...row);
   });
-  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy]);
+  // PUNGGOL FRESHVIEW's only block — resold at 97y remaining lease, so below the BTO MOP gate
+  const punggolFreshview = [
+    ['PUNGGOL','4 ROOM','601A','PUNGGOL FIELD','07 TO 09',93,'MODEL A',97,610000,6559,'2025-05','HDB',null,null,null,'Resale',null],
+  ];
+  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...punggolFreshview]);
 
   // Project coords
   const insertCoord = db.prepare(`
@@ -186,6 +190,12 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   insertBtoAll([
     ['2026-06', 'June 2026 BTO', '2026-06-17', '2026-06-24', 'BEDOK VISTA CREST', 'Bedok Vista Crest', 'BEDOK', 'Standard', 'Near Bedok North', 1.3253, 103.9303, 40, '3-Room', '3 ROOM', 65, 200, 250000, 280000],
     ['2026-06', 'June 2026 BTO', '2026-06-17', '2026-06-24', 'BEDOK VISTA CREST', 'Bedok Vista Crest', 'BEDOK', 'Standard', 'Near Bedok North', 1.3253, 103.9303, 40, '4-Room', '4 ROOM', 90, 300, 320000, 360000],
+    // Past MOP — its blocks (tests/fixtures/bto_project_blocks.json) are the BEDOK NORTH ST 1
+    // resale blocks 100/200 above, all well under 95y remaining lease.
+    ['2015-05', 'May 2015 BTO', '2015-05-26', '2015-06-01', 'BEDOK NORTH GROVE', 'Bedok North Grove', 'BEDOK', null, 'Bedok North St 1', 1.3253, 103.9303, null, '3-Room', '3 ROOM', 65, 100, 150000, 170000],
+    // Resold only at ≥95y remaining lease — not yet treated as past MOP.
+    ['2020-01', 'January 2020 BTO', '2020-01-20', '2020-01-27', 'PUNGGOL FRESHVIEW', 'Punggol Freshview', 'PUNGGOL', null, 'Punggol Field', 1.3950, 103.9000, null, '4-Room', '4 ROOM', 90, 100, 300000, 330000],
+    ['2012-03', 'March 2012 BTO', '2012-03-27', '2012-04-02', 'GOLDEN CLOVER', 'Golden Clover', 'TOA PAYOH', null, 'Kim Keat Avenue', 1.3310, 103.8560, null, 'Studio Apartment (Type 1)', null, 35, 50, 90000, 100000],
     ['2026-11', 'November 2026 BTO (upcoming)', null, null, 'TOA PAYOH SUMMIT', 'Toa Payoh Summit', 'TOA PAYOH', 'Plus', 'TBD', null, null, null, '', null, null, null, null, null],
   ]);
 

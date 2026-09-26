@@ -377,6 +377,11 @@ const App = {
     // Restore the resale-search stat-card labels — renderBtoResults() repurposes these
     // same 4 slots for different concepts (price range/wait/classification/town) and
     // relabels them; every other render path needs the original labels back.
+    // BTO-only containers — renderBtoResults() refills them after this runs
+    for (const id of ['bto-comparison-container', 'bto-resale-container']) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+    }
     const statLabelId = document.getElementById('stat-median-label');
     if (statLabelId) statLabelId.textContent = 'Median Price';
     const statPsfLabel = document.getElementById('stat-psf-label');
@@ -1766,6 +1771,8 @@ const App = {
       }
     }
 
+    this.renderBtoProjectResale(data);
+
     this.updateSeoForSearch('bto', data);
 
     // Map
@@ -1785,6 +1792,72 @@ const App = {
       // Upcoming/unpriced launch — no site to plot yet
       document.getElementById('map-section')?.classList.add('hidden');
     }
+  },
+
+  // The project's own resale transactions once it's past MOP (null project_resale → nothing shown)
+  renderBtoProjectResale(data) {
+    const container = document.getElementById('bto-resale-container');
+    const r = data.project_resale;
+    if (!container) return;
+    // Studio Apartments: 30-year lease, can't be resold on the open market — explain the absence
+    const studioOnly = data.flats.length > 0 && data.flats.every(f => /^Studio Apartment/i.test(f.bto_label));
+    if (!r && studioOnly && data.status === 'closed') {
+      container.innerHTML = `<p class="text-xs text-gray-400">Studio Apartments carry a 30-year lease and can't be resold on the open market — no resale transactions exist.</p>`;
+      return;
+    }
+    if (!r) return;
+
+    const typeLabel = t => t.charAt(0) + t.slice(1).toLowerCase();
+    const summaryRows = r.by_type.map(t => {
+      const change = t.change_pct != null
+        ? `<span class="${t.change_pct >= 0 ? 'text-green-500' : 'text-red-500'} font-semibold">${t.change_pct >= 0 ? '+' : '−'}${Math.abs(t.change_pct)}%</span>` : '--';
+      return `<tr>
+        <td class="py-2 pr-2">${typeLabel(t.flat_type)}</td>
+        <td class="py-2 pr-2">${t.launch_price_mid ? `$${this.formatNumber(t.launch_price_mid)}` : '--'}</td>
+        <td class="py-2 pr-2">$${this.formatNumber(t.median_price)} <span class="text-gray-400 text-xs">($${this.formatNumber(t.min_price)}–$${this.formatNumber(t.max_price)})</span></td>
+        <td class="py-2 pr-2">$${this.formatNumber(this.psmToPsf(t.median_psm))}</td>
+        <td class="py-2 pr-2">${change}</td>
+        <td class="py-2 pr-2 text-xs text-gray-400">${t.basis === '12m' ? `${t.count_12m} in last 12mo` : `${t.count} since MOP, latest ${this.formatMonth(t.latest_month)}`}</td>
+      </tr>`;
+    }).join('');
+
+    const txRow = tx => `<tr>
+      <td class="py-1.5 pr-2 text-gray-400 text-xs whitespace-nowrap">${this.formatMonth(tx.month)}</td>
+      <td class="py-1.5 pr-2 whitespace-nowrap">Blk ${tx.block}</td>
+      <td class="py-1.5 pr-2 whitespace-nowrap">${typeLabel(tx.flat_type)}</td>
+      <td class="py-1.5 pr-2 text-xs whitespace-nowrap">${tx.storey_range || '--'}</td>
+      <td class="py-1.5 pr-2 text-xs whitespace-nowrap">${this.sqmToSqft(tx.floor_area_sqm)} sqft</td>
+      <td class="py-1.5 pr-2 font-semibold whitespace-nowrap">$${this.formatNumber(tx.resale_price)}</td>
+      <td class="py-1.5 pr-2 text-xs whitespace-nowrap">$${this.formatNumber(this.psmToPsf(tx.price_per_sqm))}</td>
+    </tr>`;
+    const INITIAL = 10;
+    const txs = r.transactions;
+
+    container.innerHTML = `
+      <h3 class="text-sm font-semibold mb-1">Resale Transactions at ${data.display_name}</h3>
+      <p class="text-xs text-gray-400 mb-2">
+        Past MOP · ${r.total_count} resale${r.total_count === 1 ? '' : 's'} since ${this.formatMonth(r.first_resale_month)}
+      </p>
+      <div class="overflow-x-auto">
+      <table class="w-full text-sm"><thead><tr class="text-left text-gray-400 text-xs">
+        <th class="pb-1">Flat Type</th><th class="pb-1">BTO Launch Price</th><th class="pb-1">Resale Median</th><th class="pb-1">$/sqft</th><th class="pb-1">vs Launch</th><th class="pb-1">Basis</th>
+      </tr></thead><tbody>${summaryRows}</tbody></table>
+      </div>
+      <div class="overflow-x-auto mt-3">
+      <table class="w-full text-sm"><thead><tr class="text-left text-gray-400 text-xs">
+        <th class="pb-1">Month</th><th class="pb-1">Block</th><th class="pb-1">Type</th><th class="pb-1">Storey</th><th class="pb-1">Area</th><th class="pb-1">Price</th><th class="pb-1">$/sqft</th>
+      </tr></thead><tbody id="bto-resale-rows">${txs.slice(0, INITIAL).map(txRow).join('')}</tbody></table>
+      </div>
+      ${txs.length > INITIAL ? `<button id="bto-resale-more" class="mt-2 text-xs text-blue-500 hover:underline">Show all ${txs.length} transactions</button>` : ''}
+      <p class="text-xs text-gray-400 mt-3">
+        "vs Launch" compares the resale median with the midpoint of HDB's indicative launch price range
+        (excluding grants), not what any individual owner paid. Not financial advice.
+      </p>`;
+
+    document.getElementById('bto-resale-more')?.addEventListener('click', (e) => {
+      document.getElementById('bto-resale-rows').innerHTML = txs.map(txRow).join('');
+      e.target.remove();
+    });
   },
 
   async renderBtoIndex() {

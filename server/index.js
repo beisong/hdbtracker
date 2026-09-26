@@ -54,6 +54,23 @@ for (const launch of BTO_LAUNCHES_JSON.launches || []) {
   }
 }
 
+// BTO project → its actual HDB blocks (scripts/fetch_bto_blocks.py, from OneMap BUILDING
+// names), so a post-MOP project's page can show its own resale transactions. In-memory
+// like HDB_QUOTED_RESALE: a code deploy refreshes it, no DB rebuild needed.
+const BTO_BLOCKS_PATH = process.env.BTO_BLOCKS_PATH || path.join(__dirname, '..', 'scripts', 'bto_project_blocks.json');
+const BTO_PROJECT_BLOCKS = {};
+try {
+  const blocksJson = require(BTO_BLOCKS_PATH);
+  for (const [project, entry] of Object.entries(blocksJson.projects || {})) {
+    BTO_PROJECT_BLOCKS[project.toUpperCase()] = (entry.blocks || []).map(b => ({ block: b.block, street_name: b.street_name }));
+  }
+} catch (err) {
+  console.warn(`⚠️  BTO block map not loaded (${BTO_BLOCKS_PATH}): ${err.message}`);
+}
+// HDB's 99-year lease starts before key collection, so a flat past its 5-year MOP
+// has under ~95 years left — the gate for treating a BTO project as resellable.
+const BTO_MOP_REMAINING_LEASE = 95;
+
 // Open database
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'db', 'resale.db');
 let db = null;
@@ -2218,6 +2235,62 @@ app.get('/api/bto/projects', (req, res) => {
   }
 });
 
+// The BTO project's own resale transactions (via BTO_PROJECT_BLOCKS), or null when the
+// project has no known blocks or hasn't reached MOP (no resale under 95y remaining lease).
+function btoProjectResale(project, town, flats) {
+  const blocks = BTO_PROJECT_BLOCKS[project.toUpperCase()] || [];
+  if (blocks.length === 0) return null;
+  const keys = new Set(blocks.map(b => `${b.block}|${b.street_name}`));
+  const blockNos = [...new Set(blocks.map(b => b.block))];
+  const query = (withTown) => db.prepare(`
+    SELECT month, flat_type, block, street_name, storey_range, floor_area_sqm, flat_model,
+           resale_price, price_per_sqm, remaining_lease_years
+    FROM transactions
+    WHERE dataset_source != 'URA_PRIVATE' AND resale_price IS NOT NULL
+      ${withTown ? 'AND town = ?' : ''} AND block IN (${blockNos.map(() => '?').join(',')})
+    ORDER BY month DESC
+  `).all(...(withTown ? [town] : []), ...blockNos).filter(t => keys.has(`${t.block}|${t.street_name}`));
+  // town narrows the scan via idx_transactions_town; retry without it in case the BTO
+  // record's town label differs from HDB's resale town naming.
+  let txs = query(true);
+  if (txs.length === 0) txs = query(false);
+  txs = txs.filter(t => t.remaining_lease_years != null && t.remaining_lease_years < BTO_MOP_REMAINING_LEASE);
+  if (txs.length === 0) return null;
+
+  const cutoff12 = monthsAgoStr(12);
+  const types = [...new Set(txs.map(t => t.flat_type))].sort();
+  const by_type = types.map(flatType => {
+    const all = txs.filter(t => t.flat_type === flatType);
+    const recent = all.filter(t => t.month >= cutoff12);
+    const basis = recent.length > 0 ? recent : all;
+    const medianPrice = median(basis.map(t => t.resale_price));
+    const flat = flats.find(f => f.resale_flat_type === flatType && f.price_min != null);
+    const launchMid = flat ? Math.round((flat.price_min + (flat.price_max ?? flat.price_min)) / 2) : null;
+    return {
+      flat_type: flatType,
+      count: all.length,
+      count_12m: recent.length,
+      basis: recent.length > 0 ? '12m' : 'all',
+      median_price: medianPrice,
+      median_psm: median(basis.map(t => t.price_per_sqm).filter(v => v != null)),
+      min_price: Math.min(...basis.map(t => t.resale_price)),
+      max_price: Math.max(...basis.map(t => t.resale_price)),
+      latest_month: all[0].month,
+      launch_price_mid: launchMid,
+      change_pct: launchMid && medianPrice ? Math.round((medianPrice / launchMid - 1) * 100) : null,
+    };
+  });
+
+  return {
+    block_count: blocks.length,
+    blocks: [...new Set(txs.map(t => `${t.block} ${t.street_name}`))].sort(),
+    total_count: txs.length,
+    first_resale_month: txs[txs.length - 1].month,
+    by_type,
+    transactions: txs.slice(0, 200),
+  };
+}
+
 app.get('/api/bto/project-overview', (req, res) => {
   try {
     const { project } = req.query;
@@ -2304,6 +2377,7 @@ app.get('/api/bto/project-overview', (req, res) => {
       flats,
       comparison,
       hdb_quoted_resale: HDB_QUOTED_RESALE[head.project] || [],
+      project_resale: btoProjectResale(head.project, head.town, flats),
     });
   } catch (err) {
     console.error('Error in /api/bto/project-overview:', err);
@@ -2676,11 +2750,20 @@ app.get('/api/seo/metadata', (req, res) => {
         // sentences that already say "BTO"/"upcoming" themselves elsewhere.
         const launchMonthYear = head.launch_label.replace(/\s*BTO.*$/i, '').trim();
         const isProvisional = launchStatus(head.application_start, head.application_end) === 'upcoming';
+        // Post-MOP projects: people search "<project> resale price", not the decade-old BTO price
+        const projectResale = isProvisional ? null : btoProjectResale(head.project, head.town, flats);
+        const studioOnly = flats.length > 0 && flats.every(f => /^Studio Apartment/i.test(f.bto_label));
+        const resaleSummary = projectResale
+          ? projectResale.by_type.map(t => `${flatTypeLabel(t.flat_type)} ${fmtPrice(t.median_price)}`).join(', ')
+          : '';
 
         if (isProvisional) {
           // No official HDB launch yet — lead with "upcoming", not a price we don't have.
           meta.title = `${head.display_name} BTO — Upcoming ${launchMonthYear} Launch in ${townDisplay}${classSuffix} | WorthIt`;
           meta.description = `${head.display_name} is an upcoming HDB BTO${classSuffix} project in ${townDisplay}, expected in the ${launchMonthYear} sales exercise.${totalUnits ? ` ~${totalUnits.toLocaleString()} units expected.` : ''} See location and how nearby resale flats compare.`;
+        } else if (projectResale) {
+          meta.title = `${head.display_name} Resale Prices — ${projectResale.total_count} Sales Since MOP (${launchMonthYear} BTO) | WorthIt`;
+          meta.description = `${head.display_name}, ${townDisplay}: median resale ${resaleSummary}. Launched as a BTO ${priceLabel} in ${launchMonthYear}. See every resale since MOP.`;
         } else {
           meta.title = `${head.display_name} BTO Price — ${flatTypesLabel || 'Flats'} ${priceLabel} (${head.launch_label}) | WorthIt`;
           meta.description = `${head.display_name} BTO in ${townDisplay}: ${priceLabel} excl. grants,${classSuffix} flat, ${head.launch_label}. See flats, prices & nearby resale comparison.`;
@@ -2734,7 +2817,14 @@ app.get('/api/seo/metadata', (req, res) => {
               acceptedAnswer: { '@type': 'Answer', text: `${head.display_name} has an estimated waiting time of about ${Math.round(head.waiting_months / 12)} years (${head.waiting_months} months) from the ${head.launch_label} application.` },
             });
           }
-          if (townMedian?.avg_price) {
+          if (projectResale) {
+            faqs.push({
+              '@type': 'Question',
+              name: `What is the resale price of flats at ${head.display_name}?`,
+              acceptedAnswer: { '@type': 'Answer', text: `${head.display_name} is past its 5-year MOP and has had ${projectResale.total_count} resale transactions since ${projectResale.first_resale_month}. Median resale prices: ${projectResale.by_type.map(t => `${flatTypeLabel(t.flat_type)} ${fmtPrice(t.median_price)}${t.basis === '12m' ? ' (last 12 months)' : ''}${t.change_pct != null ? `, ${t.change_pct >= 0 ? 'up' : 'down'} ${Math.abs(t.change_pct)}% vs the launch price` : ''}`).join('; ')}.` },
+            });
+          }
+          if (townMedian?.avg_price && !projectResale) {
             faqs.push({
               '@type': 'Question',
               name: `Is ${head.display_name} cheaper than resale flats nearby?`,
@@ -2775,6 +2865,23 @@ app.get('/api/seo/metadata', (req, res) => {
       <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Units</th>
       <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Price (excl. grants)</th>
     </tr></thead><tbody>${flatRows}</tbody></table>` : ''}
+  ${projectResale ? `<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">${head.display_name} Resale Transactions</h3>
+  <p style="color:#4b5563;margin-bottom:0.75rem">Past MOP: ${projectResale.total_count} resales since ${projectResale.first_resale_month} across blocks ${projectResale.blocks.map(b => b.split(' ')[0]).join(', ')}.</p>
+  <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-bottom:1.5rem">
+    <thead><tr style="background:#f3f4f6">
+      <th style="padding:6px 12px;text-align:left;border-bottom:2px solid #e5e7eb">Month</th>
+      <th style="padding:6px 12px;text-align:left;border-bottom:2px solid #e5e7eb">Block</th>
+      <th style="padding:6px 12px;text-align:left;border-bottom:2px solid #e5e7eb">Flat Type</th>
+      <th style="padding:6px 12px;text-align:left;border-bottom:2px solid #e5e7eb">Storey</th>
+      <th style="padding:6px 12px;text-align:right;border-bottom:2px solid #e5e7eb">Price</th>
+    </tr></thead><tbody>${projectResale.transactions.slice(0, 10).map(t => `<tr>
+      <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">${t.month}</td>
+      <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">${t.block} ${t.street_name}</td>
+      <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">${flatTypeLabel(t.flat_type)}</td>
+      <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb">${t.storey_range || ''}</td>
+      <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${fmtPrice(t.resale_price)}</td>
+    </tr>`).join('')}</tbody></table>` : ''}
+  ${!projectResale && studioOnly && !isProvisional ? `<p style="color:#4b5563;margin-bottom:1rem">Studio Apartments carry a 30-year lease and can't be resold on the open market — no resale transactions exist.</p>` : ''}
   <p style="font-size:0.875rem;color:#6b7280">
     <a href="/hdb/${townToSlug(head.town)}" style="color:#3b82f6;text-decoration:none">View ${townDisplay} HDB resale prices &rarr;</a> ·
     <a href="/bto" style="color:#3b82f6;text-decoration:none">All BTO Launches &rarr;</a>

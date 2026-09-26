@@ -1,0 +1,24 @@
+{
+ "_readme": "Test fixture for BTO_BLOCKS_PATH — mirrors scripts/bto_project_blocks.json's shape.",
+ "projects": {
+  "BEDOK NORTH GROVE": {
+   "source": "manual",
+   "blocks": [
+    {"block": "100", "street_name": "BEDOK NORTH ST 1"},
+    {"block": "200", "street_name": "BEDOK NORTH ST 1"}
+   ]
+  },
+  "PUNGGOL FRESHVIEW": {
+   "source": "manual",
+   "blocks": [
+    {"block": "601A", "street_name": "PUNGGOL FIELD"}
+   ]
+  },
+  "BEDOK VISTA CREST": {
+   "source": "manual",
+   "blocks": [
+    {"block": "999", "street_name": "BEDOK NORTH ST 1"}
+   ]
+  }
+ }
+}

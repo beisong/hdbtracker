@@ -146,6 +146,32 @@ describe('GET /api/seo/metadata — BTO', () => {
     expect(res.body.content_html).toBeTruthy();
   });
 
+  it('post-MOP /bto/bedok-north-grove leads with its own resale prices', async () => {
+    const res = await request.get('/api/seo/metadata?route=/bto/bedok-north-grove');
+    expect(res.status).toBe(200);
+    expect(res.body.title).toMatch(/Bedok North Grove Resale Prices/);
+    expect(res.body.title).toMatch(/\(May 2015 BTO\)/);
+    expect(res.body.content_html).toMatch(/Bedok North Grove Resale Transactions/);
+    expect(res.body.content_html).toMatch(/100 BEDOK NORTH ST 1/);
+    expect(res.body.json_ld).toMatch(/What is the resale price of flats at Bedok North Grove/);
+  });
+
+  it('pre-MOP /bto/bedok-vista-crest keeps the BTO price title', async () => {
+    const res = await request.get('/api/seo/metadata?route=/bto/bedok-vista-crest');
+    expect(res.body.title).toMatch(/BTO Price/);
+    expect(res.body.content_html).not.toMatch(/Resale Transactions/);
+  });
+
+  it('studio-only /bto/golden-clover explains why there are no resales', async () => {
+    const res = await request.get('/api/seo/metadata?route=/bto/golden-clover');
+    expect(res.body.content_html).toMatch(/30-year lease and can't be resold on the open market/);
+  });
+
+  it('non-studio pages have no studio note', async () => {
+    const res = await request.get('/api/seo/metadata?route=/bto/bedok-north-grove');
+    expect(res.body.content_html).not.toMatch(/30-year lease/);
+  });
+
   it('unknown /bto/nope is noindex', async () => {
     const res = await request.get('/api/seo/metadata?route=/bto/nope');
     expect(res.body.robots).toBe('noindex, follow');

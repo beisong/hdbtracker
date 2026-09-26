@@ -144,10 +144,45 @@ function injectContent(html, meta) {
   );
 }
 
+async function proxyApi(request, url) {
+  const headers = new Headers(request.headers);
+  headers.delete('host');
+  // Overwrite (not append) so clients can't spoof the IP the feedback rate limiter keys on.
+  const clientIp = request.headers.get('cf-connecting-ip');
+  if (clientIp) headers.set('x-forwarded-for', clientIp);
+
+  const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
+  try {
+    const upstream = await fetch(`${API_BASE}${url.pathname}${url.search}`, {
+      method: request.method,
+      headers,
+      body: hasBody ? request.body : undefined,
+      redirect: 'manual',
+    });
+    // fetch() already decoded the body; a stale Content-Encoding would make the runtime
+    // re-compress regardless of what the client accepts. Let Cloudflare negotiate instead.
+    const respHeaders = new Headers(upstream.headers);
+    respHeaders.delete('content-encoding');
+    respHeaders.delete('content-length');
+    return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: respHeaders });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: 'API unavailable' }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Retry-After': '30' },
+    });
+  }
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
+
+  // Same-origin API proxy: Googlebot's renderer won't reliably fetch from a separate,
+  // reputation-less host (worthit-api.fly.dev), so the SPA calls /api/* here instead.
+  if (url.pathname.startsWith('/api/')) {
+    return proxyApi(request, url);
+  }
 
   // Handle robots.txt — keep in sync with public/robots.txt
   if (url.pathname === '/robots.txt') {

@@ -64,7 +64,7 @@ Cloudflare Pages (public/)          Fly.io (server/)
 └──────────────────────────┘
 ```
 
-**`public/config.js`** auto-detects environment: localhost → same-origin API, production → `https://worthit-api.fly.dev`.
+**`public/config.js`** sets `API_BASE = ''` — the SPA always calls same-origin `/api/*`. Locally Express serves it; in production `functions/[[path]].js` (`proxyApi()`) proxies `/api/*` to `https://worthit-api.fly.dev`. This is deliberate: Googlebot's renderer failed to fetch from the separate Fly host ("Failed to fetch" full-screen error in GSC Live Test), so don't point the browser back at Fly directly. The proxy overwrites `X-Forwarded-For` with `CF-Connecting-IP` (feedback rate limiter keys on it) and strips upstream `Content-Encoding`/`Content-Length` so Cloudflare negotiates compression per client.
 
 ## Database
 
@@ -104,7 +104,7 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
-**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=24`.
+**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=26`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 

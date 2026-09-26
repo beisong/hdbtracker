@@ -1,15 +1,10 @@
 /**
  * WorthIt — API Configuration
- * 
- * Auto-detects environment:
- * - Local dev (localhost) → API_BASE = '' (same-origin, server serves both)
- * - Production (Cloudflare Pages) → API_BASE = 'https://hdbtracker-api.fly.dev'
- * 
- * When you set up a custom domain (api.yourdomain.com), update the URL below.
+ *
+ * Always same-origin: local dev is served by Express directly, and in production
+ * the Cloudflare Pages function (functions/[[path]].js) proxies /api/* to Fly.io.
  */
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? ''
-  : 'https://worthit-api.fly.dev';
+const API_BASE = '';
 
 /**
  * CARTO basemap tile API key — required since Aug 2026, when CARTO started

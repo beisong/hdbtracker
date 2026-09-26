@@ -1,6 +1,26 @@
 # Active Context: WorthIt
 
-## Recent Changes (Sep 2026 — post-completion audit + full 2010/2011 gap-fill, DONE) — committed `e5a0709` (through 2010-06), remaining 2010-07/08/09 + 2011-05/07 LOCAL ONLY, NOT YET COMMITTED
+## Recent Changes (2026-09-26 — same-origin API proxy for Googlebot rendering) — DEPLOYED (frontend, v=26), NOT YET COMMITTED
+
+GSC Live Test of `/bto/bedok-bayshore-ii` rendered a full-screen "Something went wrong — Failed to load:
+Failed to fetch": the SPA's startup `Promise.all([getStatus, getTowns])` (`app.js` init) failed when
+Googlebot fetched cross-origin from `worthit-api.fly.dev`, and `showError()` covers the whole viewport
+(server-injected SEO content is underneath). Likely a large contributor to "Crawled – currently not
+indexed" (0/856 sitemap URLs indexed; a GSC validation run failed 9/15). Fix:
+- `functions/[[path]].js`: new `proxyApi()` forwards `/api/*` to Fly (method/body/query preserved,
+  `X-Forwarded-For` overwritten from `CF-Connecting-IP`, upstream `Content-Encoding`/`Content-Length`
+  stripped — without that, wrangler served `br` to clients that didn't accept it; 502 JSON on failure).
+- `public/config.js`: `API_BASE = ''` always. `index.html`: removed Fly preconnect, bumped `?v=24`→`25`.
+- Verified via `wrangler pages dev` + Chrome (all `/api/*` same-origin 200s, no console errors), bot
+  SEO injection/robots/sitemap unaffected; 240 tests pass.
+
+Deployed 2026-09-26 via `npm run deploy:frontend` (its bump step moved cache to `v=26`; IndexNow
+resubmitted 856 URLs). Verified live in Chrome: all `/api/*` calls same-origin on worthit.canlah.app,
+200s, no console errors; Googlebot-UA page still gets injected title.
+**Next:** user re-runs GSC Live Test on a BTO page and re-requests validation. Not done (user chose only option 1): making the init failure
+non-fatal (dismiss overlay instead of full-screen error) and `min_machines_running = 1` on Fly.
+
+## Previous (Sep 2026 — post-completion audit + full 2010/2011 gap-fill, DONE) — fully committed/pushed (`e5a0709`, `85b20b9`)
 
 Ran the user-requested double-check after the earlier "ROADMAP COMPLETE" claim: a full systematic
 re-fetch of housingmap.sg (2001-2026, year-batches, cross-referencing project *counts* not just

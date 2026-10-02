@@ -10,7 +10,7 @@ Singapore's HDB resale market is complex — prices vary by town, flat type, flo
 4. **Geographic uncertainty**: Postal codes don't directly map to HDB "town" categories used in data
 
 ## How It Works — User Flow
-1. User enters a **postal code**, **town name**, **district code** (D01–D28), or **private project name**
+1. User enters a **postal code**, **town name**, **district code** (D01–D28), **private project name**, or **BTO project name**
 2. If postal code: OneMap API resolves it to lat/lng → `hdb_block_coords` distance query finds nearby HDB blocks within 500m (no Nominatim needed)
 3. User can multi-select **flat types** (2–5 Room, Executive) to filter results
 4. The app displays:
@@ -20,7 +20,12 @@ Singapore's HDB resale market is complex — prices vary by town, flat type, flo
    - **Deal Score map**: color-coded markers (green=good value, red=premium) relative to nearby median
    - **Comparable transactions**: filterable/sortable table with floor, area, lease, $/sqft
 5. For private properties: search by project name → project overview with district context
-6. URL routing: `/hdb/<town>`, `/district/<code>`, `/private/<project>`, `/postal/<code>` — shareable and bot-indexable
+6. **Check My Price**: after a postal search (or from any transaction row), enter an asking price →
+   0–100 Deal Score + fair-value range from storey-adjusted nearby comparables
+7. **BTO projects**: search a BTO project name or browse `/bto` → flats, launch prices, BTO vs
+   nearby-resale comparison; projects past their 5-year MOP also show their own resale transactions
+8. URL routing: `/hdb/<town>`, `/hdb/<town>/<flat-type>`, `/district/<code>`, `/private/<project>`,
+   `/postal/<code>`, `/bto/<project>`, `/check/<postal>` — shareable and bot-indexable
 
 ## User Experience Goals
 - **Instant**: Results appear within seconds

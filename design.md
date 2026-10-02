@@ -125,7 +125,7 @@ bg-clip-text text-transparent
 
 ## 7. Engineering Principles
 - **No raw hex codes in HTML/JS**: use Tailwind tokens or CSS variables
-- **No emojis** in UI copy or code
+- **Emojis sparingly**: allowed as small inline icons in UI copy where they aid scanning (e.g. 💰 Check, ⏳ wait time, ⚠️ provisional notices) — never as the only label for an action, and never in code identifiers or comments
 - **Mobile-first**: write base styles for mobile, use `sm:` / `lg:` to scale up
 - **Dark mode on every element**: every component must have a `dark:` variant — never leave an element unthemed
 - **Tables on desktop, cards on mobile**: never show a data table on mobile; always provide a card-based alternative

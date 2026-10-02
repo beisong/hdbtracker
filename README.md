@@ -14,7 +14,7 @@ WorthIt uses a **split architecture**:
 
 - **Frontend**: Static files (`public/`) served via Cloudflare Pages (or `node server/index.js` locally)
 - **API Server**: Node.js/Express on [Fly.io](https://fly.io) with SQLite database
-- `public/config.js` auto-detects environment and points API calls to the right backend
+- The SPA always calls same-origin `/api/*` (`public/config.js` sets `API_BASE = ''`): locally Express serves it; in production the Cloudflare Pages Function (`functions/[[path]].js`) proxies it to Fly.io
 
 ## Quick Start (Local Development)
 
@@ -235,6 +235,9 @@ curl -I https://worthit.canlah.app
 | `GET /api/private/district-summary?districts=` | District aggregate stats |
 | `GET /api/private/district-overview?district=` | Full district overview |
 | `GET /api/nearby-hdb?lat=&lng=` | Nearby HDB transactions + private projects (800m) |
+| `GET /api/bto/launches` | All BTO launches grouped by exercise |
+| `GET /api/bto/projects?q=` | BTO project autocomplete |
+| `GET /api/bto/project-overview?project=` | BTO project flats, nearby-resale comparison, and own resales once past MOP |
 | `GET /api/seo/metadata?route=` | Bot metadata for edge-function injection |
 | `GET /api/seo/sitemap` | Sitemap URLs (consumed by Cloudflare edge function) |
 
@@ -244,14 +247,20 @@ curl -I https://worthit.canlah.app
 WorthIt/
 ├── scripts/
 │   ├── download_data.py         # HDB data download (data.gov.sg)
-│   └── download_ura_data.py     # URA private property data
+│   ├── download_ura_data.py     # URA private property data
+│   ├── bto_launches.json        # Hand-curated BTO launch data
+│   ├── fetch_bto_blocks.py      # BTO project → HDB blocks (OneMap)
+│   └── bto_project_blocks.json  # Output of fetch_bto_blocks.py
 ├── server/
 │   ├── index.js                 # Express API server
 │   └── db/
-│       └── resale.db            # SQLite database (generated)
+│       ├── resale.db            # SQLite database (generated)
+│       └── feedback.db          # In-app feedback (writable, generated)
+├── functions/
+│   └── [[path]].js              # Cloudflare edge: /api proxy, bot SEO injection, sitemap
 ├── public/
 │   ├── index.html               # Main SPA
-│   ├── config.js                # API base URL config
+│   ├── config.js                # API base URL config (same-origin)
 │   ├── css/
 │   │   └── styles.css
 │   └── js/

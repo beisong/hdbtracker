@@ -3063,7 +3063,7 @@ app.get('/api/seo/metadata', (req, res) => {
         const otherTowns = db.prepare("SELECT DISTINCT town FROM transactions WHERE dataset_source != 'URA_PRIVATE' ORDER BY town").all().map(r => r.town).filter(t => t !== town);
 
         // BTO projects in this town — surfaces fresh launch content from the site's
-        // highest-authority, most-crawled pages (see BTO.plan.md "SEO" notes).
+        // highest-authority, most-crawled pages.
         const townBtoProjects = db.prepare(`
           SELECT DISTINCT project, display_name, launch_id, launch_label, application_start, application_end
           FROM bto_projects WHERE town = ? ORDER BY launch_id DESC

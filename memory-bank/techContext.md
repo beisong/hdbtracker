@@ -1,5 +1,9 @@
 # Technical Context: WorthIt
 
+> Scope: technology versions, hosting/config, environment variables, DB schema, external APIs.
+> Architecture, commands, deploy/data-update steps and code patterns live in **CLAUDE.md** (single
+> source) — don't duplicate them here.
+
 ## Technologies
 
 ### Backend
@@ -26,11 +30,11 @@
 - **Charts**: Chart.js 4
 - **Fonts**: Inter (Google Fonts)
 - **Map**: Leaflet.js 1.9.4
-- **Analytics**: Google Analytics 4 (`G-WGC8D0FRSQ`) with SPA pageview tracking + 8 custom events
-- **Edge functions**: `functions/[[path]].js` — Cloudflare Pages Function for bot SEO injection
+- **Analytics**: Google Analytics 4 (`G-WGC8D0FRSQ`) with SPA pageview tracking + custom events (`App.track()`)
+- **Edge functions**: `functions/[[path]].js` — Cloudflare Pages Function: same-origin `/api/*` proxy to Fly, bot SEO injection, robots/sitemap, static E-E-A-T pages
 
 ### External APIs
-- **OneMap SG API**: Postal code → address/coordinates lookup, geocoding. Use 0.4s delay between requests in batch geocoding scripts
+- **OneMap SG API**: Postal code → address/coordinates lookup, geocoding, BTO block names (`BUILDING` field). Silently rate-limits — keep ≥0.35s between geocode calls in batch scripts and ~1.5s for search-heavy scripts like `fetch_bto_blocks.py`
 - **Nominatim (OpenStreetMap)**: Reverse geocoding, fallback geocoding (map display only — no longer used for postal search radius)
 - **data.gov.sg**: HDB resale transaction data download
 - **URA API**: Private property transaction data
@@ -40,6 +44,7 @@
 ### Hosting
 - **API**: Fly.io (`worthit-api.fly.dev`) — Docker container with persistent volume
 - **Frontend**: Cloudflare Pages (`worthit.canlah.app`) — static files from `public/` + `functions/`, deployed via `node scripts/deploy-frontend.js` (loads `.env` cross-platform, then runs wrangler), DNS on Cloudflare (domain from Porkbun)
+- **Data refresh**: GitHub Actions `refresh-data.yml`, daily 03:00 SGT (`npm run download` → `npm run deploy:data`); secrets `URA_API_ACCESS_KEY` + `FLY_API_TOKEN` (org token, expires ~Jun 2027)
 - **Cost**: $0/month on free tiers
 
 ### Fly.io Configuration
@@ -48,10 +53,8 @@
 - **Env vars**: `DB_PATH=/data/resale.db`, `ONEMAP_TOKEN`, `URA_API_ACCESS_KEY` (via `fly secrets`)
 - **Machine ID**: Set in `fly.toml`
 
-### Database Seeding
-- Fly.io free tier (256MB RAM) too small for Python download scripts (OOM)
-- Build database locally, upload via `fly ssh sftp put`
-- Monthly updates: re-download locally → re-upload
+### Data updates
+The Python pipeline can't run on Fly (256MB RAM → OOM): the DB is built in GitHub Actions (daily) or locally and uploaded — steps in CLAUDE.md.
 
 ## Development Setup
 
@@ -60,15 +63,7 @@
 - Python 3 with pip (for data download scripts)
 - Internet connection (for API calls)
 
-### Commands
-```bash
-npm install              # Install Node.js dependencies
-pip install requests pyproj  # Python dependencies
-npm run download-hdb     # Download HDB data
-npm run download-ura     # Download URA data (requires URA_API_ACCESS_KEY)
-npm start                # Start server on port 3000
-npm run dev              # Start with --watch for auto-reload
-```
+Python dependencies: `pip install -r requirements.txt` (venv managed by `scripts/run-python.js`). npm commands: see CLAUDE.md.
 
 ### Environment Variables (.env)
 - `PORT` — Server port (default: 3000)
@@ -84,7 +79,7 @@ npm run dev              # Start with --watch for auto-reload
 |--------|-------------|
 | month | YYYY-MM format |
 | town | HDB town name (uppercase) |
-| flat_type | e.g., "4-ROOM", "5-ROOM" |
+| flat_type | e.g., "4 ROOM", "5 ROOM", "EXECUTIVE" (private: property type) |
 | block | Block number |
 | street_name | Street name (abbreviated) |
 | storey_range | e.g., "04 TO 06" |
@@ -121,10 +116,20 @@ npm run dev              # Start with --watch for auto-reload
 
 12,442 rows covering 100% of HDB addresses in the transactions DB. Seeded from `scripts/hdb_blocks.csv`. Used for postal code radius search — replaces old Nominatim 9-point reverse geocoding. Index on `(lat, lng)` for bounding-box queries.
 
+### Table: `bto_projects`
+One row per BTO project × flat type, seeded from `scripts/bto_launches.json` (schema in
+`.claude/skills/seed-bto-launch/references/schema.md`). Never mixed into `transactions`.
+
+### Other data files
+- `scripts/bto_project_blocks.json` — BTO project → HDB blocks (from `scripts/fetch_bto_blocks.py`),
+  loaded in memory by the server for post-MOP resale.
+- `feedback.db` — separate writable SQLite (`FEEDBACK_DB_PATH`, default next to `resale.db`) for
+  in-app feedback; survives data refreshes.
+- `town_stats`, `monthly_medians`, `storey_adjustments` — precomputed by `download_data.py` but
+  currently unused by the server.
+
 ## Technical Constraints
 - **Cross-platform npm scripts**: `scripts/run-python.js` detects OS and uses correct venv path; `scripts/deploy-frontend.js` loads `.env` before wrangler for cross-platform auth
-- **No build step**: Vanilla JS served directly; asset versioning via `?v=N` query strings
-- **Test suite**: 156 unit + integration tests (Vitest + supertest + fixture SQLite); 19 smoke tests against live API; all deploy scripts gate on `npm test`
-- **Single server file**: All routes in `server/index.js` (~2200+ lines) — refactor into modules is a known backlog item
+- **Single server file**: All routes in `server/index.js` (~3,400 lines) — refactor into modules is a known backlog item
 - **SQLite limitations**: Not suitable for concurrent writes (acceptable since DB is readonly from server)
-- **Fly.io RAM**: 256MB free tier — can't run Python data scripts on the machine; build DB locally, upload via SFTP
+- **No build step / tests / cache busting**: see CLAUDE.md.

@@ -87,6 +87,21 @@ describe('GET /api/private/project-overview', () => {
   });
 });
 
+describe('GET /api/private/project-overview?slug=', () => {
+  it('resolves the exact project for a slug that fuzzy-matches another', async () => {
+    const res = await request.get('/api/private/project-overview?slug=sky');
+    expect(res.status).toBe(200);
+    expect(res.body.found).toBe(true);
+    expect(res.body.project.project).toBe('SKY');
+  });
+
+  it('returns found:false for an unknown slug', async () => {
+    const res = await request.get('/api/private/project-overview?slug=no-such-project-xyz');
+    expect(res.status).toBe(200);
+    expect(res.body.found).toBe(false);
+  });
+});
+
 describe('GET /api/private/property-types', () => {
   it('returns 200 with non-empty property_types array', async () => {
     const res = await request.get('/api/private/property-types');

@@ -73,8 +73,14 @@
   Vitals win, higher regression risk).
 
 ### Search indexing & distribution
+- 🔲 **Deploy the Bing SEO report fixes** (private exact slugs, server-sourced SPA titles,
+  title/description lengths — code done 2026-10-05) with `npm run deploy` (bump `v=`), then
+  re-submit affected URLs to Bing.
+- 🔲 **Fly cold-start SEO fallback** — bots get the homepage title when the API takes >5s to wake
+  (likely Bing's duplicate titles/descriptions). Options: cache metadata at the edge + return 503
+  `Retry-After` on a cold miss; or `min_machines_running = 1`.
 - 🔲 Re-check GSC + Bing ~mid-Oct 2026 (see `activeContext.md` § Current Focus for the baseline).
-- 🔲 Submit the remaining ~150 post-MOP BTO pages + district/private pages to Bing (100/day quota).
+- 🔲 Submit the last 51 post-MOP BTO pages (ranks 173–223) + district/private pages to Bing (100/day quota).
 - 🔲 Backlinks — see playbook below.
 
 ## Backlink Playbook

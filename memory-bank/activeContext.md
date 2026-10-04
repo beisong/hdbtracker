@@ -12,9 +12,9 @@
   little (Jun 50 / Jul 75 / Aug 4 / Sep 11 impressions, 0 clicks ever).
   - Re-check GSC + Bing **~mid-Oct 2026**. If pages recrawled after the 2026-09-26 proxy fix are
     still not indexed, the render bug wasn't the blocker — backlinks are.
-  - Bing URL submission quota is only **100/day, 3,100/month**. 2026-10-01 submitted 100 (home,
-    `/bto`, 26 town pages, 72 BTO pages with the most resales). ~150 more post-MOP BTO pages +
-    district/private pages remain to submit directly (IndexNow still pings all 856 on each deploy).
+  - Bing URL submission quota is only **100/day, 3,100/month**. Submitted 2026-10-01 (home, `/bto`,
+    26 town pages, top 72 BTO pages by resale count) and 2026-10-02 (BTO ranks 73–172). Remaining:
+    BTO ranks 173–223 (51 pages) + district/private pages (IndexNow still pings all 856 on deploy).
   - Off-site backlinks remain the biggest lever — see `progress.md` § Backlink playbook
     (data.gov.sg showcase first).
 - **BTO post-MOP resale** — re-run `python scripts/fetch_bto_blocks.py` every few months to pick
@@ -25,7 +25,32 @@
 - **Ops reminder**: the GitHub Actions `FLY_API_TOKEN` (org token) expires ~**Jun 2027** — renew
   with `fly tokens create org`.
 
-## Recent Changes (Sep 2026)
+## Recent Changes (Sep–Oct 2026)
+
+### Bing SEO report fixes — CODE DONE 2026-10-05, NOT DEPLOYED (needs API + frontend deploy, bump `v=`)
+Bing Webmaster flagged duplicate titles, duplicate meta descriptions, short titles, and no
+backlinks (0 inbound links per the Bing API).
+- **Diagnosis**: server-generated bot metadata was already ~unique (8/856 dupes). The main
+  duplicate source is likely **Fly cold starts** — the edge waits 5s for `/api/seo/metadata`, then
+  falls back to the homepage title/description (a cold bingbot request measured 5.1s). Cold-start
+  fix (edge cache of metadata + 503 Retry-After fallback, or `min_machines_running = 1`) proposed
+  but **not implemented** — user picked fixes 2–4 only.
+- **Private slugs**: `slugToProject()` now tries an exact slug → project map (cached per DB
+  handle; collisions → most transactions) before the fuzzy LIKE fallback. 85 of 2,989 projects
+  used to resolve to another project (ECO → ECOPOLITAN, THE GARDEN RESIDENCES → THE LAKEGARDEN
+  RESIDENCES, WATERBAY → KINGSFORD WATERBAY…). `/api/private/project-overview?slug=` added; the
+  SPA's `/private/<slug>` route uses it (also fixes D'LEEDON, LIV @ MB deep links).
+- **One title per page**: SPA `updateSeoForSearch()` now only computes the path; title,
+  description, og tags come from `/api/seo/metadata?route=&head=1` (`head=1` drops
+  `content_html`/`json_ld`), applied only if the user hasn't navigated on. The `/check/` price
+  title (`_pushCheckUrl`) is unchanged.
+- **Lengths**: `fmtPsf()` adds thousands commas; short private titles get `, District NN`;
+  private descriptions add "sales since YYYY" + price range; town × flat-type add price range;
+  town pages add YoY; postal title "… HDB Resale Prices & Recent Sales". BTO descriptions pick
+  the longest variant ≤160 chars, and no longer print "BTO TBD"/"TBD excl. grants, flat" for
+  unpriced historical launches. Result over the 856 sitemap URLs: titles <50 chars 17 → 0,
+  descriptions >160 chars 83 → 10 (homepage-family + 5 combined-name BTOs), descriptions <120 chars
+  317 → 5.
 
 ### BTO project resale after MOP — DEPLOYED 2026-09-27 (API + frontend, v=27), commit `2bdfe2a`
 Each post-MOP BTO page shows the project's *own* resale transactions.

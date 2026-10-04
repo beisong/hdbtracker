@@ -119,6 +119,34 @@ describe('GET /api/seo/metadata', () => {
     }
   });
 
+  it('resolves a private slug exactly before falling back to fuzzy matching', async () => {
+    // "sky" fuzzy-matches SKY HABITAT (more transactions) — the exact slug must win
+    const sky = await request.get('/api/seo/metadata?route=/private/sky');
+    expect(sky.body.title).toMatch(/^SKY Condo Resale Price/);
+    expect(sky.body.canonical).toBe('https://worthit.canlah.app/private/sky');
+    const habitat = await request.get('/api/seo/metadata?route=/private/sky-habitat');
+    expect(habitat.body.title).toMatch(/^SKY HABITAT /);
+    // A slug that doesn't round-trip still finds the project via the fuzzy fallback
+    const partial = await request.get('/api/seo/metadata?route=/private/habitat');
+    expect(partial.body.title).toMatch(/^SKY HABITAT /);
+  });
+
+  it('pads short private titles with the district and formats psf with commas', async () => {
+    const res = await request.get('/api/seo/metadata?route=/private/sky');
+    expect(res.body.title).toBe('SKY Condo Resale Price — $929 psf, District 11 | WorthIt');
+    const habitat = await request.get('/api/seo/metadata?route=/private/sky-habitat');
+    expect(habitat.body.description).toMatch(/sales since 2024/);
+    expect(habitat.body.description).toMatch(/\$900k–\$1\.22M/);
+  });
+
+  it('head=1 returns only head fields (no bot page content)', async () => {
+    const res = await request.get('/api/seo/metadata?route=/hdb/bedok&head=1');
+    expect(res.body.title).toMatch(/Bedok/);
+    expect(res.body.canonical).toBe('https://worthit.canlah.app/hdb/bedok');
+    expect(res.body.content_html).toBeUndefined();
+    expect(res.body.json_ld).toBeUndefined();
+  });
+
   it('marks unresolved deep routes as noindex (soft-404 guard)', async () => {
     const res = await request.get('/api/seo/metadata?route=/hdb/notarealtown');
     expect(res.body.robots).toBe('noindex, follow');

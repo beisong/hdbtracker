@@ -110,6 +110,22 @@ const API = {
     return resp.json();
   },
 
+  /** Resolve a /private/<slug> deep link to its exact project (returns { found: false } if none) */
+  async getPrivateProjectOverviewBySlug(slug) {
+    const params = new URLSearchParams({ slug });
+    const resp = await fetch(`${this.baseUrl}/api/private/project-overview?${params}`);
+    if (!resp.ok) throw new Error('Failed to get project overview');
+    return resp.json();
+  },
+
+  /** Title/description/canonical for a route — same values bots get (head=1 skips page content) */
+  async getSeoMetadata(route) {
+    const params = new URLSearchParams({ route, head: '1' });
+    const resp = await fetch(`${this.baseUrl}/api/seo/metadata?${params}`);
+    if (!resp.ok) throw new Error('Failed to get page metadata');
+    return resp.json();
+  },
+
   async getPrivatePropertyTypes() {
     const resp = await fetch(`${this.baseUrl}/api/private/property-types`);
     if (!resp.ok) throw new Error('Failed to fetch property types');

@@ -1291,8 +1291,15 @@ app.get('/api/private/projects', (req, res) => {
  */
 app.get('/api/private/project-overview', (req, res) => {
   try {
-    const { project, property_type } = req.query;
-    if (!project) return res.status(400).json({ error: 'Missing project parameter' });
+    const { property_type, slug } = req.query;
+    if (slug && slug.length > 200) return res.status(400).json({ error: 'slug parameter too long' });
+    // `slug` lets /private/<slug> deep links resolve the exact project (names like "D'LEEDON"
+    // or "LIV @ MB" can't be recovered from the slug by a text search).
+    const project = req.query.project || (slug ? slugToProject(slug) : null);
+    if (!project) {
+      if (slug) return res.json({ found: false });
+      return res.status(400).json({ error: 'Missing project parameter' });
+    }
     if (project.length > 200) return res.status(400).json({ error: 'project parameter too long' });
 
     const monthsAgo12 = monthsAgoStr(12);
@@ -2407,8 +2414,32 @@ function slugToTown(slug) {
   return towns.find(t => townToSlug(t) === slug) || null;
 }
 
+// slug → project for every private project, built once per DB handle. On a slug collision
+// (e.g. "D'LEEDON" vs "DLEEDON") the project with more transactions wins.
+let privateSlugCache = { db: null, map: null };
+function privateSlugMap() {
+  if (privateSlugCache.db !== db) {
+    const map = new Map();
+    const rows = db.prepare(`
+      SELECT project FROM transactions WHERE dataset_source = 'URA_PRIVATE'
+      GROUP BY project ORDER BY COUNT(*) DESC
+    `).all();
+    for (const { project } of rows) {
+      const slug = townToSlug(project);
+      if (!map.has(slug)) map.set(slug, project);
+    }
+    privateSlugCache = { db, map };
+  }
+  return privateSlugCache.map;
+}
+
+// Exact slug match first — the fuzzy LIKE fallback alone sent e.g. /private/eco to
+// ECOPOLITAN and /private/the-canopy to THE CLEMENT CANOPY (more transactions win).
+// The fallback still serves old or hand-typed slugs that don't round-trip exactly.
 function slugToProject(slug) {
   if (!db) return null;
+  const exact = privateSlugMap().get(slug);
+  if (exact) return exact;
   const searchPattern = `%${slug.replace(/-/g, '%')}%`;
   return db.prepare(`
     SELECT project FROM transactions
@@ -2472,7 +2503,7 @@ function fmtPrice(p) {
 
 function fmtPsf(psm) {
   if (!psm) return 'N/A';
-  return `$${Math.round(psm / 10.7639)} psf`;
+  return `$${Math.round(psm / 10.7639).toLocaleString('en-US')} psf`;
 }
 
 /**
@@ -2760,13 +2791,26 @@ app.get('/api/seo/metadata', (req, res) => {
         if (isProvisional) {
           // No official HDB launch yet — lead with "upcoming", not a price we don't have.
           meta.title = `${head.display_name} BTO — Upcoming ${launchMonthYear} Launch in ${townDisplay}${classSuffix} | WorthIt`;
-          meta.description = `${head.display_name} is an upcoming HDB BTO${classSuffix} project in ${townDisplay}, expected in the ${launchMonthYear} sales exercise.${totalUnits ? ` ~${totalUnits.toLocaleString()} units expected.` : ''} See location and how nearby resale flats compare.`;
+          const upcoming = `${head.display_name} is an upcoming HDB BTO${classSuffix} project in ${townDisplay}, expected in the ${launchMonthYear} sales exercise.${totalUnits ? ` ~${totalUnits.toLocaleString()} units expected.` : ''}`;
+          meta.description = [`${upcoming} See location and how nearby resale flats compare.`, `${upcoming} Compare nearby resale prices.`]
+            .find(d => d.length <= 160) || `${upcoming} Compare nearby resale prices.`;
         } else if (projectResale) {
           meta.title = `${head.display_name} Resale Prices — ${projectResale.total_count} Sales Since MOP (${launchMonthYear} BTO) | WorthIt`;
-          meta.description = `${head.display_name}, ${townDisplay}: median resale ${resaleSummary}. Launched as a BTO ${priceLabel} in ${launchMonthYear}. See every resale since MOP.`;
+          // Longest variant that fits the ~160-char snippet: drop the launch price, then keep
+          // only the two most-traded flat types.
+          const topTwo = [...projectResale.by_type].sort((a, b) => b.count - a.count).slice(0, 2)
+            .map(t => `${flatTypeLabel(t.flat_type)} ${fmtPrice(t.median_price)}`).join(', ');
+          const descFor = (summary, withPrice) =>
+            `${head.display_name}, ${townDisplay}: median resale ${summary}. Launched as a BTO${withPrice && prices.length ? ` ${priceLabel}` : ''} in ${launchMonthYear}. See all ${projectResale.total_count} resales since MOP.`;
+          const variants = [descFor(resaleSummary, true), descFor(resaleSummary, false), descFor(topTwo, false)];
+          meta.description = variants.find(d => d.length <= 160) || variants[variants.length - 1];
         } else {
           meta.title = `${head.display_name} BTO Price — ${flatTypesLabel || 'Flats'} ${priceLabel} (${head.launch_label}) | WorthIt`;
-          meta.description = `${head.display_name} BTO in ${townDisplay}: ${priceLabel} excl. grants,${classSuffix} flat, ${head.launch_label}. See flats, prices & nearby resale comparison.`;
+          meta.description = prices.length
+            ? [' See flats, prices & nearby resale comparison.', ' Compare nearby resale prices.', '']
+                .map(tail => `${head.display_name} BTO in ${townDisplay}: ${priceLabel} excl. grants,${classSuffix} flat, ${head.launch_label}.${tail}`)
+                .find((d, i, all) => d.length <= 160 || i === all.length - 1)
+            : `${head.display_name} BTO in ${townDisplay}${classSuffix ? ` (${classSuffix.trim()})` : ''}, ${head.launch_label}. Launch prices weren't published; see flats and how nearby resale flats compare.`;
         }
         meta.canonical = `${SEO_BASE_URL}/bto/${slug}`;
         meta.og_title = meta.title;
@@ -2901,7 +2945,7 @@ app.get('/api/seo/metadata', (req, res) => {
         ).get(postal);
         if (block) {
           const addr = `Blk ${block.block} ${titleCase(block.street_name)}`;
-          meta.title = `${addr} HDB Resale Prices | WorthIt`;
+          meta.title = `${addr} HDB Resale Prices & Recent Sales | WorthIt`;
           meta.description = `Check HDB resale prices near ${addr}. View recent transactions, deal scores, and price trends for this location.`;
           meta.canonical = `${SEO_BASE_URL}/postal/${postal}`;
           meta.og_title = meta.title;
@@ -2943,7 +2987,9 @@ app.get('/api/seo/metadata', (req, res) => {
 
         if (cnt > 0) {
           meta.title = `${ftLabel} HDB Resale Price in ${townDisplay} ${year} — ${fmtPsf(avgPsm)} | WorthIt`;
-          meta.description = `${ftLabel} HDB flats in ${townDisplay}: ${cnt.toLocaleString()} sales in 12 months, avg ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)})${yoyDir ? `, ${yoyDir} ${yoyPct}% YoY` : ''}. See trends & recent sales.`;
+          const ftRange = cur.min_price && cur.max_price && cur.min_price !== cur.max_price
+            ? `, ${fmtPrice(cur.min_price)}–${fmtPrice(cur.max_price)}` : '';
+          meta.description = `${ftLabel} HDB flats in ${townDisplay}: ${cnt.toLocaleString()} sales in 12 months, avg ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)})${ftRange}${yoyDir ? `, ${yoyDir} ${yoyPct}% YoY` : ''}. See trends, recent sales & Deal Scores.`;
           meta.og_title = `${ftLabel} HDB Resale Prices in ${townDisplay} — ${fmtPsf(avgPsm)} avg`;
           meta.og_description = `${cnt.toLocaleString()} ${ftLabel} transactions in ${townDisplay}.${yoyDir ? ` Prices ${yoyDir} ${yoyPct}% YoY.` : ''}`;
 
@@ -3070,7 +3116,7 @@ app.get('/api/seo/metadata', (req, res) => {
         `).all(town);
 
         meta.title = `${townDisplay} HDB Resale Price ${new Date().getFullYear()} — ${fmtPsf(avgPsm)} Avg | WorthIt`;
-        meta.description = `${townDisplay} HDB resale prices: ${txCount.toLocaleString()} sales in 12 months, avg ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)}). Compare flat types, trends & Deal Scores.`;
+        meta.description = `${townDisplay} HDB resale prices: ${txCount.toLocaleString()} sales in 12 months, avg ${fmtPrice(avgPrice)} (${fmtPsf(avgPsm)})${yoyDir ? `, ${yoyDir} ${yoyPct}% YoY` : ''}. Compare flat types, trends & Deal Scores.`;
         meta.canonical = `${SEO_BASE_URL}/hdb/${slug}`;
         meta.og_title = `${townDisplay} HDB Resale Prices — ${fmtPsf(avgPsm)} avg psf`;
         meta.og_description = `${txCount.toLocaleString()} recent HDB transactions in ${townDisplay}.${yoyDir ? ` Prices ${yoyDir} ${yoyPct}% YoY.` : ''}`;
@@ -3185,6 +3231,7 @@ app.get('/api/seo/metadata', (req, res) => {
         const info = db.prepare(`
           SELECT project, street_name, district, market_segment, COUNT(*) as tx_count,
             ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm,
+            MIN(resale_price) as min_price, MAX(resale_price) as max_price,
             MIN(month) as earliest_month, MAX(month) as latest_month
           FROM transactions WHERE dataset_source = 'URA_PRIVATE' AND project = ?
           GROUP BY project
@@ -3216,8 +3263,12 @@ app.get('/api/seo/metadata', (req, res) => {
           if (isNewLaunch) titleTag = ' | New EC Launch';
           else if (isMOPReached && mopYear) titleTag = ` | MOP ${mopYear}`;
 
-          meta.title = `${info.project} ${propertyLabel} Resale Price${titleTag} — ${fmtPsf(info.avg_psm)} | WorthIt`;
-          meta.description = `${info.project} ${isEC ? 'EC' : 'condo'} resale prices, District ${info.district}${info.market_segment ? ` (${info.market_segment})` : ''}: ${info.tx_count.toLocaleString()} sales, avg ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)}). URA history & trends.`;
+          // Short project names gave 45–49 char titles (Bing flags < 50) — add the district.
+          const baseTitle = `${info.project} ${propertyLabel} Resale Price${titleTag} — ${fmtPsf(info.avg_psm)}`;
+          meta.title = `${baseTitle}${baseTitle.length < 45 ? `, District ${info.district}` : ''} | WorthIt`;
+          const priceRange = info.min_price && info.max_price && info.min_price !== info.max_price
+            ? `, ${fmtPrice(info.min_price)}–${fmtPrice(info.max_price)}` : '';
+          meta.description = `${info.project} ${isEC ? 'EC' : 'condo'} resale prices, District ${info.district}${info.market_segment ? ` (${info.market_segment})` : ''}: ${info.tx_count.toLocaleString()} sales since ${info.earliest_month.substring(0, 4)}, avg ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)})${priceRange}. URA history & trends.`;
           meta.canonical = `${SEO_BASE_URL}/private/${slug}`;
           meta.og_title = `${info.project} — ${propertyLabel} Resale Prices Singapore`;
           meta.og_description = `${info.tx_count.toLocaleString()} transactions. Average ${fmtPrice(info.avg_price)} (${fmtPsf(info.avg_psm)}).`;
@@ -3404,6 +3455,13 @@ app.get('/api/seo/metadata', (req, res) => {
     const isDeepRoute = /^\/(hdb|private|district|postal|bto)(\/|$)/.test(route);
     if (isDeepRoute && db && meta.canonical === SEO_BASE_URL + '/') {
       meta.robots = 'noindex, follow';
+    }
+
+    // ?head=1 — the SPA only needs title/description/canonical/robots after client-side
+    // navigation (single source of truth for titles); skip the heavy bot-only payload.
+    if (req.query.head) {
+      delete meta.content_html;
+      delete meta.json_ld;
     }
 
     res.json(meta);

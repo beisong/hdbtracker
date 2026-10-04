@@ -147,11 +147,23 @@ const App = {
       return;
     }
 
-    // /private/<project-slug>
+    // /private/<project-slug> — resolve the exact project server-side first. A text search on
+    // the de-slugged name picks the wrong project when names overlap (ECO vs ECOPOLITAN) and
+    // can't recover punctuation (D'LEEDON, LIV @ MB).
     const privMatch = path.match(/^\/private\/(.+)$/);
     if (privMatch) {
       const slug = privMatch[1];
-      // Try searching as a project name (replace hyphens with spaces)
+      try {
+        const data = await API.getPrivateProjectOverviewBySlug(slug);
+        if (data.found) {
+          document.getElementById('search-input').value = data.project.project;
+          this._showPrivateProject(data, '', null, null);
+          return;
+        }
+      } catch (err) {
+        console.error('Private slug lookup failed:', err);
+      }
+      // Fallback: search as a project name (replace hyphens with spaces)
       const projectName = slug.replace(/-/g, ' ');
       document.getElementById('search-input').value = projectName.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
       await this.search();
@@ -167,60 +179,46 @@ const App = {
     }
   },
 
+  /** Show a private project overview; lat/lng override the project's own coordinates (postal lookups) */
+  _showPrivateProject(data, suffix, lat, lng) {
+    this.currentTown = null;
+    this.pinnedBlock = null;
+    this.currentPostalCode = null;
+    this.lastResolvedData = {
+      lat: lat ?? data.coordinates?.lat ?? null,
+      lng: lng ?? data.coordinates?.lng ?? null,
+      town: null,
+      projectName: data.project?.project,
+      isPrivate: true,
+    };
+    this.renderPrivateResults(data, suffix);
+  },
+
   /** Update the browser URL and document meta tags after a search */
   updateSeoForSearch(type, data) {
     const baseUrl = 'https://worthit.canlah.app';
     let path = '/';
-    let title = 'WorthIt — Singapore HDB Resale Prices & Property Transaction Checker';
-    let description = 'Check HDB resale prices, property transaction history, and fair value estimates for Singapore flats and condos.';
 
     if (type === 'hdb' && data?.town) {
-      const townDisplay = data.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
-      const ts = data.town_summary;
       if (this.currentPostalCode) {
         path = `/postal/${this.currentPostalCode}`;
-        const addrDisplay = this.lastResolvedData?.address || this.currentPostalCode;
-        title = `${addrDisplay} HDB Resale Prices | WorthIt`;
-        description = `Check HDB resale prices near ${addrDisplay} in ${townDisplay}. ${ts?.total_transactions_12m?.toLocaleString() || 0} nearby transactions. Compare Deal Scores from data.gov.sg records.`;
       } else {
         const slug = data.town.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         // Single flat-type selection → dedicated /hdb/<town>/<flat-type> URL (indexable + shareable)
         const FT_SLUG = { '2 ROOM': '2-room', '3 ROOM': '3-room', '4 ROOM': '4-room', '5 ROOM': '5-room', 'EXECUTIVE': 'executive' };
         const ftSlug = this.selectedFlatTypes.size === 1 ? FT_SLUG[[...this.selectedFlatTypes][0]] : null;
-        if (ftSlug) {
-          const ft = [...this.selectedFlatTypes][0];
-          const ftLabel = ft.charAt(0) + ft.slice(1).toLowerCase();
-          path = `/hdb/${slug}/${ftSlug}`;
-          title = `${ftLabel} HDB Resale Prices in ${townDisplay} | WorthIt`;
-          description = `Check ${ftLabel} HDB resale flat prices in ${townDisplay}. ${ts?.total_transactions_12m?.toLocaleString() || 0} recent transactions. Compare Deal Scores from data.gov.sg records.`;
-        } else {
-          path = `/hdb/${slug}`;
-          title = `${townDisplay} HDB Resale Prices & Transaction History | WorthIt`;
-          description = `Check ${townDisplay} HDB resale flat prices and transaction history. ${ts?.total_transactions_12m?.toLocaleString() || 0} recent transactions. Compare Deal Scores from data.gov.sg records.`;
-        }
+        path = ftSlug ? `/hdb/${slug}/${ftSlug}` : `/hdb/${slug}`;
       }
     } else if (type === 'district' && data?.district) {
       path = `/district/${data.district}`;
-      title = `${data.district_label || 'D' + data.district} — Private Property Prices | WorthIt`;
-      description = `Check private property resale prices in ${data.district_label || 'District ' + data.district}. View top projects, price trends, and URA transaction data.`;
     } else if (type === 'private' && data?.project) {
       const slug = data.project.project.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       path = `/private/${slug}`;
-      title = `${data.project.project} Resale Transaction Prices | WorthIt`;
-      description = `View ${data.project.project} resale prices and history. ${data.project.total_transactions?.toLocaleString() || 0} transactions in District ${data.project.district}.`;
     } else if (type === 'bto' && data?.project) {
       const slug = (data.display_name || data.project).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       path = `/bto/${slug}`;
-      const townDisplay = data.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
-      const classSuffix = data.classification ? ` ${data.classification}` : '';
-      title = `${data.display_name} BTO — ${townDisplay}${classSuffix} (${data.launch_label}) | WorthIt`;
-      const prices = (data.flats || []).flatMap(f => [f.price_min, f.price_max]).filter(Boolean);
-      const priceSpan = prices.length ? `$${Math.round(Math.min(...prices) / 1000)}k–$${Math.round(Math.max(...prices) / 1000)}k` : 'TBD';
-      description = `${data.display_name} BTO in ${townDisplay}${classSuffix ? ':' + classSuffix + ' flat' : ''}, ${priceSpan} indicative prices, ${data.launch_label}. Compare vs nearby resale.`;
     } else if (type === 'bto-index') {
       path = '/bto';
-      title = 'HDB BTO Launches 2025/2026 — Prices & Resale Comparison | WorthIt';
-      description = 'Browse all recent and upcoming HDB BTO launches with indicative prices and comparison against nearby resale flats.';
     }
 
     // Update browser URL (no reload)
@@ -231,13 +229,28 @@ const App = {
       if (typeof gtag === 'function') gtag('event', 'page_view', { page_path: path });
     }
 
-    // Update document title and meta tags
-    document.title = title;
-    this._updateMeta('description', description);
     this._updateLink('canonical', baseUrl + path);
-    this._updateOgMeta('og:title', title);
-    this._updateOgMeta('og:description', description);
     this._updateOgMeta('og:url', baseUrl + path);
+    this._applySeoMetadata(path);
+  },
+
+  /**
+   * Title + description come from /api/seo/metadata — the exact values bots get from the edge
+   * function — so a crawler that runs JS sees the same title as one that doesn't. Skipped if
+   * the user has navigated on (e.g. a price check pushed /check/...) before the response lands.
+   */
+  async _applySeoMetadata(path) {
+    try {
+      const meta = await API.getSeoMetadata(path);
+      if (window.location.pathname !== path || !meta?.title) return;
+      document.title = meta.title;
+      if (meta.description) this._updateMeta('description', meta.description);
+      if (meta.canonical) this._updateLink('canonical', meta.canonical);
+      this._updateOgMeta('og:title', meta.og_title || meta.title);
+      this._updateOgMeta('og:description', meta.og_description || meta.description || '');
+    } catch (err) {
+      console.warn('SEO metadata fetch failed:', err.message);
+    }
   },
 
   _updateMeta(name, content) {
@@ -556,17 +569,7 @@ const App = {
           const privateProject = exact || projectResults.projects[0];
           const data = await API.getPrivateProjectOverview(privateProject.project);
           if (data.found) {
-            this.currentTown = null;
-            this.pinnedBlock = null;
-            this.currentPostalCode = null;
-            this.lastResolvedData = {
-              lat: data.coordinates?.lat || null,
-              lng: data.coordinates?.lng || null,
-              town: null,
-              projectName: data.project?.project,
-              isPrivate: true,
-            };
-            this.renderPrivateResults(data, '');
+            this._showPrivateProject(data, '', null, null);
             return;
           }
         }
@@ -581,15 +584,7 @@ const App = {
           if (buildingResults.projects && buildingResults.projects.length > 0) {
             const data = await API.getPrivateProjectOverview(buildingResults.projects[0].project);
             if (data.found) {
-              this.currentTown = null;
-              this.pinnedBlock = null;
-              this.currentPostalCode = null;
-              this.lastResolvedData = {
-                lat: resolved.lat, lng: resolved.lng, town: null,
-                projectName: data.project?.project,
-                isPrivate: true,
-              };
-              this.renderPrivateResults(data, ` (${resolved.address})`);
+              this._showPrivateProject(data, ` (${resolved.address})`, resolved.lat, resolved.lng);
               return;
             }
           }

@@ -147,6 +147,12 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
     [null,'CONDOMINIUM',null,'TOA PAYOH RISE',null,100,null,null,1150000,11500,'2025-05','URA_PRIVATE','THE CANOPY','11','RCR','Resale','Strata'],
   ];
 
+  // Private SKY — 1 row. Its slug "sky" fuzzy-matches SKY HABITAT (more transactions), so
+  // /private/sky only resolves correctly via the exact slug lookup.
+  const sky = [
+    [null,'CONDOMINIUM',null,'SKY ROAD',null,80,null,null,800000,10000,'2025-02','URA_PRIVATE','SKY','11','RCR','Resale','Strata'],
+  ];
+
   const insertAll = db.transaction((rows) => {
     for (const row of rows) insertTx.run(...row);
   });
@@ -154,7 +160,7 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   const punggolFreshview = [
     ['PUNGGOL','4 ROOM','601A','PUNGGOL FIELD','07 TO 09',93,'MODEL A',97,610000,6559,'2025-05','HDB',null,null,null,'Resale',null],
   ];
-  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...punggolFreshview]);
+  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...sky, ...punggolFreshview]);
 
   // Project coords
   const insertCoord = db.prepare(`

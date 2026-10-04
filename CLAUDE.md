@@ -31,7 +31,7 @@ npm run deploy:frontend # Deploy frontend only (wrangler pages deploy public --p
 ```
 
 ```bash
-npm test                # Run unit + integration tests (247 tests, Vitest + supertest)
+npm test                # Run unit + integration tests (252 tests, Vitest + supertest)
 npm run test:smoke      # Smoke tests against live worthit-api.fly.dev (19 tests)
 npm run test:smoke-local # Smoke tests against localhost:3000
 ```
@@ -84,7 +84,7 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Geocoding pipeline** (`/api/geocode`): OneMap SG API primary → Nominatim fallback. Now only a fallback for blocks missing from `hdb_block_coords`. Server enforces a hard cap of 100 addresses per request; client (`map.js`) caps at 100 to match.
 
-**SEO for bots** (`functions/[[path]].js`): Cloudflare edge function detects crawlers via User-Agent regex, fetches metadata from Fly.io (`/api/seo/metadata`), and injects `<title>`, `<meta>`, OpenGraph, and JSON-LD into the HTML before serving. Normal users get the SPA directly.
+**SEO for bots** (`functions/[[path]].js`): Cloudflare edge function detects crawlers via User-Agent regex, fetches metadata from Fly.io (`/api/seo/metadata`), and injects `<title>`, `<meta>`, OpenGraph, and JSON-LD into the HTML before serving. Normal users get the SPA directly. The SPA sets its own `<title>`/description from the same endpoint (`/api/seo/metadata?route=&head=1`, in `_applySeoMetadata()`) so JS-rendering crawlers see the same title as non-rendering ones — edit titles only in the server's metadata branches. Private project slugs resolve exactly first (`slugToProject()` slug map), fuzzy LIKE only as a fallback.
 
 **IndexNow** (`scripts/indexnow-ping.js`, chained onto `deploy` / `deploy:frontend`): after each frontend deploy, every sitemap URL is submitted to IndexNow (Bing, Yandex, DuckDuckGo, Naver, Seznam). **`public/a464a4c238872496dcaa8d33718f8e13.txt` must never be deleted** — IndexNow re-validates that key file on every submission and returns `403 SiteVerificationNotCompleted` without it. The script is deliberately non-fatal (logs a warning, exits 0) so a search-engine outage can't block a deploy. Cloudflare's own Crawler Hints toggle (Caching → Configuration) pings IndexNow independently with a separate Cloudflare-managed key; the two don't conflict.
 
@@ -106,16 +106,17 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
-**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=27`.
+**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=28`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 
 **UI style guide**: `design.md` (repo root) defines the design tokens, component classes, dark-mode and mobile rules — read it before adding or restyling any UI.
 
-**Testing**: 247 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
+**Testing**: 252 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
 
 **WAL checkpoint**: always run `PRAGMA wal_checkpoint(TRUNCATE)` on the SQLite DB before uploading to Fly.io. Otherwise geocoded data in the WAL file is silently lost.
 
 ## Known Issues
 
 - In-memory geocode cache (`geocodeCache`) has no size limit; long-running servers may accumulate unbounded memory.
+- **Cold-start SEO fallback (to fix next)**: Fly auto-stops the API (`min_machines_running = 0`). When a bot hits a sleeping machine, `/api/seo/metadata` takes >5s, the edge function aborts (`functions/[[path]].js`, 5s `AbortController`) and serves `index.html` with only the canonical injected — i.e. the **homepage title + description** on every such page. Likely cause of Bing's "identical titles / meta descriptions" report (a cold bingbot request measured 5.1s; warm calls are 0.03–0.26s). Planned fix: cache metadata at the edge (Cache API, ~24h, refresh in background via `waitUntil`), return `503` + `Retry-After` on a cold miss instead of the generic page, and raise the timeout to ~8s. Alternative: `min_machines_running = 1` (check Fly billing first).

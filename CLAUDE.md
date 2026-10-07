@@ -86,6 +86,8 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **SEO for bots** (`functions/[[path]].js`): Cloudflare edge function detects crawlers via User-Agent regex, fetches metadata from Fly.io (`/api/seo/metadata`), and injects `<title>`, `<meta>`, OpenGraph, and JSON-LD into the HTML before serving. Normal users get the SPA directly. The SPA sets its own `<title>`/description from the same endpoint (`/api/seo/metadata?route=&head=1`, in `_applySeoMetadata()`) so JS-rendering crawlers see the same title as non-rendering ones — edit titles only in the server's metadata branches. Private project slugs resolve exactly first (`slugToProject()` slug map), fuzzy LIKE only as a fallback.
 
+**Crawl control** (`functions/[[path]].js` + `server/index.js`): the edge serves a real **404** for any extension-less path that isn't a known SPA route shape (`SPA_ROUTE_PATTERNS`; deep routes that fail to resolve stay 200 + server `noindex`), so junk URLs like `/foo/bar/baz` or `/_headers` can't burn crawl budget. All `/api/*` responses carry `X-Robots-Tag: noindex, nofollow` (set in the edge `proxyApi()` and a matching Express middleware) — a header, not a robots `Disallow`, so Googlebot's renderer can still fetch `/api/*` (the same-origin render fix). `robots.txt` (kept in sync between `public/robots.txt` and the edge generator) also `Disallow: /_headers`.
+
 **IndexNow** (`scripts/indexnow-ping.js`, chained onto `deploy` / `deploy:frontend`): after each frontend deploy, every sitemap URL is submitted to IndexNow (Bing, Yandex, DuckDuckGo, Naver, Seznam). **`public/a464a4c238872496dcaa8d33718f8e13.txt` must never be deleted** — IndexNow re-validates that key file on every submission and returns `403 SiteVerificationNotCompleted` without it. The script is deliberately non-fatal (logs a warning, exits 0) so a search-engine outage can't block a deploy. Cloudflare's own Crawler Hints toggle (Caching → Configuration) pings IndexNow independently with a separate Cloudflare-managed key; the two don't conflict.
 
 **URL routing**: `history.pushState()` SPA navigation with routes `/hdb/<town-slug>`, `/hdb/<town-slug>/<flat-type>`, `/postal/<code>`, `/district/<code>`, `/private/<project-slug>`, `/bto`, `/bto/<project-slug>`, `/check/<postal>?price=`. `popstate` listener handles back/forward. GA4 `page_view` events fire on each route change.
@@ -106,13 +108,13 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
-**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=28`.
+**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=30`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 
 **UI style guide**: `design.md` (repo root) defines the design tokens, component classes, dark-mode and mobile rules — read it before adding or restyling any UI.
 
-**Testing**: 252 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
+**Testing**: 271 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
 
 **WAL checkpoint**: always run `PRAGMA wal_checkpoint(TRUNCATE)` on the SQLite DB before uploading to Fly.io. Otherwise geocoded data in the WAL file is silently lost.
 

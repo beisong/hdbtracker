@@ -215,3 +215,22 @@ describe('GET /api/seo/sitemap — BTO', () => {
     expect(urls).not.toContain('https://worthit.canlah.app/bto/toa-payoh-summit');
   });
 });
+
+describe('API crawl control', () => {
+  it('sets X-Robots-Tag noindex on /api responses (keeps APIs out of the index)', async () => {
+    const res = await request.get('/api/status');
+    expect(res.status).toBe(200);
+    expect(res.headers['x-robots-tag']).toBe('noindex, nofollow');
+  });
+});
+
+describe('public/robots.txt', () => {
+  it('disallows /_headers and keeps the sitemap reference', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const txt = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'robots.txt'), 'utf8');
+    expect(txt).toMatch(/User-agent: \*\nAllow: \/\nDisallow: \/_headers/);
+    expect(txt).toMatch(/Sitemap: https:\/\/worthit\.canlah\.app\/sitemap\.xml/);
+  });
+});
+

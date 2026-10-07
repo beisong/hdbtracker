@@ -3,7 +3,7 @@
 > Restructured 2026-10-02. Detailed per-change history is in git and in `activeContext.md`
 > § Feature History.
 
-## What Works (all deployed — cache `v=27`)
+## What Works (all deployed — cache `v=29`)
 
 **Search & analysis**
 - ✅ Search by town, postal code (500m true-radius via `hdb_block_coords`), district (D01–D28),
@@ -36,7 +36,7 @@
 - ✅ Daily automated data refresh (GitHub Actions → build → gzip → SFTP → atomic swap → restart).
 - ✅ Light/dark theme; mobile UX (jump bar, FAB, share, card tap → map highlight).
 - ✅ In-app feedback → separate `feedback.db`; GA4 with SPA page views + custom events.
-- ✅ 247 unit + integration tests + 19 smoke tests; every deploy gated on `npm test`.
+- ✅ 271 unit + integration tests + 19 smoke tests; every deploy gated on `npm test`.
 
 ## Outstanding
 
@@ -73,14 +73,16 @@
   Vitals win, higher regression risk).
 
 ### Search indexing & distribution
-- 🔲 **Deploy the Bing SEO report fixes** (private exact slugs, server-sourced SPA titles,
-  title/description lengths — code done 2026-10-05) with `npm run deploy` (bump `v=`), then
-  re-submit affected URLs to Bing.
+- ✅ **Bing SEO report fixes deployed** 2026-10-07 (API + frontend, `v=29`, commit `df0947b`) —
+  private exact slugs, server-sourced SPA titles, title/description lengths.
+- 🔲 Re-submit affected URLs to Bing after the 2026-10-07 deploy.
 - 🔲 **Fly cold-start SEO fallback** — bots get the homepage title when the API takes >5s to wake
   (likely Bing's duplicate titles/descriptions). Options: cache metadata at the edge + return 503
   `Retry-After` on a cold miss; or `min_machines_running = 1`.
 - 🔲 Re-check GSC + Bing ~mid-Oct 2026 (see `activeContext.md` § Current Focus for the baseline).
-- 🔲 Submit the last 51 post-MOP BTO pages (ranks 173–223) + district/private pages to Bing (100/day quota).
+- ✅ Submitted 2026-10-07 (100/100 quota): all 28 district pages + 72 highest-volume private
+  project pages (Bing `SUBMIT_URLS`, `submitted: true`). Remaining: ~128 private pages + 51
+  post-MOP BTO pages (ranks 173–223), 100/day.
 - 🔲 Backlinks — see playbook below.
 
 ## Backlink Playbook
@@ -103,7 +105,9 @@ Avoid paid link farms and mass-posting the same link (penalty / spam risk).
 
 ## Known Issues
 1. Geocode cache has no size limit (see Engineering backlog).
-2. GSC: 0 of 856 URLs indexed as of 2026-10-01.
+2. GSC: 0 of 856 URLs indexed (sitemap 856 submitted / 0 indexed, no page impressions);
+   re-checked 2026-10-07 — homepage `/`, `/bto`, `/hdb/tampines/4-room` all "Crawled – currently
+   not indexed" (crawl OK, canonical OK, indexing allowed → authority/backlinks, not technical).
 
 ## Evolution of Project Decisions
 - Started HDB-only; added URA private property, then BTO launches, then post-MOP BTO resale.

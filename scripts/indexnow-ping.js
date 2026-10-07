@@ -11,11 +11,23 @@
 const INDEXNOW_KEY = 'a464a4c238872496dcaa8d33718f8e13';
 const HOST = 'worthit.canlah.app';
 
-async function main() {
-  const resp = await fetch(`https://${HOST}/sitemap.xml`);
-  if (!resp.ok) throw new Error(`sitemap fetch returned HTTP ${resp.status}`);
+// The deploy chain runs this right after `wrangler pages deploy`; the production alias can
+// still be propagating for a few seconds, so retry the sitemap before giving up.
+async function fetchSitemap(retries = 5, delayMs = 5000) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const resp = await fetch(`https://${HOST}/sitemap.xml`);
+      if (resp.ok) return await resp.text();
+      if (attempt > retries) throw new Error(`sitemap fetch returned HTTP ${resp.status}`);
+    } catch (err) {
+      if (attempt > retries) throw err;
+    }
+    await new Promise(r => setTimeout(r, delayMs));
+  }
+}
 
-  const urlList = [...(await resp.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+async function main() {
+  const urlList = [...(await fetchSitemap()).matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
   if (urlList.length === 0) throw new Error('sitemap contained no URLs');
 
   const submit = await fetch('https://api.indexnow.org/indexnow', {

@@ -37,6 +37,13 @@ app.use(cors({
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(express.json());
 
+// API responses are data, not pages — keep them out of search indexes. Header (not robots
+// Disallow) so crawler renderers can still fetch /api/* and render the SPA.
+app.use('/api/', (req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
 // URA API config
 const URA_ACCESS_KEY = process.env.URA_API_ACCESS_KEY || '';
 let uraToken = null;

@@ -33,6 +33,21 @@ function isBot(userAgent) {
   return BOT_PATTERNS.some(pattern => pattern.test(userAgent));
 }
 
+// Known SPA route shapes (extension-less). Anything else gets a real 404 instead of the
+// SPA shell, so junk URLs (/foo/bar/baz, /_headers) can't burn crawl budget as 200s.
+// /about, /methodology and /data-sources are handled earlier via STATIC_PAGES.
+const SPA_ROUTE_PATTERNS = [
+  /^\/$/,
+  /^\/hdb\/[^/]+(?:\/[^/]+)?$/,
+  /^\/bto$/,
+  /^\/bto\/[^/]+$/,
+  /^\/private\/[^/]+$/,
+  /^\/district\/\d{1,2}$/,
+  /^\/postal\/\d{6}$/,
+  /^\/check$/,
+  /^\/check\/\d{6}$/,
+];
+
 // Inject SEO meta tags into HTML
 function injectMeta(html, meta) {
   // Update title
@@ -164,6 +179,10 @@ async function proxyApi(request, url) {
     const respHeaders = new Headers(upstream.headers);
     respHeaders.delete('content-encoding');
     respHeaders.delete('content-length');
+    // API responses are data, not pages — keep them out of the index without blocking
+    // crawler fetches (Googlebot's renderer fetches /api/* same-origin; a robots Disallow
+    // would break rendering, an X-Robots-Tag does not).
+    respHeaders.set('X-Robots-Tag', 'noindex, nofollow');
     return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: respHeaders });
   } catch (err) {
     return new Response(JSON.stringify({ error: 'API unavailable' }), {
@@ -192,7 +211,7 @@ export async function onRequest(context) {
       'cohere-ai', 'meta-externalagent', 'Bytespider',
     ];
     const body =
-      `User-agent: *\nAllow: /\n\n` +
+      `User-agent: *\nAllow: /\nDisallow: /_headers\n\n` +
       aiBots.map(b => `User-agent: ${b}\nAllow: /\n`).join('\n') +
       `\nSitemap: ${SITE_URL}/sitemap.xml\n`;
     return new Response(body, { headers: { 'Content-Type': 'text/plain' } });
@@ -240,6 +259,16 @@ ${(data.urls || []).map(u => `  <url>
   // og:image or favicon would otherwise receive HTML instead of the actual file.
   if (/\.[a-z0-9]{2,5}$/i.test(url.pathname)) {
     return env.ASSETS.fetch(request);
+  }
+
+  // Real 404 for unknown extension-less paths — nothing below this point should answer 200
+  // to a URL the SPA can't route (deep routes that fail to resolve stay 200 + server noindex).
+  const routePath = url.pathname.replace(/\/+$/, '') || '/';
+  if (!SPA_ROUTE_PATTERNS.some(re => re.test(routePath))) {
+    return new Response('Not Found', {
+      status: 404,
+      headers: { 'Content-Type': 'text/plain; charset=UTF-8', 'X-Robots-Tag': 'noindex, nofollow' },
+    });
   }
 
   // For bots: inject SEO metadata

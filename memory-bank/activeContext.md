@@ -12,9 +12,11 @@
   little (Jun 50 / Jul 75 / Aug 4 / Sep 11 impressions, 0 clicks ever).
   - Re-check GSC + Bing **~mid-Oct 2026**. If pages recrawled after the 2026-09-26 proxy fix are
     still not indexed, the render bug wasn't the blocker — backlinks are.
-  - Bing URL submission quota is only **100/day, 3,100/month**. Submitted 2026-10-01 (home, `/bto`,
-    26 town pages, top 72 BTO pages by resale count) and 2026-10-02 (BTO ranks 73–172). Remaining:
-    BTO ranks 173–223 (51 pages) + district/private pages (IndexNow still pings all 856 on deploy).
+  - Bing URL submission quota is **100/day, 2,500/month** (API now reports 2,500, not 3,100).
+    Submitted 2026-10-01 (home, `/bto`, 26 town pages, top 72 BTO by resale count), 2026-10-02
+    (BTO ranks 73–172), and 2026-10-07 (all 28 district + 72 highest-volume private pages, to
+    recrawl after the `df0947b` fixes). Remaining: ~128 private + 51 post-MOP BTO (ranks 173–223)
+    (IndexNow still pings all 856 on deploy).
   - Off-site backlinks remain the biggest lever — see `progress.md` § Backlink playbook
     (data.gov.sg showcase first).
 - **BTO post-MOP resale** — re-run `python scripts/fetch_bto_blocks.py` every few months to pick
@@ -27,7 +29,31 @@
 
 ## Recent Changes (Sep–Oct 2026)
 
-### Bing SEO report fixes — CODE DONE 2026-10-05, NOT DEPLOYED (needs API + frontend deploy, bump `v=`)
+### Bing crawl-control fixes (A+B+C) — DEPLOYED 2026-10-07 (API + frontend, `v=30`)
+Bing's "crawl more URLs / exclude useless URLs / limit parameters / boost crawl quota" recommendation
+turned out to be a generic canned message (Bing crawl diagnostics showed no issues), but it exposed
+real crawl-budget leaks:
+- **Edge 404** (`functions/[[path]].js`): unknown extension-less paths (`/foo/bar/baz`, `/_headers`)
+  now return a real **404** instead of the SPA shell 200. Whitelist = `SPA_ROUTE_PATTERNS`; deep
+  routes that fail to *resolve* are left alone (still 200 + server `noindex`).
+- **`/api/*` noindex header**: `X-Robots-Tag: noindex, nofollow` on all API responses (edge
+  `proxyApi()` + new Express middleware). Deliberately a header, **not** a robots `Disallow` —
+  Googlebot's renderer fetches `/api/*` same-origin, so blocking it would re-trigger the
+  `showError()`-covers-content regression fixed 2026-09-26. Bingbot-scoped `Disallow: /api/` was
+  considered and declined.
+- **robots.txt**: `Disallow: /_headers` (both `public/robots.txt` and the edge generator); deleted
+  stray `public/.DS_Store`. No dotfile-wide rule, no parameter rules (param URLs already
+  canonicalise to clean paths).
+- **Tests 252 → 271**: new `tests/unit/edge.test.js` (edge 404 whitelist, robots body) + API
+  `X-Robots-Tag` and robots-content assertions in `tests/integration/seo.test.js`.
+- **Deferred by choice**: data-unresolved deep-route 404s (`/hdb/not-a-town`), trimming the 473
+  BTO sitemap URLs, and the manual Bing Webmaster **Crawl Control** rate boost (dashboard-only).
+- **IndexNow**: `scripts/indexnow-ping.js` now retries the sitemap fetch (5× / 5s) — the first run
+  after this deploy hit a transient 404 while the Pages alias propagated and silently skipped the
+  submit; re-run submitted all 856. Live-verified: valid routes 200, junk 404, `/api/*` header,
+  robots.txt, 19/19 smoke tests.
+
+### Bing SEO report fixes — DEPLOYED 2026-10-07 (API + frontend, `v=29`), commit `df0947b`
 Bing Webmaster flagged duplicate titles, duplicate meta descriptions, short titles, and no
 backlinks (0 inbound links per the Bing API).
 - **Diagnosis**: server-generated bot metadata was already ~unique (8/856 dupes). The main

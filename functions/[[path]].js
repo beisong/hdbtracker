@@ -11,6 +11,22 @@
 const API_BASE = 'https://worthit-api.fly.dev';
 const SITE_URL = 'https://worthit.canlah.app';
 
+// The API machine auto-stops when idle (fly.toml min_machines_running = 0), so a cold bot
+// request can take well over 5s. Give it more room before declaring failure.
+const META_TIMEOUT_MS = 8000;
+const META_CACHE_TTL = 86400;
+
+// Bots that only build link previews and never retry: they must still get a usable card.
+const PREVIEW_BOT_PATTERNS = [
+  /facebookexternalhit/i, /facebot/i, /twitterbot/i, /linkedinbot/i, /slackbot/i,
+  /discordbot/i, /discordapp/i, /telegrambot/i, /whatsapp/i, /pinterest/i,
+  /embedly/i, /skypeuripreview/i, /vkshare/i, /outbrain/i,
+];
+
+function isPreviewBot(userAgent) {
+  return PREVIEW_BOT_PATTERNS.some(pattern => pattern.test(userAgent));
+}
+
 const BOT_PATTERNS = [
   /googlebot/i, /google-inspectiontool/i, /bingbot/i, /yandexbot/i, /baiduspider/i, /duckduckbot/i,
   /slurp/i, /facebot/i, /facebookexternalhit/i, /twitterbot/i,
@@ -50,11 +66,13 @@ const SPA_ROUTE_PATTERNS = [
 
 // Inject SEO meta tags into HTML
 function injectMeta(html, meta) {
-  // Update title
-  html = html.replace(
-    /<title>[^<]*<\/title>/i,
-    `<title>${meta.title}</title>`
-  );
+  // Update title (never write "undefined" — a partial meta object keeps the static title)
+  if (meta.title) {
+    html = html.replace(
+      /<title>[^<]*<\/title>/i,
+      `<title>${meta.title}</title>`
+    );
+  }
 
   // Update or add meta description
   if (meta.description) {
@@ -157,6 +175,46 @@ function injectContent(html, meta) {
     /<section[^>]+id=["']seo-content["'][^>]*>[\s\S]*?<\/section>/i,
     meta.content_html
   );
+}
+
+// Fetch page metadata, memoized in the edge cache per route so a sleeping API machine only
+// affects the first crawl of a route per data center, not every crawler request.
+async function fetchSeoMetadata(route, waitUntil) {
+  const cacheKey = new Request(`${SITE_URL}/__seo-meta?route=${encodeURIComponent(route)}`, { method: 'GET' });
+  const cache = typeof caches !== 'undefined' && caches.default ? caches.default : null;
+
+  if (cache) {
+    try {
+      const hit = await cache.match(cacheKey);
+      if (hit) return await hit.json();
+    } catch (err) {}
+  }
+
+  const controller = new AbortController();
+  const abortTimer = setTimeout(() => controller.abort(), META_TIMEOUT_MS);
+  try {
+    const metaResp = await fetch(`${API_BASE}/api/seo/metadata?route=${encodeURIComponent(route)}`, {
+      headers: { 'User-Agent': 'WorthIt-Edge/1.0' },
+      signal: controller.signal,
+    });
+    const meta = await metaResp.json();
+    if (!meta || !meta.title) throw new Error('incomplete metadata payload');
+
+    // Only cache complete payloads — a partial object must not be replayed to crawlers.
+    if (cache) {
+      const store = cache.put(cacheKey, new Response(JSON.stringify(meta), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': `public, max-age=${META_CACHE_TTL}`,
+        },
+      })).catch(err => {});
+      if (waitUntil) waitUntil(store); else await store;
+    }
+
+    return meta;
+  } finally {
+    clearTimeout(abortTimer);
+  }
 }
 
 async function proxyApi(request, url) {
@@ -273,40 +331,47 @@ ${(data.urls || []).map(u => `  <url>
 
   // For bots: inject SEO metadata
   if (isBot(userAgent)) {
+    const route = url.pathname === '/' ? '/' : url.pathname;
+    let meta;
+
     try {
-      const route = url.pathname === '/' ? '/' : url.pathname;
-      const controller = new AbortController();
-      const abortTimer = setTimeout(() => controller.abort(), 5000);
-      const metaResp = await fetch(`${API_BASE}/api/seo/metadata?route=${encodeURIComponent(route)}`, {
-        headers: { 'User-Agent': 'WorthIt-Edge/1.0' },
-        signal: controller.signal,
-      });
-      clearTimeout(abortTimer);
-      const meta = await metaResp.json();
-
-      // Fetch the static index.html
-      const assetResp = await env.ASSETS.fetch(new Request(new URL('/', url.toString())));
-      let html = await assetResp.text();
-
-      // Inject metadata and page-specific content
-      html = injectMeta(html, meta);
-      html = injectContent(html, meta);
-
-      return new Response(html, {
-        headers: {
-          'Content-Type': 'text/html;charset=UTF-8',
-          'Cache-Control': 'public, max-age=3600',
-        },
-      });
+      meta = await fetchSeoMetadata(route, context.waitUntil ? context.waitUntil.bind(context) : null);
     } catch (err) {
-      // API unreachable (e.g. Fly.io cold start) — still inject the correct canonical
-      // from the URL path so Google doesn't mark this page as "Alternate with proper canonical"
-      console.error('SEO injection failed:', err.message);
+      console.error('SEO metadata unavailable:', err.message);
+
+      // A 503 tells search engines to come back instead of indexing a broken duplicate.
+      if (!isPreviewBot(userAgent)) {
+        return new Response('Temporarily unavailable', {
+          status: 503,
+          headers: {
+            'Content-Type': 'text/plain; charset=UTF-8',
+            'Retry-After': '300',
+            'Cache-Control': 'no-store',
+          },
+        });
+      }
+
+      // Link-preview bots never retry — give them the real page with the static title intact.
       const assetResp = await env.ASSETS.fetch(new Request(new URL('/', url.toString())));
       let html = await assetResp.text();
       html = injectMeta(html, { canonical: `${SITE_URL}${url.pathname}` });
-      return new Response(html, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
+      return new Response(html, {
+        headers: { 'Content-Type': 'text/html;charset=UTF-8', 'Cache-Control': 'no-store' },
+      });
     }
+
+    const assetResp = await env.ASSETS.fetch(new Request(new URL('/', url.toString())));
+    let html = await assetResp.text();
+
+    html = injectMeta(html, meta);
+    html = injectContent(html, meta);
+
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html;charset=UTF-8',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
   }
 
   // Normal users: serve SPA — try static asset first, fall back to index.html

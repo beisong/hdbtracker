@@ -10,8 +10,9 @@
 2. `/robots.txt` (generated; keep in sync with `public/robots.txt`) and `/sitemap.xml` (built from `/api/seo/sitemap`)
 3. `STATIC_PAGES` (`/about`, `/methodology`, `/data-sources`) → static HTML for everyone
 4. Paths with a file extension → static asset (never bot-injected)
-5. Bot User-Agent → `/api/seo/metadata` (5s timeout) → `injectMeta()` + `injectContent()`;
-   on failure, inject only the path-based canonical
+5. Bot User-Agent → `fetchSeoMetadata()` (edge Cache API, 24h) → `injectMeta()` + `injectContent()`;
+   on a cold miss the API is polled for 8s, then crawlers get `503` + `Retry-After` (link-preview
+   bots get the page with the static title). A payload without `title` counts as a failure.
 6. Everyone else → static asset or `index.html` (SPA fallback)
 
 ## Server (`server/index.js`, monolithic ~3,400 lines)

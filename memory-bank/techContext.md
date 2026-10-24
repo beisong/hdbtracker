@@ -51,7 +51,11 @@
 - **Dockerfile**: Node.js 20 + Python 3 slim
 - **Volume**: 1GB persistent at `/data` — stores `resale.db`
 - **Env vars**: `DB_PATH=/data/resale.db`, `ONEMAP_TOKEN`, `URA_API_ACCESS_KEY` (via `fly secrets`)
-- **Machine ID**: Set in `fly.toml`
+- **Machine ID**: `e7845746c2d918` (also hard-coded in the `deploy:data` npm script)
+- **Auto-stop**: `min_machines_running = 0` — the machine sleeps after ~8 min idle and a cold boot
+  takes ~8s+. The edge caches SEO metadata 24h to absorb this; bots get `503` + `Retry-After` on a
+  cold miss (see CLAUDE.md § Known Issues). Setting `min_machines_running = 1` removes the cold
+  starts but costs a small monthly fee.
 
 ### Data updates
 The Python pipeline can't run on Fly (256MB RAM → OOM): the DB is built in GitHub Actions (daily) or locally and uploaded — steps in CLAUDE.md.

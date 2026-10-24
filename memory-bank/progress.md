@@ -36,7 +36,7 @@
 - ✅ Daily automated data refresh (GitHub Actions → build → gzip → SFTP → atomic swap → restart).
 - ✅ Light/dark theme; mobile UX (jump bar, FAB, share, card tap → map highlight).
 - ✅ In-app feedback → separate `feedback.db`; GA4 with SPA page views + custom events.
-- ✅ 271 unit + integration tests + 19 smoke tests; every deploy gated on `npm test`.
+- ✅ 276 unit + integration tests + 19 smoke tests; every deploy gated on `npm test`.
 
 ## Outstanding
 
@@ -76,10 +76,14 @@
 - ✅ **Bing SEO report fixes deployed** 2026-10-07 (API + frontend, `v=29`, commit `df0947b`) —
   private exact slugs, server-sourced SPA titles, title/description lengths.
 - 🔲 Re-submit affected URLs to Bing after the 2026-10-07 deploy.
-- 🔲 **Fly cold-start SEO fallback** — bots get the homepage title when the API takes >5s to wake
-  (likely Bing's duplicate titles/descriptions). Options: cache metadata at the edge + return 503
-  `Retry-After` on a cold miss; or `min_machines_running = 1`.
-- 🔲 Re-check GSC + Bing ~mid-Oct 2026 (see `activeContext.md` § Current Focus for the baseline).
+- ✅ **Fly cold-start SEO fallback fixed + deployed** 2026-10-24 (frontend `v=31`) — the edge fallback was
+  writing literal `<title>undefined</title>` + homepage content on deep URLs whenever the API machine
+  was asleep. Now: title guarded, metadata memoized in the edge Cache API (24h), timeout 5s → 8s,
+  crawlers get 503 + `Retry-After` while link-preview bots still get the real page. 276 tests pass.
+- 🔲 Manually "Request indexing" in GSC for the top ~20 URLs (the Indexing API is
+  job-posting-only, so this can't be scripted).
+- 🔲 Re-check GSC + Bing coverage in ~2 weeks (edge fix shipped 2026-10-24; see
+  `activeContext.md` § Current Focus).
 - ✅ Submitted 2026-10-07 (100/100 quota): all 28 district pages + 72 highest-volume private
   project pages (Bing `SUBMIT_URLS`, `submitted: true`). Remaining: ~128 private pages + 51
   post-MOP BTO pages (ranks 173–223), 100/day.
@@ -106,8 +110,10 @@ Avoid paid link farms and mass-posting the same link (penalty / spam risk).
 ## Known Issues
 1. Geocode cache has no size limit (see Engineering backlog).
 2. GSC: 0 of 856 URLs indexed (sitemap 856 submitted / 0 indexed, no page impressions);
-   re-checked 2026-10-07 — homepage `/`, `/bto`, `/hdb/tampines/4-room` all "Crawled – currently
-   not indexed" (crawl OK, canonical OK, indexing allowed → authority/backlinks, not technical).
+   re-checked 2026-10-24 — 12/15 sampled pages "Crawled – currently not indexed", 3 "URL is unknown
+   to Google", only 30 lifetime impressions / 0 clicks (crawl OK, canonical OK, indexing allowed →
+   authority/backlinks, plus the now-fixed cold-start duplicate-content bug). Bing, by contrast,
+   had 384 URLs indexed with 0 crawl errors.
 
 ## Evolution of Project Decisions
 - Started HDB-only; added URA private property, then BTO launches, then post-MOP BTO resale.

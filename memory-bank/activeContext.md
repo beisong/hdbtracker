@@ -10,8 +10,13 @@
 - **Search indexing (the main open problem)** — Google: sitemap 856 submitted / **0 indexed**,
   every inspected page "Crawled – currently not indexed", 0 impressions in Sept. Bing: indexing a
   little (Jun 50 / Jul 75 / Aug 4 / Sep 11 impressions, 0 clicks ever).
-  - Re-check GSC + Bing **~mid-Oct 2026**. If pages recrawled after the 2026-09-26 proxy fix are
-    still not indexed, the render bug wasn't the blocker — backlinks are.
+  - **Re-checked 2026-10-24** (after the 2026-09-26 proxy fix): still 856 / **0 indexed** (12/15
+    sampled "Crawled – currently not indexed"), only 30 lifetime impressions. Bing meanwhile has
+    **384 URLs indexed**, 0 crawl errors. So the render bug wasn't the blocker — but a cold-start
+    bug was serving `<title>undefined</title>` + homepage content on deep URLs; fixed and deployed
+    2026-10-24 (frontend `v=31`; edge cache + 8s timeout + 503 for crawlers). **Next: manually
+    "Request indexing" in GSC for the top ~20 URLs** (not scriptable — the Indexing API is
+    job-posting-only), then re-check coverage in ~2 weeks, and continue backlinks.
   - Bing URL submission quota is **100/day, 2,500/month** (API now reports 2,500, not 3,100).
     Submitted 2026-10-01 (home, `/bto`, 26 town pages, top 72 BTO by resale count), 2026-10-02
     (BTO ranks 73–172), and 2026-10-07 (all 28 district + 72 highest-volume private pages, to
@@ -28,6 +33,30 @@
   with `fly tokens create org`.
 
 ## Recent Changes (Sep–Oct 2026)
+
+### Cold-start SEO fallback fix — DEPLOYED 2026-10-24 (frontend `v=31`)
+Re-checked GSC + Bing. **Google: 856 submitted / 0 indexed**; 12 of 15 sampled URLs "Crawled –
+currently not indexed", 3 "URL is unknown to Google"; **30 lifetime impressions, 0 clicks** (homepage
++ 4 `/private/*`, faded to zero by Aug). **Bing is healthy**: 384 URLs in index (6 in June), 1,131
+pages crawled, 0 crawl errors / 4xx / 5xx. Technical layer verified clean (200s, robots allowed,
+self-canonical, no noindex) — so the block is quality/authority, aggravated by a real bug.
+- **Root cause**: the edge fallback called `injectMeta(html, { canonical })` with no `title`, and
+  `injectMeta` rewrote `<title>` unconditionally → **`<title>undefined</title>`** plus homepage
+  content on every deep URL whenever the Fly machine was asleep (reproduced live twice). Bot-facing
+  duplicate pages are exactly what "crawled – currently not indexed" describes.
+- **Fix** (`functions/[[path]].js`): (1) title only rewritten when `meta.title` exists; (2) metadata
+  timeout 5s → **8s**; (3) new `fetchSeoMetadata()` memoizes the payload in the **edge Cache API**
+  (24h TTL, `waitUntil`, complete payloads only) so a sleeping machine costs one crawl per route per
+  data centre; (4) on failure, search/AI crawlers get **503 + `Retry-After: 300`** (`no-store`)
+  instead of a broken duplicate, while link-preview bots (Twitter/Slack/Facebook/WhatsApp/Discord/…)
+  still receive the real page with the static title intact.
+- **Deliberately unchanged**: `min_machines_running = 1` (billing) — the edge cache makes it optional.
+- **Tests 271 → 276** (5 new in `tests/unit/edge.test.js`).
+- **Live verification**: Fly machine stopped → cached bot request returned in **0.165s** with the
+  correct title and never woke the machine. Uncached route on a cold machine → **503 + `Retry-After:
+  300` at 8.15s** (no `undefined` title, no duplicate), then **200** once warm. Note: a fully cold
+  boot now measures ~8s+, so an uncached route usually 503s on its first crawl — `min_machines_running
+  = 1` remains the way to remove that, if the billing is acceptable.
 
 ### Bing crawl-control fixes (A+B+C) — DEPLOYED 2026-10-07 (API + frontend, `v=30`)
 Bing's "crawl more URLs / exclude useless URLs / limit parameters / boost crawl quota" recommendation
@@ -60,7 +89,8 @@ backlinks (0 inbound links per the Bing API).
   duplicate source is likely **Fly cold starts** — the edge waits 5s for `/api/seo/metadata`, then
   falls back to the homepage title/description (a cold bingbot request measured 5.1s). Cold-start
   fix (edge cache of metadata + 503 Retry-After fallback, or `min_machines_running = 1`) proposed
-  but **not implemented** — user picked fixes 2–4 only.
+  then; **implemented 2026-10-24** (see the cold-start entry above) — it also stopped the fallback
+  writing literal `<title>undefined</title>`.
 - **Private slugs**: `slugToProject()` now tries an exact slug → project map (cached per DB
   handle; collisions → most transactions) before the fuzzy LIKE fallback. 85 of 2,989 projects
   used to resolve to another project (ECO → ECOPOLITAN, THE GARDEN RESIDENCES → THE LAKEGARDEN

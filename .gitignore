@@ -12,3 +12,4 @@ server/db/*.db-wal
 fly.ssh
 fly.ssh-cert.pub
 .wrangler/
+opencode.json

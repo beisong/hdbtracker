@@ -7,6 +7,16 @@ const path = require('path');
 // Cross-platform temp path (Windows has no /tmp). vitest.config.js imports this
 // so the fixture DB and the server's DB_PATH always agree.
 const FIXTURE_DB_PATH = path.join(os.tmpdir(), 'worthornot-test.db');
+// Separate feedback store so feedback tests never touch a real feedback.db; wiped before and
+// after each run so the global daily cap starts from zero.
+const FEEDBACK_TEST_DB_PATH = path.join(os.tmpdir(), 'worthornot-feedback-test.db');
+
+function removeFeedbackTestDb() {
+  for (const suffix of ['', '-wal', '-shm']) {
+    const p = FEEDBACK_TEST_DB_PATH + suffix;
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  }
+}
 
 function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   // Remove existing file so we get a clean slate each test run
@@ -160,7 +170,16 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   const punggolFreshview = [
     ['PUNGGOL','4 ROOM','601A','PUNGGOL FIELD','07 TO 09',93,'MODEL A',97,610000,6559,'2025-05','HDB',null,null,null,'Resale',null],
   ];
-  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...sky, ...punggolFreshview]);
+  // HDB CENTRAL AREA — 5 skewed rows (one outlier) so mean ≠ median in /api/area-overview.
+  // 3 ROOM prices 300k/310k/320k/900k → median 315k (mean 457.5k); town median 320k (mean 466k).
+  const centralAreaSkewed = [
+    ['CENTRAL AREA','3 ROOM','1','SELEGIE RD','01 TO 03',65,'MODEL A',60,300000,4615,'2025-01','HDB',null,null,null,'Resale',null],
+    ['CENTRAL AREA','3 ROOM','2','SELEGIE RD','04 TO 06',65,'MODEL A',60,310000,4769,'2025-02','HDB',null,null,null,'Resale',null],
+    ['CENTRAL AREA','3 ROOM','3','SELEGIE RD','07 TO 09',65,'MODEL A',60,320000,4923,'2025-03','HDB',null,null,null,'Resale',null],
+    ['CENTRAL AREA','3 ROOM','4','SELEGIE RD','40 TO 42',65,'MODEL A',90,900000,13846,'2025-04','HDB',null,null,null,'Resale',null],
+    ['CENTRAL AREA','4 ROOM','5','SELEGIE RD','10 TO 12',90,'MODEL A',60,500000,5555,'2025-05','HDB',null,null,null,'Resale',null],
+  ];
+  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...sky, ...punggolFreshview, ...centralAreaSkewed]);
 
   // Project coords
   const insertCoord = db.prepare(`
@@ -202,6 +221,10 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
     // Resold only at ≥95y remaining lease — not yet treated as past MOP.
     ['2020-01', 'January 2020 BTO', '2020-01-20', '2020-01-27', 'PUNGGOL FRESHVIEW', 'Punggol Freshview', 'PUNGGOL', null, 'Punggol Field', 1.3950, 103.9000, null, '4-Room', '4 ROOM', 90, 100, 300000, 330000],
     ['2012-03', 'March 2012 BTO', '2012-03-27', '2012-04-02', 'GOLDEN CLOVER', 'Golden Clover', 'TOA PAYOH', null, 'Kim Keat Avenue', 1.3310, 103.8560, null, 'Studio Apartment (Type 1)', null, 35, 50, 90000, 100000],
+    // Punctuated keys a de-slugged name can't recover ("@", "(PHASE 1)"). Phase 2's display_name
+    // differs from its key — /bto/<slug> deep links must resolve both exactly.
+    ['2007-12', 'December 2007 BTO', '2007-12-27', null, 'JADE SPRING @ YISHUN (PHASE 1)', 'Jade Spring @ Yishun (Phase 1)', 'YISHUN', null, 'Yishun Ring Road', 1.4300, 103.8400, null, '4-Room', '4 ROOM', null, 336, 183000, 246000],
+    ['2008-03', 'March 2008 BTO', '2008-03-26', null, 'JADE SPRING @ YISHUN', 'Jade Spring @ Yishun (Phase 2)', 'YISHUN', null, 'Yishun Ring Road', 1.4300, 103.8400, null, '4-Room', '4 ROOM', null, 192, 190000, 250000],
     ['2026-11', 'November 2026 BTO (upcoming)', null, null, 'TOA PAYOH SUMMIT', 'Toa Payoh Summit', 'TOA PAYOH', 'Plus', 'TBD', null, null, null, '', null, null, null, null, null],
   ]);
 
@@ -215,4 +238,4 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   };
 }
 
-module.exports = { createFixtureDb, FIXTURE_DB_PATH };
+module.exports = { createFixtureDb, FIXTURE_DB_PATH, FEEDBACK_TEST_DB_PATH, removeFeedbackTestDb };

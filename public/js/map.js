@@ -225,42 +225,8 @@ const TransactionMap = {
     if (mapLoading) mapLoading.style.display = 'flex';
 
     try {
-      // Separate transactions with pre-existing coordinates from those needing geocoding
-      const preGeocoded = [];
-      const needsGeocoding = [];
-      for (const tx of transactions) {
-        if (tx.lat && tx.lng) {
-          preGeocoded.push(tx);
-        } else {
-          needsGeocoding.push(tx);
-        }
-      }
-
-      const seen = new Set();
-      const uniqueAddresses = [];
-      for (const tx of needsGeocoding) {
-        const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
-        if (!seen.has(key)) {
-          seen.add(key);
-          uniqueAddresses.push({ block: tx.block, street_name: tx.street_name });
-          if (uniqueAddresses.length >= 100) break;
-        }
-      }
-
-      const geoResult = await API.geocodeAddresses(uniqueAddresses);
-      const geoMap = {};
-      for (const r of geoResult.results) {
-        if (r.lat && r.lng) geoMap[r.query] = { lat: r.lat, lng: r.lng };
-      }
-
-      const markerData = [...preGeocoded];
-      for (const tx of needsGeocoding) {
-        const key = `${tx.block} ${tx.street_name}`.trim().toUpperCase();
-        if (geoMap[key]) {
-          markerData.push({ ...tx, lat: geoMap[key].lat, lng: geoMap[key].lng });
-        }
-        if (markerData.length >= 200) break;
-      }
+      // Coords come from the server (hdb_block_coords); transactions without them aren't plotted.
+      const markerData = transactions.filter(tx => tx.lat && tx.lng);
 
       if (mapCount) mapCount.textContent = `— ${markerData.length} transactions mapped`;
 

@@ -62,6 +62,25 @@ jobs:
         env:
           URA_API_ACCESS_KEY: ${{ secrets.URA_API_ACCESS_KEY }}
 
+      # ── Sanity check ──────────────────────────────────────────────────────
+      # Refuse to deploy an obviously partial/empty DB. The download scripts
+      # already exit non-zero on any failed page/batch; this is a second guard.
+      - name: Verify row counts
+        run: |
+          python3 - <<'PY'
+          import sqlite3, sys
+          MIN_HDB, MIN_URA = 200_000, 100_000
+          db = sqlite3.connect('server/db/resale.db')
+          hdb = db.execute("SELECT COUNT(*) FROM transactions WHERE dataset_source != 'URA_PRIVATE'").fetchone()[0]
+          ura = db.execute("SELECT COUNT(*) FROM transactions WHERE dataset_source = 'URA_PRIVATE'").fetchone()[0]
+          db.close()
+          print(f"HDB rows: {hdb:,} (min {MIN_HDB:,})")
+          print(f"URA rows: {ura:,} (min {MIN_URA:,})")
+          if hdb < MIN_HDB or ura < MIN_URA:
+              print("::error::resale.db row counts below threshold - refusing to deploy")
+              sys.exit(1)
+          PY
+
       # ── Deploy ────────────────────────────────────────────────────────────
       # WAL-checkpoints, SFTPs the DB to Fly volume, swaps it in, restarts.
       # Matches the existing manual: npm run deploy:data

@@ -33,6 +33,26 @@ describe('GET /api/area-overview', () => {
     expect(pp.p75).toBeLessThanOrEqual(pp.p90);
   });
 
+  it('town_summary returns true medians, not means (skewed CENTRAL AREA fixture)', async () => {
+    const res = await request.get('/api/area-overview?town=CENTRAL+AREA');
+    expect(res.status).toBe(200);
+    const ts = res.body.town_summary;
+    expect(ts.total_transactions_12m).toBe(5);
+    expect(ts.median_price).toBe(320000); // mean would be 466000
+    expect(ts.median_psm).toBe(4923);     // mean would be 6742
+    expect(ts.median_price).toBe(res.body.price_percentiles.p50);
+    expect(ts.min_price).toBe(300000);
+    expect(ts.max_price).toBe(900000);
+  });
+
+  it('prices_by_type returns true per-flat-type medians, sorted by median_price', async () => {
+    const res = await request.get('/api/area-overview?town=CENTRAL+AREA');
+    const byType = Object.fromEntries(res.body.prices_by_type.map(p => [p.flat_type, p]));
+    expect(byType['3 ROOM']).toMatchObject({ count: 4, median_price: 315000, median_psm: 4846 }); // mean 457500
+    expect(byType['4 ROOM']).toMatchObject({ count: 1, median_price: 500000, median_psm: 5555 });
+    expect(res.body.prices_by_type.map(p => p.flat_type)).toEqual(['3 ROOM', '4 ROOM']);
+  });
+
   it('flat_type filter returns only 3 ROOM results', async () => {
     const res = await request.get('/api/area-overview?town=BEDOK&flat_type=3+ROOM');
     expect(res.status).toBe(200);

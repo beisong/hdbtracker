@@ -27,44 +27,119 @@ const App = {
     this.setupEventListeners();
     this.setupTransactionFilters();
 
-    try {
-      this.setLoadingProgress(20);
+    // Towns feed autocomplete and /hdb/<town> routing. _townsReady resolves once they arrive —
+    // possibly after a retry, since the API machine can take ~5–8s to wake from auto-stop.
+    this._townsLoaded = false;
+    let resolveTowns;
+    this._townsReady = new Promise(r => { resolveTowns = r; });
+    this._towns = this._towns || [];
+    this._districts = this._districts || [];
 
-      // Run both API calls in parallel — towns data only needed for autocomplete
-      const [status, townsData] = await Promise.all([
-        API.getStatus(),
-        API.getTowns(),
+    const applyStatus = (status) => {
+      if (status.total_transactions === 0) return false;
+      if (status.latest_month) {
+        document.getElementById('last-updated').textContent = `Data as of ${this.formatMonth(status.latest_month)}`;
+      }
+      return true;
+    };
+    const applyTowns = (townsData) => {
+      this._towns = townsData.towns || [];
+      this._districts = townsData.districts || [];
+      this._townsLoaded = true;
+      resolveTowns();
+    };
+
+    // Small, dismissible, retryable notice — never blocks the page (unlike showError()).
+    const removeNotice = () => document.getElementById('init-notice')?.remove();
+    const showNotice = (message, onRetry) => {
+      removeNotice();
+      const el = document.createElement('div');
+      el.id = 'init-notice';
+      el.setAttribute('role', 'status');
+      el.className = 'fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md flex items-center gap-3 bg-white dark:bg-dark-800 border border-amber-500/30 text-amber-700 dark:text-amber-300 px-4 py-3 rounded-xl shadow-lg text-sm';
+      const text = document.createElement('span');
+      text.className = 'flex-1';
+      text.textContent = message;
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'px-3 py-1 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-500 transition-colors';
+      retry.textContent = 'Retry';
+      retry.addEventListener('click', () => onRetry());
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200';
+      close.setAttribute('aria-label', 'Dismiss');
+      close.textContent = '×';
+      close.addEventListener('click', removeNotice);
+      el.appendChild(text);
+      el.appendChild(retry);
+      el.appendChild(close);
+      document.body.appendChild(el);
+    };
+
+    let statusOk = false;
+    let inflight = null;
+    // Re-fetch whatever failed (shared by the auto-retry and the Retry button);
+    // resolves true when everything has loaded.
+    const retryFailed = () => inflight || (inflight = (async () => {
+      const [s, t] = await Promise.allSettled([
+        statusOk ? null : API.getStatus(),
+        this._townsLoaded ? null : API.getTowns(),
       ]);
-      this.setLoadingProgress(100);
+      if (!statusOk && s.status === 'fulfilled') statusOk = applyStatus(s.value);
+      if (!this._townsLoaded && t.status === 'fulfilled') applyTowns(t.value);
+      return this._townsLoaded && statusOk;
+    })().finally(() => { inflight = null; }));
+    const failMessage = 'Some data is still loading — the server may be waking up.';
+    const onRetryClick = async () => {
+      showNotice('Retrying…', onRetryClick);
+      if (await retryFailed()) removeNotice();
+      else showNotice(failMessage, onRetryClick);
+    };
 
-      if (status.total_transactions === 0) {
+    this.setLoadingProgress(20);
+    // Run both API calls in parallel; a failure in either is non-fatal.
+    const [statusRes, townsRes] = await Promise.allSettled([API.getStatus(), API.getTowns()]);
+    this.setLoadingProgress(100);
+
+    if (statusRes.status === 'fulfilled') {
+      if (statusRes.value.total_transactions === 0) {
         this.showError('No transaction data found. Please run the download script first.');
         return;
       }
+      statusOk = applyStatus(statusRes.value);
+    } else {
+      console.error('Init error (status):', statusRes.reason);
+    }
+    if (townsRes.status === 'fulfilled') applyTowns(townsRes.value);
+    else console.error('Init error (towns):', townsRes.reason);
 
-      document.getElementById('last-updated').textContent = `Data as of ${this.formatMonth(status.latest_month)}`;
+    // Dismiss overlay immediately — no artificial delay
+    const overlay = document.getElementById('loading-overlay');
+    overlay.classList.add('loading-fade-out');
+    setTimeout(() => overlay.style.display = 'none', 500);
 
-      // Store for autocomplete
-      this._towns = townsData.towns || [];
-      this._districts = townsData.districts || [];
+    if (!statusOk || !this._townsLoaded) {
+      showNotice(failMessage, onRetryClick);
+      // One automatic retry after ~3s; afterwards the notice's Retry button takes over.
+      setTimeout(async () => {
+        if (this._townsLoaded && statusOk) return;
+        if (await retryFailed()) removeNotice();
+      }, this._initRetryDelayMs ?? 3000);
+    }
 
-      // Dismiss overlay immediately — no artificial delay
-      const overlay = document.getElementById('loading-overlay');
-      overlay.classList.add('loading-fade-out');
-      setTimeout(() => overlay.style.display = 'none', 500);
-
-      // Handle URL-based routing (e.g. /hdb/bedok, /private/sky-habitat)
-      await this.handleUrlRoute();
+    try {
       // Listen for back/forward navigation
       window.addEventListener('popstate', () => {
         this.handleUrlRoute();
         // Track SPA pageview for back/forward navigation in Google Analytics
         if (typeof gtag === 'function') gtag('event', 'page_view', { page_path: window.location.pathname });
       });
-
+      // Handle URL-based routing (e.g. /hdb/bedok, /private/sky-habitat).
+      // A /hdb/<town> route waits for towns inside handleUrlRoute().
+      await this.handleUrlRoute();
     } catch (err) {
-      console.error('Init error:', err);
-      this.showError(`Failed to load: ${err.message}`);
+      console.error('Routing error:', err);
     }
   },
 
@@ -79,7 +154,12 @@ const App = {
       const ftSlug = hdbMatch[2];
       // Try to match slug to a known town
       const townSlug = slug.toUpperCase().replace(/-/g, ' ');
-      const town = this._towns.find(t =>
+      // Opened before /api/towns has answered (cold API) — wait for it rather than falling through
+      if (!this._townsLoaded && this._townsReady) {
+        await this._townsReady;
+        if (window.location.pathname !== path) return; // user navigated away meanwhile
+      }
+      const town = (this._towns || []).find(t =>
         t === townSlug ||
         t.replace(/[^A-Z0-9]/g, ' ') === townSlug.replace(/[^A-Z0-9]/g, ' ') ||
         t.toLowerCase().replace(/[^a-z0-9]+/g, '-') === slug

@@ -277,6 +277,185 @@ describe('App.parsePrice', () => {
   it('returns null for zero/negative', () => expect(App.parsePrice('-5')).toBe(null));
 });
 
+// ─── App.init — non-fatal startup failures ─────────────────────────────────
+describe('App.init — startup failures are non-fatal', () => {
+  // A DOM stub that remembers elements by id and supports createElement/appendChild,
+  // so the init notice can be found, clicked and removed.
+  function makeInitContext({ pathname = '/', getStatus, getTowns }) {
+    const base = makeBrowserContext();
+    const byId = new Map();
+    const makeEl = (id) => {
+      const listeners = {};
+      const el = {
+        id: id || '',
+        children: [],
+        attrs: {},
+        className: '',
+        innerHTML: '',
+        textContent: '',
+        value: '',
+        placeholder: '',
+        style: {},
+        dataset: {},
+        classList: {
+          _s: new Set(),
+          contains(c) { return this._s.has(c); },
+          add(c) { this._s.add(c); },
+          remove(c) { this._s.delete(c); },
+          toggle(c, on) { on ? this._s.add(c) : this._s.delete(c); },
+        },
+        addEventListener: (type, fn) => { (listeners[type] = listeners[type] || []).push(fn); },
+        click: () => (listeners.click || []).forEach(fn => fn({ preventDefault() {} })),
+        setAttribute(k, v) { el.attrs[k] = v; },
+        appendChild(child) {
+          el.children.push(child);
+          child.parentNode = el;
+          if (child.id) byId.set(child.id, child);
+          return child;
+        },
+        remove() {
+          if (el.parentNode) el.parentNode.children = el.parentNode.children.filter(c => c !== el);
+          if (byId.get(el.id) === el) byId.delete(el.id);
+        },
+        focus() {},
+        scrollIntoView() {},
+        querySelector: () => null,
+        querySelectorAll: () => [],
+      };
+      return el;
+    };
+    const body = makeEl('body');
+    base.document = {
+      documentElement: makeEl('html'),
+      body,
+      // Unknown ids are created on demand (the real page has them); the notice must be
+      // added via appendChild before getElementById sees it.
+      getElementById: (id) => {
+        if (id === 'init-notice') return byId.get(id) || null;
+        if (!byId.has(id)) byId.set(id, makeEl(id));
+        return byId.get(id);
+      },
+      createElement: () => makeEl(),
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      addEventListener: () => {},
+      title: '',
+      head: { querySelector: () => null, appendChild: () => {} },
+    };
+    base.location = { href: `http://localhost${pathname}`, pathname, search: '' };
+    base.URLSearchParams = URLSearchParams;
+    base.API = { ...base.API, getStatus, getTowns };
+    base.MrtOverlay = { toggle: () => {} };
+    base.addEventListener = () => {};
+    base.innerWidth = 1024;
+    base.window = base;
+    const c = vm.createContext(base);
+    const appSrc = fs.readFileSync(path.join(__dirname, '../../public/js/app.js'), 'utf8');
+    vm.runInContext(appSrc + '\nglobalThis.App = App;', c);
+    const app = c.App;
+    app._initRetryDelayMs = 20;
+    app.updateThemeIcons = () => {};
+    app.search = vi.fn(() => Promise.resolve());
+    return { app, doc: base.document };
+  }
+
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+  const STATUS = { total_transactions: 100, latest_month: '2026-09' };
+  const TOWNS = { towns: ['BEDOK', 'ANG MO KIO'], districts: [] };
+
+  it('getTowns rejects → overlay dismissed, retryable notice instead of full-screen error', async () => {
+    const getTowns = vi.fn()
+      .mockRejectedValueOnce(new Error('Failed to fetch'))
+      .mockResolvedValueOnce(TOWNS);
+    const { app, doc } = makeInitContext({ getStatus: () => Promise.resolve(STATUS), getTowns });
+    const showError = vi.spyOn(app, 'showError');
+
+    await app.init();
+
+    expect(showError).not.toHaveBeenCalled();
+    const overlay = doc.getElementById('loading-overlay');
+    expect(overlay.classList.contains('loading-fade-out')).toBe(true);
+    expect(overlay.innerHTML).toBe('');
+    const notice = doc.getElementById('init-notice');
+    expect(notice).not.toBeNull();
+    expect(notice.children.some(c => c.textContent === 'Retry')).toBe(true);
+
+    // Automatic retry (~3s in production, shortened here) loads the towns and clears the notice
+    await wait(60);
+    expect(getTowns).toHaveBeenCalledTimes(2);
+    expect(app._towns).toEqual(['BEDOK', 'ANG MO KIO']);
+    expect(doc.getElementById('init-notice')).toBeNull();
+  });
+
+  it('/hdb/<town> opened before towns load waits for them, then routes once retry succeeds', async () => {
+    const getTowns = vi.fn()
+      .mockRejectedValueOnce(new Error('Failed to fetch'))
+      .mockResolvedValueOnce(TOWNS);
+    const { app, doc } = makeInitContext({
+      pathname: '/hdb/ang-mo-kio/4-room',
+      getStatus: () => Promise.resolve(STATUS),
+      getTowns,
+    });
+
+    const initDone = app.init();
+    await wait(5);
+    expect(app.search).not.toHaveBeenCalled(); // waiting, not falling through
+    await initDone;
+
+    expect(app.search).toHaveBeenCalledTimes(1);
+    expect(doc.getElementById('search-input').value).toBe('Ang Mo Kio');
+    expect(app.selectedFlatTypes.has('4 ROOM')).toBe(true);
+  });
+
+  it('Retry button re-fetches after the automatic retry also fails; dismiss removes the notice', async () => {
+    const getStatus = vi.fn()
+      .mockRejectedValueOnce(new Error('timeout'))
+      .mockRejectedValueOnce(new Error('timeout'))
+      .mockResolvedValueOnce(STATUS);
+    const getTowns = vi.fn()
+      .mockRejectedValueOnce(new Error('timeout'))
+      .mockRejectedValueOnce(new Error('timeout'))
+      .mockResolvedValueOnce(TOWNS);
+    const { app, doc } = makeInitContext({ getStatus, getTowns });
+    const showError = vi.spyOn(app, 'showError');
+
+    await app.init();
+    await wait(60); // auto-retry fails
+    expect(getTowns).toHaveBeenCalledTimes(2);
+    expect(showError).not.toHaveBeenCalled();
+
+    const retryBtn = doc.getElementById('init-notice').children.find(c => c.textContent === 'Retry');
+    retryBtn.click();
+    await wait(10);
+    expect(getTowns).toHaveBeenCalledTimes(3);
+    expect(app._towns).toEqual(['BEDOK', 'ANG MO KIO']);
+    expect(doc.getElementById('last-updated').textContent).toMatch(/^Data as of/);
+    expect(doc.getElementById('init-notice')).toBeNull();
+  });
+
+  it('dismiss (×) removes the notice', async () => {
+    const { app, doc } = makeInitContext({
+      getStatus: () => Promise.reject(new Error('down')),
+      getTowns: () => Promise.reject(new Error('down')),
+    });
+    app._initRetryDelayMs = 10000;
+    await app.init();
+    const notice = doc.getElementById('init-notice');
+    notice.children.find(c => c.attrs['aria-label'] === 'Dismiss').click();
+    expect(doc.getElementById('init-notice')).toBeNull();
+  });
+
+  it('still shows the full-screen error when the DB has no transactions', async () => {
+    const { app } = makeInitContext({
+      getStatus: () => Promise.resolve({ total_transactions: 0 }),
+      getTowns: () => Promise.resolve(TOWNS),
+    });
+    const showError = vi.spyOn(app, 'showError').mockImplementation(() => {});
+    await app.init();
+    expect(showError).toHaveBeenCalledWith(expect.stringMatching(/No transaction data/));
+  });
+});
+
 // ─── MrtNearest.nearestStation ────────────────────────────────────────────
 describe('MrtNearest.nearestStation', () => {
   const stations = JSON.parse(fs.readFileSync(path.join(__dirname, '../../public/data/mrt_stations.json'), 'utf8'));

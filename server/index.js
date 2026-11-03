@@ -3,35 +3,9 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const Database = require('better-sqlite3');
-const cors = require('cors');
-const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// OneMap API token (from .env file)
-const ONEMAP_TOKEN = process.env.ONEMAP_TOKEN || '';
-
-// CORS — allow frontend origins (Cloudflare Pages, localhost, custom domains)
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'https://hdbtracker.pages.dev',       // Cloudflare Pages default
-  // Add your custom domain when ready, e.g.:
-  // 'https://yourdomain.com',
-  // 'https://www.yourdomain.com',
-];
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (curl, server-to-server)
-    if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    // Also allow any Fly.io or Cloudflare Pages subdomain
-    if (origin.endsWith('.fly.dev') || origin.endsWith('.pages.dev')) return callback(null, true);
-    callback(null, true); // Allow all for now; tighten later
-  },
-  credentials: true,
-}));
 
 // Serve static files (only works in local dev; public/ not included in Docker image)
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -235,16 +209,34 @@ try {
   console.warn(`⚠️  Could not open feedback DB at ${FEEDBACK_DB_PATH}: ${err.message}`);
 }
 
-// Simple in-memory rate limit: max 5 feedback submissions per IP per hour
+// Per-IP limit: max 5 feedback submissions per IP per hour. The key comes from the first
+// X-Forwarded-For value, which the Pages proxy sets but a direct caller of the Fly host can
+// forge — so FEEDBACK_DAILY_CAP below is the real bound on disk use. Entries are deleted once
+// their hits age out, and only accepted submissions add hits, so the Map stays small.
+const FEEDBACK_PER_IP_LIMIT = 5;
+const FEEDBACK_IP_WINDOW_MS = 60 * 60 * 1000;
 const feedbackRate = new Map();
 function feedbackRateLimited(ip) {
   const now = Date.now();
-  const windowMs = 60 * 60 * 1000;
-  const hits = (feedbackRate.get(ip) || []).filter((t) => now - t < windowMs);
-  if (hits.length >= 5) { feedbackRate.set(ip, hits); return true; }
+  for (const [key, times] of feedbackRate) {
+    const fresh = times.filter((t) => now - t < FEEDBACK_IP_WINDOW_MS);
+    if (fresh.length) feedbackRate.set(key, fresh);
+    else feedbackRate.delete(key);
+  }
+  const hits = feedbackRate.get(ip) || [];
+  if (hits.length >= FEEDBACK_PER_IP_LIMIT) return true;
   hits.push(now);
   feedbackRate.set(ip, hits);
   return false;
+}
+
+// Global cap: at most this many feedback rows per rolling 24h, whatever the source IP.
+const FEEDBACK_DAILY_CAP = 200;
+function feedbackGlobalCapReached() {
+  const { n } = feedbackDb
+    .prepare("SELECT COUNT(*) AS n FROM feedback WHERE created_at >= datetime('now', '-1 day')")
+    .get();
+  return n >= FEEDBACK_DAILY_CAP;
 }
 
 // Health check (always responds, even without DB — must be before the DB middleware)
@@ -280,7 +272,7 @@ app.post('/api/feedback', (req, res) => {
   const userAgent = String(req.headers['user-agent'] || '').slice(0, 400) || null;
 
   const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'unknown';
-  if (feedbackRateLimited(ip)) {
+  if (feedbackGlobalCapReached() || feedbackRateLimited(ip)) {
     return res.status(429).json({ error: 'Too many submissions — please try again later.' });
   }
 
@@ -392,7 +384,7 @@ function monthsAgoStr(months) {
 async function resolvePostalCode(postalCode) {
   try {
     const url = `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${postalCode}&returnGeom=Y&getAddrDetails=Y&pageNum=1`;
-    const resp = await fetch(url, { timeout: 5000 });
+    const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
     const data = await resp.json();
     if (data.results && data.results.length > 0) {
       const r = data.results[0];
@@ -1115,10 +1107,7 @@ app.get('/api/area-overview', (req, res) => {
   }
 });
 
-// In-memory caches
-const geocodeCache = new Map();
-
-// Expand HDB street abbreviations for better OneMap matching
+// Expand HDB street abbreviations (ST → STREET, BT → BUKIT) — used by findDbStreets()
 const streetAbbrevs = {
   ' ST ': ' STREET ', ' AVE ': ' AVENUE ', ' RD ': ' ROAD ',
   ' DR ': ' DRIVE ', ' CRES ': ' CRESCENT ', ' CRT ': ' COURT ',
@@ -1137,118 +1126,6 @@ function expandStreetName(name) {
   }
   return expanded.trim();
 }
-
-/**
- * POST /api/geocode — Geocode a list of addresses via OneMap
- * Body: { addresses: [{ block, street_name }] }
- * Returns: { results: [{ query, lat, lng }] }
- */
-app.post('/api/geocode', async (req, res) => {
-  try {
-    const { addresses } = req.body;
-    if (!addresses || !Array.isArray(addresses)) {
-      return res.status(400).json({ error: 'Missing addresses array' });
-    }
-    if (addresses.length > 100) {
-      return res.status(400).json({ error: 'addresses array exceeds limit of 100' });
-    }
-
-    // Deduplicate addresses
-    const uniqueKeys = [...new Set(
-      addresses.map(a => `${a.block} ${a.street_name}`.trim().toUpperCase())
-    )];
-
-    const results = [];
-    const toFetch = [];
-
-    // Check cache first
-    for (const key of uniqueKeys) {
-      if (geocodeCache.has(key)) {
-        results.push({ query: key, ...geocodeCache.get(key) });
-      } else {
-        toFetch.push(key);
-      }
-    }
-
-    // Step 1: Geocode via OneMap (parallel, 5 concurrent) with expanded street names
-    const BATCH_SIZE = 5;
-    const onemapResults = new Map(); // addr → { lat, lng } | null
-    for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {
-      const batch = toFetch.slice(i, i + BATCH_SIZE);
-      const batchResolved = await Promise.all(
-        batch.map(async (addr) => {
-          try {
-            const expanded = expandStreetName(addr);
-            const searchVal = encodeURIComponent(expanded);
-            const url = `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${searchVal}&returnGeom=Y&getAddrDetails=N&pageNum=1`;
-            const resp = await fetch(url, {
-              timeout: 5000,
-              headers: { Authorization: `Bearer ${ONEMAP_TOKEN}` },
-            });
-            const data = await resp.json();
-            if (data.results && data.results.length > 0) {
-              const r = data.results[0];
-              return { addr, lat: parseFloat(r.LATITUDE), lng: parseFloat(r.LONGITUDE), found: true };
-            }
-            return { addr, found: false };
-          } catch (err) {
-            console.error(`OneMap geocode error for "${addr}":`, err.message);
-            return { addr, found: false };
-          }
-        })
-      );
-      for (const r of batchResolved) {
-        if (r.found) {
-          const coords = { lat: r.lat, lng: r.lng };
-          onemapResults.set(r.addr, coords);
-        } else {
-          onemapResults.set(r.addr, null);
-        }
-      }
-    }
-
-    // Step 2: For addresses OneMap couldn't find, try Nominatim as fallback
-    const nominatimNeeded = toFetch.filter(addr => onemapResults.get(addr) === null);
-    for (const addr of nominatimNeeded) {
-      try {
-        const expanded = expandStreetName(addr);
-        const searchVal = encodeURIComponent(expanded + ' SINGAPORE');
-        const url = `https://nominatim.openstreetmap.org/search?q=${searchVal}&format=json&limit=1`;
-        const resp = await fetch(url, {
-          timeout: 8000,
-          headers: { 'User-Agent': 'WorthIt/1.0 (HDB resale app)' },
-        });
-        const data = await resp.json();
-        if (data && data.length > 0) {
-          onemapResults.set(addr, { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
-        }
-        // Rate limit: 1 req/sec for Nominatim
-        if (nominatimNeeded.indexOf(addr) < nominatimNeeded.length - 1) {
-          await new Promise(r => setTimeout(r, 1100));
-        }
-      } catch (err) {
-        console.error(`Nominatim fallback error for "${addr}":`, err.message);
-      }
-    }
-
-    // Build final results from cache
-    for (const addr of toFetch) {
-      const coords = onemapResults.get(addr);
-      if (coords) {
-        geocodeCache.set(addr, coords);
-        results.push({ query: addr, ...coords });
-      } else {
-        geocodeCache.set(addr, { lat: null, lng: null });
-        results.push({ query: addr, lat: null, lng: null });
-      }
-    }
-
-    res.json({ results });
-  } catch (err) {
-    console.error('Error in /api/geocode:', err);
-    res.status(500).json({ error: 'Failed to geocode: ' + err.message });
-  }
-});
 
 /**
  * GET /api/private/projects — Search private property projects by name

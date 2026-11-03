@@ -275,3 +275,84 @@ describe('App.parsePrice', () => {
   it('returns null for garbage', () => expect(App.parsePrice('abc')).toBe(null));
   it('returns null for zero/negative', () => expect(App.parsePrice('-5')).toBe(null));
 });
+
+// ─── BTO exact-slug routing (/bto/<slug> deep links + autocomplete picks) ──
+describe('BTO slug routing', () => {
+  const PATCHED = ['track', 'search', '_showBtoProject', 'hideAc'];
+  let saved, calls;
+
+  beforeEach(() => {
+    saved = { app: Object.fromEntries(PATCHED.map(k => [k, App[k]])), api: ctx.API.getBtoProjectOverviewBySlug, path: ctx.location.pathname, items: App._acItems };
+    calls = { track: [], search: 0, shown: [], slugs: [] };
+    App.track = (name, params) => calls.track.push({ name, params });
+    App.search = async () => { calls.search++; App.track('search', { search_type: 'town' }); };
+    App._showBtoProject = (data) => calls.shown.push(data);
+    App.hideAc = () => {};
+  });
+
+  afterEach(() => {
+    Object.assign(App, saved.app);
+    ctx.API.getBtoProjectOverviewBySlug = saved.api;
+    ctx.location.pathname = saved.path;
+    App._acItems = saved.items;
+  });
+
+  const hit = { project: 'JADE SPRING @ YISHUN', display_name: 'Jade Spring @ Yishun (Phase 2)', town: 'YISHUN' };
+  const stubLookup = (result) => {
+    ctx.API.getBtoProjectOverviewBySlug = async (slug) => { calls.slugs.push(slug); if (result instanceof Error) throw result; return result; };
+  };
+  const btoItem = { type: 'bto', label: hit.display_name, value: hit.display_name, slug: 'jade-spring-yishun-phase-2' };
+  const searchEvents = () => calls.track.filter(t => t.name === 'search');
+
+  it('/bto/<slug> opens the exact project without calling search()', async () => {
+    stubLookup(hit);
+    ctx.location.pathname = '/bto/jade-spring-yishun-phase-2';
+    await App.handleUrlRoute();
+    expect(calls.slugs).toEqual(['jade-spring-yishun-phase-2']);
+    expect(calls.shown).toEqual([hit]);
+    expect(calls.search).toBe(0);
+  });
+
+  it('/bto/<slug> falls back to search() when the slug is not found', async () => {
+    stubLookup(null);
+    ctx.location.pathname = '/bto/no-such-bto';
+    await App.handleUrlRoute();
+    expect(calls.shown).toHaveLength(0);
+    expect(calls.search).toBe(1);
+  });
+
+  it('/bto/<slug> falls back to search() when the lookup throws', async () => {
+    stubLookup(new Error('network'));
+    ctx.location.pathname = '/bto/jade-spring-yishun-phase-2';
+    const origErr = console.error; console.error = () => {};
+    try { await App.handleUrlRoute(); } finally { console.error = origErr; }
+    expect(calls.search).toBe(1);
+  });
+
+  it('autocomplete BTO pick opens by slug and tracks exactly one search event', async () => {
+    stubLookup(hit);
+    App._acItems = [btoItem];
+    await App.selectAc(0);
+    expect(calls.slugs).toEqual(['jade-spring-yishun-phase-2']);
+    expect(calls.shown).toEqual([hit]);
+    expect(calls.search).toBe(0);
+    expect(searchEvents()).toHaveLength(1);
+    expect(searchEvents()[0].params.search_type).toBe('bto');
+  });
+
+  it('autocomplete BTO pick that misses falls back to search() with no double-counted search event', async () => {
+    stubLookup(null);
+    App._acItems = [btoItem];
+    await App.selectAc(0);
+    expect(calls.search).toBe(1);
+    expect(searchEvents()).toHaveLength(1);
+  });
+
+  it('non-BTO autocomplete pick skips the slug lookup', async () => {
+    stubLookup(hit);
+    App._acItems = [{ type: 'town', label: 'Yishun', value: 'YISHUN' }];
+    await App.selectAc(0);
+    expect(calls.slugs).toHaveLength(0);
+    expect(calls.search).toBe(1);
+  });
+});

@@ -2200,7 +2200,16 @@ function btoProjectResale(project, town, flats) {
 
 app.get('/api/bto/project-overview', (req, res) => {
   try {
-    const { project } = req.query;
+    const { slug } = req.query;
+    if (slug && slug.length > 200) return res.status(400).json({ error: 'slug parameter too long' });
+    // `slug` lets /bto/<slug> deep links resolve the exact project — keys like
+    // "JADE SPRING @ YISHUN (PHASE 1)" can't be recovered from the slug by a text search.
+    // An unknown slug falls through to the not-found 404 below, not a 400.
+    let project = req.query.project;
+    if (!project && slug) {
+      project = slugToBtoProject(slug)?.project;
+      if (!project) return res.status(404).json({ error: 'Project not found' });
+    }
     if (!project) return res.status(400).json({ error: 'Missing project parameter' });
     if (project.length > 200) return res.status(400).json({ error: 'project parameter too long' });
 

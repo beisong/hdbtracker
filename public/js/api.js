@@ -85,6 +85,15 @@ const API = {
     return resp.json();
   },
 
+  /** Resolve a /bto/<slug> deep link to its exact project (returns null if no project matches) */
+  async getBtoProjectOverviewBySlug(slug) {
+    const params = new URLSearchParams({ slug });
+    const resp = await fetch(`${this.baseUrl}/api/bto/project-overview?${params}`);
+    if (resp.status === 404) return null;
+    if (!resp.ok) throw new Error('Failed to get BTO project overview');
+    return resp.json();
+  },
+
   async getNearbyHDB(lat, lng) {
     const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
     const resp = await fetch(`${this.baseUrl}/api/nearby-hdb?${params}`);

@@ -2066,9 +2066,10 @@ const App = {
     this.hideAc();
     // BTO picks open by exact slug: the label is the display_name, which can differ from the
     // project key /api/resolve exact-matches ("Jade Spring @ Yishun (Phase 2)" vs "JADE SPRING @ YISHUN").
-    if (item.type === 'bto' && item.slug) {
+    // Track only on success — on a miss, search() fires its own 'search' event (no double count).
+    if (item.type === 'bto' && item.slug && await this._openBtoBySlug(item.slug)) {
       this.track('search', { search_type: 'bto', query: item.value });
-      if (await this._openBtoBySlug(item.slug)) return;
+      return;
     }
     this.search();
   },

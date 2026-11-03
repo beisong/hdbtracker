@@ -30,8 +30,47 @@ def ensure_db_dir():
     os.makedirs(DB_DIR, exist_ok=True)
 
 
+MAX_ATTEMPTS = 3          # per page: 1 initial request + 2 retries
+RETRY_BACKOFF_SECS = 5    # 5s, then 10s
+
+
+class DownloadError(Exception):
+    """Raised when a dataset cannot be downloaded completely."""
+
+
+def fetch_page(resource_id, offset):
+    """Fetch one page, retrying with backoff. Raises DownloadError after MAX_ATTEMPTS."""
+    params = {
+        'resource_id': resource_id,
+        'limit': BATCH_SIZE,
+        'offset': offset,
+    }
+    last_err = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            resp = requests.get(API_BASE, params=params, timeout=60)
+            resp.raise_for_status()
+            data = resp.json()
+            if not data.get('success'):
+                raise DownloadError(f"API returned success=false: {str(data)[:200]}")
+            return data.get('result', {})
+        except Exception as e:
+            last_err = e
+            print(f"   ❌ Error at offset {offset} (attempt {attempt}/{MAX_ATTEMPTS}): {e}")
+            if attempt < MAX_ATTEMPTS:
+                wait = RETRY_BACKOFF_SECS * attempt
+                print(f"   Retrying in {wait} seconds...")
+                time.sleep(wait)
+    raise DownloadError(f"offset {offset} failed after {MAX_ATTEMPTS} attempts: {last_err}")
+
+
 def download_dataset(resource_id, dataset_name):
-    """Download all records from a dataset using pagination."""
+    """Download all records from a dataset using pagination.
+
+    All-or-nothing: raises DownloadError if any page fails after retries or if
+    fewer records than the API's reported total arrive, so the caller never
+    builds a database from partial data.
+    """
     all_records = []
     offset = 0
     total = None
@@ -40,36 +79,7 @@ def download_dataset(resource_id, dataset_name):
     print(f"   Resource ID: {resource_id}")
 
     while True:
-        params = {
-            'resource_id': resource_id,
-            'limit': BATCH_SIZE,
-            'offset': offset,
-        }
-
-        try:
-            resp = requests.get(API_BASE, params=params, timeout=60)
-            resp.raise_for_status()
-            data = resp.json()
-        except Exception as e:
-            print(f"   ❌ Error at offset {offset}: {e}")
-            if offset > 0:
-                print(f"   Retrying in 5 seconds...")
-                time.sleep(5)
-                try:
-                    resp = requests.get(API_BASE, params=params, timeout=60)
-                    resp.raise_for_status()
-                    data = resp.json()
-                except Exception as e2:
-                    print(f"   ❌ Retry failed: {e2}")
-                    break
-            else:
-                break
-
-        if not data.get('success'):
-            print(f"   ❌ API returned success=false")
-            break
-
-        result = data.get('result', {})
+        result = fetch_page(resource_id, offset)
         records = result.get('records', [])
 
         if total is None:
@@ -90,6 +100,10 @@ def download_dataset(resource_id, dataset_name):
 
         # Small delay to be nice to the API
         time.sleep(0.3)
+
+    if not total or len(all_records) < total:
+        raise DownloadError(
+            f"incomplete download: got {len(all_records):,} of {total or 0:,} records")
 
     print(f"   ✅ Total downloaded: {len(all_records):,} records")
     return all_records
@@ -165,6 +179,8 @@ def create_database(records_by_dataset):
     conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_town_flat_type ON transactions(town, flat_type)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_month ON transactions(month)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_town_flat_month ON transactions(town, flat_type, month)')
+    # /api/valuation and block lookups filter on (block, street_name)
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_block_street ON transactions(block, street_name)')
 
     # Insert records
     total_inserted = 0
@@ -253,9 +269,6 @@ def create_database(records_by_dataset):
 
     # Seed BTO launch data
     seed_bto_projects(conn)
-
-    # Pre-compute aggregations
-    compute_aggregations(conn)
 
     # Optimize
     conn.execute("PRAGMA optimize")
@@ -439,72 +452,6 @@ def geocode_missing_hdb_blocks(conn):
             print(f"      - {b}")
 
 
-def compute_aggregations(conn):
-    """Pre-compute aggregations for faster API responses."""
-    print(f"\n📊 Computing aggregations...")
-
-    # Town stats
-    conn.execute('DROP TABLE IF EXISTS town_stats')
-    conn.execute('''
-        CREATE TABLE town_stats AS
-        SELECT
-            town,
-            flat_type,
-            COUNT(*) as total_transactions,
-            AVG(resale_price) as avg_price,
-            MIN(resale_price) as min_price,
-            MAX(resale_price) as max_price,
-            AVG(price_per_sqm) as avg_psm,
-            MIN(price_per_sqm) as min_psm,
-            MAX(price_per_sqm) as max_psm,
-            AVG(floor_area_sqm) as avg_area,
-            AVG(remaining_lease_years) as avg_remaining_lease
-        FROM transactions
-        WHERE resale_price IS NOT NULL
-        GROUP BY town, flat_type
-    ''')
-    conn.execute('CREATE INDEX idx_town_stats ON town_stats(town, flat_type)')
-
-    # Monthly median prices per town per flat type (last 24 months)
-    conn.execute('DROP TABLE IF EXISTS monthly_medians')
-    conn.execute('''
-        CREATE TABLE monthly_medians AS
-        SELECT
-            month,
-            town,
-            flat_type,
-            COUNT(*) as transaction_count,
-            AVG(resale_price) as avg_price,
-            AVG(price_per_sqm) as avg_psm
-        FROM transactions
-        WHERE resale_price IS NOT NULL
-        GROUP BY month, town, flat_type
-        ORDER BY month DESC, town, flat_type
-    ''')
-    conn.execute('CREATE INDEX idx_monthly_medians ON monthly_medians(town, flat_type, month)')
-
-    # Storey price adjustments
-    conn.execute('DROP TABLE IF EXISTS storey_adjustments')
-    conn.execute('''
-        CREATE TABLE storey_adjustments AS
-        SELECT
-            town,
-            flat_type,
-            storey_range,
-            storey_midpoint,
-            COUNT(*) as transaction_count,
-            AVG(price_per_sqm) as avg_psm,
-            AVG(resale_price) as avg_price
-        FROM transactions
-        WHERE resale_price IS NOT NULL AND storey_range IS NOT NULL
-        GROUP BY town, flat_type, storey_range
-    ''')
-    conn.execute('CREATE INDEX idx_storey_adj ON storey_adjustments(town, flat_type, storey_range)')
-
-    conn.commit()
-    print(f"   ✅ Aggregations computed")
-
-
 def main():
     print("=" * 60)
     print("🏢 HDB Resale Flat Price Data Downloader")
@@ -514,10 +461,15 @@ def main():
 
     records_by_dataset = {}
 
-    # Download primary dataset (2017-2026) - always required
-    primary_records = download_dataset(DATASETS['primary'], 'Primary (2017-2026)')
-    if primary_records:
-        records_by_dataset['primary_2017_2026'] = primary_records
+    # Download primary dataset (2017-2026) - always required.
+    # Any failure aborts BEFORE create_database() touches the existing DB file.
+    try:
+        primary_records = download_dataset(DATASETS['primary'], 'Primary (2017-2026)')
+    except DownloadError as e:
+        print(f"\n❌ HDB download failed: {e}")
+        print("   Aborting without writing the database.")
+        sys.exit(1)
+    records_by_dataset['primary_2017_2026'] = primary_records
 
     if not records_by_dataset:
         print("\n❌ No data downloaded. Exiting.")

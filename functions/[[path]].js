@@ -14,6 +14,7 @@ const SITE_URL = 'https://worthit.canlah.app';
 // The API machine auto-stops when idle (fly.toml min_machines_running = 0), so a cold bot
 // request can take well over 5s. Give it more room before declaring failure.
 const META_TIMEOUT_MS = 8000;
+const SITEMAP_TIMEOUT_MS = 5000;
 const META_CACHE_TTL = 86400;
 
 // Bots that only build link previews and never retry: they must still get a usable card.
@@ -65,6 +66,11 @@ const SPA_ROUTE_PATTERNS = [
   /^\/compare\/[^/]+(?:\/[^/]+)?$/,
 ];
 
+// Escape a value for use inside a double-quoted HTML attribute.
+function escapeAttr(value) {
+  return String(value).replace(/"/g, '&quot;');
+}
+
 // Inject SEO meta tags into HTML
 function injectMeta(html, meta) {
   // Update title (never write "undefined" — a partial meta object keeps the static title)
@@ -80,12 +86,12 @@ function injectMeta(html, meta) {
     if (/<meta\s+name=["']description["']/i.test(html)) {
       html = html.replace(
         /<meta\s+name=["']description["'][^>]*>/i,
-        `<meta name="description" content="${meta.description.replace(/"/g, '"')}">`
+        `<meta name="description" content="${escapeAttr(meta.description)}">`
       );
     } else {
       html = html.replace(
         '</head>',
-        `<meta name="description" content="${meta.description.replace(/"/g, '"')}">\n</head>`
+        `<meta name="description" content="${escapeAttr(meta.description)}">\n</head>`
       );
     }
   }
@@ -125,7 +131,7 @@ function injectMeta(html, meta) {
     if (/<meta\s+property=["']og:title["']/i.test(html)) {
       html = html.replace(
         /<meta\s+property=["']og:title["'][^>]*>/i,
-        `<meta property="og:title" content="${meta.og_title.replace(/"/g, '"')}">`
+        `<meta property="og:title" content="${escapeAttr(meta.og_title)}">`
       );
     }
   }
@@ -135,7 +141,7 @@ function injectMeta(html, meta) {
     if (/<meta\s+property=["']og:description["']/i.test(html)) {
       html = html.replace(
         /<meta\s+property=["']og:description["'][^>]*>/i,
-        `<meta property="og:description" content="${meta.og_description.replace(/"/g, '"')}">`
+        `<meta property="og:description" content="${escapeAttr(meta.og_description)}">`
       );
     }
   }
@@ -278,12 +284,20 @@ export async function onRequest(context) {
 
   // Handle sitemap.xml
   if (url.pathname === '/sitemap.xml') {
+    const controller = new AbortController();
+    const abortTimer = setTimeout(() => controller.abort(), SITEMAP_TIMEOUT_MS);
     try {
-      const resp = await fetch(`${API_BASE}/api/seo/sitemap`);
+      const resp = await fetch(`${API_BASE}/api/seo/sitemap`, { signal: controller.signal });
+      // e.g. 503 {"error":"Database not ready"} during a DB swap — never serve an empty
+      // <urlset> with a 24h cache; fall through to the 503 + Retry-After branch instead.
+      if (!resp.ok) throw new Error(`sitemap API returned ${resp.status}`);
       const data = await resp.json();
+      if (!data || !Array.isArray(data.urls) || data.urls.length === 0) {
+        throw new Error('sitemap API returned no urls');
+      }
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${(data.urls || []).map(u => `  <url>
+${data.urls.map(u => `  <url>
     <loc>${u.url}</loc>
     <lastmod>${u.lastmod}</lastmod>
     <changefreq>${u.changefreq}</changefreq>
@@ -302,6 +316,8 @@ ${(data.urls || []).map(u => `  <url>
         status: 503,
         headers: { 'Retry-After': '3600' },
       });
+    } finally {
+      clearTimeout(abortTimer);
     }
   }
 

@@ -192,6 +192,10 @@
             <div id="badge-volume" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-100 dark:bg-dark-700">
               <span class="w-2 h-2 rounded-full bg-brand-400"></span> --
             </div>
+            <!-- "+ Compare" — HDB town results only (shown by renderResults) -->
+            <select id="compare-add-select" aria-label="Compare with another town" class="hidden px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-brand-600 dark:text-brand-400 hover:border-brand-500/50 cursor-pointer outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+              <option value="">+ Compare</option>
+            </select>
             <button id="share-btn" class="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-brand-500/50 hover:text-brand-500 transition-all" aria-label="Share" title="Share this page">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
             </button>
@@ -466,6 +470,37 @@
 
   <!-- BTO Launches Index (/bto) -->
   <section id="bto-index-section" class="hidden max-w-5xl mx-auto px-4 py-8"></section>
+
+  <!-- Town Comparison (/compare/<a>-vs-<b>[-vs-<c>][/<flat-type>]) -->
+  <section id="compare-section" class="hidden scroll-mt-16 px-3 sm:px-4 pb-12 animate-[fadeInUp_0.5s_ease-out]">
+    <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 md:p-8 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div>
+            <h2 id="compare-title" class="text-2xl sm:text-3xl font-black">Compare Towns</h2>
+            <p id="compare-subtitle" class="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">--</p>
+          </div>
+          <button id="compare-share-btn" class="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-brand-500/50 hover:text-brand-500 transition-all" aria-label="Share" title="Share this comparison">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </button>
+        </div>
+        <!-- Town pickers + flat type (filled by App.renderCompareControls) -->
+        <div id="compare-controls" class="flex flex-wrap items-center gap-2 mt-4"></div>
+      </div>
+
+      <!-- One stat card per town -->
+      <div id="compare-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"></div>
+
+      <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-2xl dark:shadow-black/50">
+        <h3 class="text-base sm:text-lg font-semibold mb-1">Price Trend</h3>
+        <p class="text-xs sm:text-sm text-gray-400 dark:text-gray-500 mb-3 sm:mb-4">Monthly average $/sqft, last 5 years</p>
+        <div class="relative h-64 sm:h-80">
+          <canvas id="compare-trend-chart"></canvas>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 dark:text-gray-500">Figures cover the last 12 months of HDB resale transactions. 1-year change compares the 3-month rolling average $/sqft at each end of the year. Not financial advice.</p>
+    </div>
+  </section>
 
   <!-- SEO Content Section (visible, provides keyword-rich content for indexing) -->
   <section id="seo-content" class="px-4 py-8 sm:py-12 mt-4 border-t border-gray-200 dark:border-white/5">

@@ -2513,6 +2513,184 @@ function fmtPsf(psm) {
   return `$${Math.round(psm / 10.7639).toLocaleString('en-US')} psf`;
 }
 
+// ============================================================
+// TOWN COMPARISON (/compare/<a>-vs-<b>[-vs-<c>][/<flat-type>])
+// ============================================================
+
+// Parse a /compare/ route into resolved towns. Returns null for anything that isn't a valid
+// 2–3 distinct-town comparison (unknown town, duplicate, bad flat-type slug) so the caller
+// leaves the default canonical in place and the soft-404 guard noindexes it.
+function parseCompareRoute(route) {
+  const m = route.match(/^\/compare\/([^/]+)(?:\/([^/]+))?$/);
+  if (!m) return null;
+  const slugs = m[1].split('-vs-');
+  if (slugs.length < 2 || slugs.length > 3 || slugs.some(s => !s)) return null;
+  const towns = slugs.map(s => slugToTown(s));
+  if (towns.some(t => !t) || new Set(towns).size !== towns.length) return null;
+  let flatType = null;
+  if (m[2]) {
+    flatType = SLUG_TO_FLAT_TYPE[m[2]];
+    if (!flatType) return null;
+  }
+  // Canonical order: alphabetical by slug, so a-vs-b and b-vs-a share one URL
+  const sorted = towns.map(t => ({ town: t, slug: townToSlug(t) })).sort((a, b) => a.slug.localeCompare(b.slug));
+  return { towns: sorted.map(t => t.town), slugs: sorted.map(t => t.slug), flatType, ftSlug: m[2] || null };
+}
+
+function comparePath(slugs, ftSlug) {
+  return `/compare/${slugs.join('-vs-')}${ftSlug ? `/${ftSlug}` : ''}`;
+}
+
+// Town centroid = mean lat/lng of the town's blocks in hdb_block_coords. Built once per DB handle.
+let townCentroidCache = { db: null, map: null };
+function townCentroids() {
+  if (townCentroidCache.db !== db) {
+    const map = {};
+    try {
+      const rows = db.prepare(`
+        SELECT t.town, AVG(c.lat) AS lat, AVG(c.lng) AS lng
+        FROM (SELECT DISTINCT town, block, street_name FROM transactions WHERE dataset_source != 'URA_PRIVATE') t
+        JOIN hdb_block_coords c ON c.block = t.block AND c.street_name = t.street_name
+        GROUP BY t.town
+      `).all();
+      for (const r of rows) map[r.town] = { lat: r.lat, lng: r.lng };
+    } catch (err) {
+      console.warn('Town centroid lookup failed:', err.message);
+    }
+    townCentroidCache = { db, map };
+  }
+  return townCentroidCache.map;
+}
+
+// Sitemap pairs for /compare/ pages: each town's K nearest towns by centroid distance, plus
+// any pair sharing a private-property district (TOWN_TO_DISTRICTS). The district map alone
+// yields only 18 pairs and leaves e.g. Bedok, Marine Parade and Woodlands without a partner;
+// centroid distance catches real neighbours across district lines (Bedok–Tampines,
+// Woodlands–Sembawang). Sorted nearest first, capped. Without coords, district pairs only.
+const COMPARE_NEIGHBOURS = 3;
+const COMPARE_MAX_PAIRS = 50;
+function compareTownPairs(towns) {
+  const cent = townCentroids();
+  const dist = (a, b) => (cent[a] && cent[b])
+    ? haversineM(cent[a].lat, cent[a].lng, cent[b].lat, cent[b].lng) : Infinity;
+  const pairs = new Map();
+  const add = (a, b) => {
+    const [x, y] = [a, b].sort((p, q) => townToSlug(p).localeCompare(townToSlug(q)));
+    const key = `${x}|${y}`;
+    if (!pairs.has(key)) pairs.set(key, { towns: [x, y], dist: dist(x, y) });
+  };
+  for (const a of towns) {
+    towns.filter(b => b !== a && dist(a, b) !== Infinity)
+      .sort((b, c) => dist(a, b) - dist(a, c))
+      .slice(0, COMPARE_NEIGHBOURS)
+      .forEach(b => add(a, b));
+    const da = TOWN_TO_DISTRICTS[a] || [];
+    for (const b of towns) {
+      if (b !== a && (TOWN_TO_DISTRICTS[b] || []).some(d => da.includes(d))) add(a, b);
+    }
+  }
+  return [...pairs.values()]
+    .sort((p, q) => p.dist - q.dist || p.towns.join().localeCompare(q.towns.join()))
+    .slice(0, COMPARE_MAX_PAIRS)
+    .map(p => p.towns);
+}
+
+// Clamp a description to ≤160 chars at a word boundary
+function clampDescription(s, max = 160) {
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max - 1);
+  return cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:–—\s]+$/, '') + '…';
+}
+
+// Fill `meta` for a /compare/ route. Leaves it untouched for invalid routes (→ noindex).
+function compareSeoMetadata(route, meta, { freshnessNote, dateModified }) {
+  const cmp = parseCompareRoute(route);
+  if (!cmp || !db) return;
+  const m12 = monthsAgoStr(12);
+  const m24 = monthsAgoStr(24);
+  const ftClause = cmp.flatType ? ' AND flat_type = ?' : '';
+  const ftArgs = cmp.flatType ? [cmp.flatType] : [];
+  const curStmt = db.prepare(`
+    SELECT COUNT(*) as cnt, ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm
+    FROM transactions WHERE town = ? AND resale_price IS NOT NULL AND month >= ? AND dataset_source != 'URA_PRIVATE'${ftClause}
+  `);
+  const prevStmt = db.prepare(`
+    SELECT ROUND(AVG(price_per_sqm), 0) as avg_psm
+    FROM transactions WHERE town = ? AND month >= ? AND month < ? AND dataset_source != 'URA_PRIVATE'${ftClause}
+  `);
+  const stats = cmp.towns.map((town, i) => {
+    const cur = curStmt.get(town, m12, ...ftArgs) || {};
+    const prev = prevStmt.get(town, m24, m12, ...ftArgs) || {};
+    const yoy = cur.avg_psm && prev.avg_psm ? Math.round((cur.avg_psm - prev.avg_psm) / prev.avg_psm * 100) : null;
+    return { town, slug: cmp.slugs[i], display: titleCase(town), cnt: cur.cnt || 0, avgPrice: cur.avg_price || 0, avgPsm: cur.avg_psm || 0, yoy };
+  });
+
+  const ftLabel = cmp.flatType ? flatTypeLabel(cmp.flatType) : null;
+  const names = stats.map(s => s.display).join(' vs ');
+  const year = new Date().getFullYear();
+  const thin = stats.every(s => s.cnt === 0);
+  // A flat-type comparison with no recent sales anywhere consolidates to the all-types page
+  meta.canonical = SEO_BASE_URL + comparePath(cmp.slugs, thin ? null : cmp.ftSlug);
+  meta.title = ftLabel
+    ? `${ftLabel} HDB: ${names} Resale Prices ${year} | WorthIt`
+    : `${names} HDB Resale Prices ${year} — Compared | WorthIt`;
+  const subject = ftLabel ? `${ftLabel} HDB` : 'HDB';
+  const perTown = stats.filter(s => s.cnt > 0).map(s => `${s.display} ${fmtPrice(s.avgPrice)} (${fmtPsf(s.avgPsm)})`).join(' vs ');
+  meta.description = clampDescription(perTown
+    ? `${names} ${subject} resale, last 12 months: ${perTown}. Compare prices, trends & volume side by side.`
+    : `Compare ${subject} resale prices in ${names} side by side: average price, $psf, 1-year change and sales volume.`);
+  meta.og_title = `${names}: ${subject} Resale Prices Compared`;
+  meta.og_description = meta.description;
+  meta.og_url = meta.canonical;
+  if (thin) return;
+
+  const cell = 'padding:6px 12px;border-bottom:1px solid #e5e7eb';
+  const rows = stats.map(s => {
+    const href = `/hdb/${s.slug}${cmp.ftSlug ? `/${cmp.ftSlug}` : ''}`;
+    return `
+      <tr>
+        <td style="${cell}"><a href="${href}" style="color:#3b82f6;text-decoration:none">${s.display}</a></td>
+        <td style="${cell};text-align:right">${s.cnt ? fmtPrice(s.avgPrice) : 'N/A'}</td>
+        <td style="${cell};text-align:right">${s.cnt ? fmtPsf(s.avgPsm) : 'N/A'}</td>
+        <td style="${cell};text-align:right">${s.yoy != null ? `${s.yoy >= 0 ? '+' : ''}${s.yoy}%` : 'N/A'}</td>
+        <td style="${cell};text-align:right">${s.cnt.toLocaleString()}</td>
+      </tr>`;
+  }).join('');
+  const th = 'padding:6px 12px;border-bottom:2px solid #e5e7eb';
+
+  // Cross-links: other flat types for the same pair, or back to the all-types comparison
+  const otherLinks = Object.entries(FLAT_TYPE_SLUGS)
+    .filter(([ft]) => ft !== cmp.flatType)
+    .map(([ft, slug]) => `<a href="${comparePath(cmp.slugs, slug)}" style="color:#3b82f6;text-decoration:none;white-space:nowrap">${flatTypeLabel(ft)}</a>`);
+  if (cmp.flatType) otherLinks.unshift(`<a href="${comparePath(cmp.slugs, null)}" style="color:#3b82f6;text-decoration:none;white-space:nowrap">All flat types</a>`);
+
+  meta.json_ld = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `${names} ${subject} Resale Prices Compared`,
+    description: meta.description,
+    url: meta.canonical,
+    dateModified,
+  });
+  meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
+  <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${names}: ${subject} Resale Prices Compared</h2>
+  <p style="color:#4b5563;margin-bottom:1rem">Average ${subject} resale prices over the last 12 months, with year-on-year change in average price per sqft.</p>
+  <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-bottom:1.5rem">
+    <thead><tr style="background:#f3f4f6">
+      <th style="${th};text-align:left">Town</th>
+      <th style="${th};text-align:right">Avg Price</th>
+      <th style="${th};text-align:right">Avg PSF</th>
+      <th style="${th};text-align:right">1-Year Change</th>
+      <th style="${th};text-align:right">Transactions (12m)</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Compare by Flat Type</h3>
+  <p style="font-size:0.9rem;line-height:2;margin-bottom:1rem">${otherLinks.join(' &middot; ')}</p>
+  ${freshnessNote}
+</section>`;
+}
+
 /**
  * GET /api/seo/sitemap — Generate sitemap URLs
  */
@@ -2611,6 +2789,11 @@ app.get('/api/seo/sitemap', (req, res) => {
         priority: '0.6',
         lastmod: p.application_start || todayStr,
       });
+    }
+
+    // Town comparison pages — adjacent pairs only (see compareTownPairs)
+    for (const pair of compareTownPairs(towns.map(t => t.town))) {
+      urls.push({ url: SEO_BASE_URL + comparePath(pair.map(townToSlug), null), changefreq: 'weekly', priority: '0.5', lastmod });
     }
 
     sitemapCache = { data: { urls }, timestamp: now };
@@ -2730,6 +2913,8 @@ app.get('/api/seo/metadata', (req, res) => {
           },
         ],
       });
+    } else if (route.startsWith('/compare/')) {
+      compareSeoMetadata(route, meta, { freshnessNote, dateModified });
     } else if (route === '/check' || route.startsWith('/check/')) {
       meta.title = 'Check an HDB Asking Price — Free Deal Score | WorthIt';
       meta.description = 'Enter a postal code and asking price to get a fair-value estimate, Deal Score, and comparable sales from real HDB resale transactions.';
@@ -3459,7 +3644,7 @@ app.get('/api/seo/metadata', (req, res) => {
     // Soft-404 guard: a deep route that didn't resolve to real data still has the default
     // homepage canonical. Tell crawlers not to index these junk URLs. Only when the DB is
     // available (never deindex valid pages while the DB is mid-refresh).
-    const isDeepRoute = /^\/(hdb|private|district|postal|bto)(\/|$)/.test(route);
+    const isDeepRoute = /^\/(hdb|private|district|postal|bto|compare)(\/|$)/.test(route);
     if (isDeepRoute && db && meta.canonical === SEO_BASE_URL + '/') {
       meta.robots = 'noindex, follow';
     }

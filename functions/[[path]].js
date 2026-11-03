@@ -62,6 +62,7 @@ const SPA_ROUTE_PATTERNS = [
   /^\/postal\/\d{6}$/,
   /^\/check$/,
   /^\/check\/\d{6}$/,
+  /^\/compare\/[^/]+(?:\/[^/]+)?$/,
 ];
 
 // Inject SEO meta tags into HTML

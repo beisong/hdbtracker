@@ -234,3 +234,72 @@ describe('public/robots.txt', () => {
   });
 });
 
+
+describe('GET /api/seo/metadata — town comparison', () => {
+  const BASE = 'https://worthit.canlah.app';
+  const meta = (route) => request.get(`/api/seo/metadata?route=${encodeURIComponent(route)}`);
+
+  it('returns a comparison title, description and self-canonical for a valid pair', async () => {
+    const res = await meta('/compare/bedok-vs-toa-payoh');
+    expect(res.status).toBe(200);
+    expect(res.body.title).toContain('Bedok vs Toa Payoh');
+    expect(res.body.canonical).toBe(`${BASE}/compare/bedok-vs-toa-payoh`);
+    expect(res.body.robots ?? null).toBeNull();
+    expect(res.body.description.length).toBeLessThanOrEqual(160);
+    expect(res.body.content_html).toContain('<table');
+    expect(res.body.content_html).toContain('href="/hdb/toa-payoh"');
+  });
+
+  it('gives the reversed order the same (alphabetical) canonical', async () => {
+    const res = await meta('/compare/toa-payoh-vs-bedok');
+    expect(res.status).toBe(200);
+    expect(res.body.canonical).toBe(`${BASE}/compare/bedok-vs-toa-payoh`);
+    expect(res.body.title).toContain('Bedok vs Toa Payoh');
+  });
+
+  it('supports a flat-type comparison with its own canonical', async () => {
+    const res = await meta('/compare/toa-payoh-vs-bedok/4-room');
+    expect(res.body.title).toContain('4 Room');
+    expect(res.body.canonical).toBe(`${BASE}/compare/bedok-vs-toa-payoh/4-room`);
+    expect(res.body.description.length).toBeLessThanOrEqual(160);
+  });
+
+  it('consolidates a flat type with no recent sales to the all-types comparison', async () => {
+    const res = await meta('/compare/bedok-vs-toa-payoh/2-room');
+    expect(res.body.canonical).toBe(`${BASE}/compare/bedok-vs-toa-payoh`);
+  });
+
+  it('supports three towns, sorted alphabetically', async () => {
+    const res = await meta('/compare/toa-payoh-vs-punggol-vs-bedok');
+    expect(res.body.canonical).toBe(`${BASE}/compare/bedok-vs-punggol-vs-toa-payoh`);
+    expect(res.body.description.length).toBeLessThanOrEqual(160);
+  });
+
+  it.each([
+    '/compare/bedok-vs-not-a-town',
+    '/compare/bedok',
+    '/compare/bedok-vs-bedok',
+    '/compare/bedok-vs-toa-payoh/not-a-type',
+    '/compare/bedok-vs-toa-payoh-vs-punggol-vs-bedok',
+  ])('noindexes the invalid comparison %s', async (route) => {
+    const res = await meta(route);
+    expect(res.status).toBe(200);
+    expect(res.body.robots).toBe('noindex, follow');
+    expect(res.body.canonical).toBe(`${BASE}/`);
+  });
+});
+
+describe('GET /api/seo/sitemap — town comparisons', () => {
+  it('includes compare URLs in canonical (alphabetical) order', async () => {
+    const res = await request.get('/api/seo/sitemap');
+    const urls = res.body.urls.map(u => u.url);
+    expect(urls).toContain('https://worthit.canlah.app/compare/bedok-vs-toa-payoh');
+    expect(urls).not.toContain('https://worthit.canlah.app/compare/toa-payoh-vs-bedok');
+    const compare = urls.filter(u => u.includes('/compare/'));
+    expect(compare.length).toBeLessThanOrEqual(50);
+    for (const u of compare) {
+      const slugs = u.split('/compare/')[1].split('-vs-');
+      expect(slugs).toEqual([...slugs].sort());
+    }
+  });
+});

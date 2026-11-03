@@ -34,6 +34,8 @@ describe('edge 404 for unknown routes', () => {
     '/hdb',
     '/district/abc',
     '/postal/123',
+    '/compare',
+    '/compare/a/b/c',
   ])('returns 404 for %s', async (pathname) => {
     const res = await onRequest(makeContext(pathname));
     expect(res.status).toBe(404);
@@ -51,6 +53,8 @@ describe('edge 404 for unknown routes', () => {
     '/postal/520123',
     '/check',
     '/check/520123',
+    '/compare/bedok-vs-tampines',
+    '/compare/bedok-vs-tampines/4-room',
   ])('does not 404 for valid route %s', async (pathname) => {
     const res = await onRequest(makeContext(pathname));
     expect(res.status).toBe(200);

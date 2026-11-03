@@ -54,101 +54,86 @@ const Charts = {
   /** Re-render charts after theme change */
   rerender() {
     this.initDefaults();
-    if (this._lastTrendData || this._lastPrivateTrendData) {
-      this.renderTrendChart(this._lastTrendData, this._lastPrivateTrendData);
-    }
+    for (const args of Object.values(this._lastTrendArgs)) this.renderTrendChart(args);
     if (this._lastDistBins && this._lastDistCounts) {
       this.renderDistributionChart(this._lastDistBins, this._lastDistCounts);
     }
   },
 
-  // hdbData = HDB monthly trend array, privateData = private monthly trend array
-  // Either can be null for single-line mode.
+  // Line colours for multi-series charts, in series order (HDB blue, private purple, then amber)
+  seriesPalette: ['#3b82f6', '#a855f7', '#f59e0b'],
+  _trendCharts: {},   // canvasId → Chart instance
+  _lastTrendArgs: {}, // canvasId → { canvasId, series } (for theme re-render)
+
+  /**
+   * Monthly $/sqft trend line chart.
+   *   renderTrendChart(hdbData, privateData = null)  — legacy: #trend-chart, "HDB" + "Private"
+   *   renderTrendChart({ canvasId, series: [{ label, data, color? }] })  — N labelled series
+   * Each data array holds { month, avg_psm, count }; empty/null series are skipped. A single
+   * series is coloured green/red by direction with a fill; several get palette colours + legend.
+   */
   renderTrendChart(hdbData, privateData = null) {
-    const canvas = document.getElementById('trend-chart');
+    let canvasId, series;
+    if (hdbData && !Array.isArray(hdbData) && Array.isArray(hdbData.series)) {
+      canvasId = hdbData.canvasId || 'trend-chart';
+      series = hdbData.series;
+    } else {
+      canvasId = 'trend-chart';
+      series = [{ label: 'HDB', data: hdbData }, { label: 'Private', data: privateData }];
+      this._lastTrendData = hdbData;
+      this._lastPrivateTrendData = privateData;
+    }
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return;
 
-    this._lastTrendData = hdbData;
-    this._lastPrivateTrendData = privateData;
-    if (this.trendChart) this.trendChart.destroy();
+    this._lastTrendArgs[canvasId] = { canvasId, series };
+    if (this._trendCharts[canvasId]) this._trendCharts[canvasId].destroy();
 
     const tc = this.getThemeColors();
     const mobile = this.isMobile();
-    const hasHdb = hdbData && hdbData.length > 0;
-    const hasPrivate = privateData && privateData.length > 0;
-    const hasBoth = hasHdb && hasPrivate;
+    // Colour by original slot, so an empty earlier series doesn't shift colours (private stays purple)
+    const active = series
+      .map((s, i) => ({ ...s, color: s.color || this.seriesPalette[i % this.seriesPalette.length] }))
+      .filter(s => s.data && s.data.length > 0);
+    const multi = active.length > 1;
 
     // Build union of months for a shared X-axis
-    const allMonthsSet = new Set([
-      ...(hasHdb ? hdbData.map(d => d.month) : []),
-      ...(hasPrivate ? privateData.map(d => d.month) : []),
-    ]);
-    const allMonths = [...allMonthsSet].sort();
+    const allMonths = [...new Set(active.flatMap(s => s.data.map(d => d.month)))].sort();
     const labels = allMonths.map(month => {
       const [y, m] = month.split('-');
       return new Date(parseInt(y), parseInt(m) - 1)
         .toLocaleDateString('en-SG', { month: 'short', year: '2-digit' });
     });
 
-    const datasets = [];
-
-    if (hasHdb) {
-      const hdbMap = Object.fromEntries(hdbData.map(d => [d.month, App.psmToPsf(d.avg_psm)]));
-      const hdbPrices = allMonths.map(m => hdbMap[m] ?? null);
-      let hdbColor, hdbBg;
-      if (hasBoth) {
-        hdbColor = this.colors.brand;
-        hdbBg = 'transparent';
+    const datasets = active.map(s => {
+      const byMonth = Object.fromEntries(s.data.map(d => [d.month, App.psmToPsf(d.avg_psm)]));
+      const prices = allMonths.map(m => byMonth[m] ?? null);
+      let color, bg;
+      if (multi) {
+        color = s.color;
+        bg = 'transparent';
       } else {
-        const first = hdbPrices.find(p => p != null) || 0;
-        const last = [...hdbPrices].reverse().find(p => p != null) || 0;
-        hdbColor = last >= first ? this.colors.green : this.colors.red;
-        hdbBg = last >= first ? this.colors.greenLight : this.colors.redLight;
+        const first = prices.find(p => p != null) || 0;
+        const last = [...prices].reverse().find(p => p != null) || 0;
+        color = last >= first ? this.colors.green : this.colors.red;
+        bg = last >= first ? this.colors.greenLight : this.colors.redLight;
       }
-      datasets.push({
-        label: 'HDB',
-        data: hdbPrices,
-        borderColor: hdbColor,
-        backgroundColor: hdbBg,
-        fill: !hasBoth,
+      return {
+        label: s.label,
+        data: prices,
+        borderColor: color,
+        backgroundColor: bg,
+        fill: !multi,
         tension: 0.4,
         pointRadius: mobile ? 0 : 1.5,
         pointHoverRadius: 5,
-        pointBackgroundColor: hdbColor,
+        pointBackgroundColor: color,
         borderWidth: 2,
         spanGaps: true,
-      });
-    }
+      };
+    });
 
-    if (hasPrivate) {
-      const privMap = Object.fromEntries(privateData.map(d => [d.month, App.psmToPsf(d.avg_psm)]));
-      const privPrices = allMonths.map(m => privMap[m] ?? null);
-      let privColor, privBg;
-      if (hasBoth) {
-        privColor = '#a855f7';
-        privBg = 'transparent';
-      } else {
-        const first = privPrices.find(p => p != null) || 0;
-        const last = [...privPrices].reverse().find(p => p != null) || 0;
-        privColor = last >= first ? this.colors.green : this.colors.red;
-        privBg = last >= first ? this.colors.greenLight : this.colors.redLight;
-      }
-      datasets.push({
-        label: 'Private',
-        data: privPrices,
-        borderColor: privColor,
-        backgroundColor: privBg,
-        fill: !hasBoth,
-        tension: 0.4,
-        pointRadius: mobile ? 0 : 1.5,
-        pointHoverRadius: 5,
-        pointBackgroundColor: privColor,
-        borderWidth: 2,
-        spanGaps: true,
-      });
-    }
-
-    this.trendChart = new Chart(canvas, {
+    const chart = new Chart(canvas, {
       type: 'line',
       data: { labels, datasets },
       options: {
@@ -157,7 +142,7 @@ const Charts = {
         interaction: { intersect: false, mode: 'index' },
         plugins: {
           legend: {
-            display: hasBoth,
+            display: multi,
             labels: { color: tc.textColor, boxWidth: 12, padding: 12, font: { size: mobile ? 10 : 11 } },
           },
           tooltip: {
@@ -167,14 +152,13 @@ const Charts = {
             borderColor: tc.tooltipBorder,
             borderWidth: 1,
             padding: 12,
-            displayColors: hasBoth,
+            displayColors: multi,
             callbacks: {
               title: (items) => items[0]?.label || '',
-              label: (item) => `${hasBoth ? item.dataset.label + ': ' : ''}$${this.formatNumber(item.raw)}/sqft`,
+              label: (item) => `${multi ? item.dataset.label + ': ' : ''}$${this.formatNumber(item.raw)}/sqft`,
               afterLabel: (item) => {
                 const month = allMonths[item.dataIndex];
-                const src = item.dataset.label === 'Private' ? privateData : hdbData;
-                const entry = src?.find(d => d.month === month);
+                const entry = active[item.datasetIndex]?.data.find(d => d.month === month);
                 return entry ? `${entry.count} transactions` : '';
               },
             },
@@ -186,6 +170,8 @@ const Charts = {
         },
       },
     });
+    this._trendCharts[canvasId] = chart;
+    if (canvasId === 'trend-chart') this.trendChart = chart;
   },
 
   renderDistributionChart(bins, counts) {

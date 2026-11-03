@@ -281,3 +281,48 @@ describe('App.parsePrice', () => {
   it('returns null for garbage', () => expect(App.parsePrice('abc')).toBe(null));
   it('returns null for zero/negative', () => expect(App.parsePrice('-5')).toBe(null));
 });
+
+// ─── App.parseCompareRoute / buildComparePath ─────────────────────────────
+describe('App.parseCompareRoute', () => {
+  it('parses a two-town comparison in URL order', () => {
+    const r = App.parseCompareRoute('/compare/tampines-vs-bedok');
+    expect([...r.slugs]).toEqual(['tampines', 'bedok']);
+    expect(r.flatType).toBeNull();
+  });
+  it('parses three towns with a flat type', () => {
+    const r = App.parseCompareRoute('/compare/tampines-vs-bedok-vs-toa-payoh/4-room');
+    expect([...r.slugs]).toEqual(['tampines', 'bedok', 'toa-payoh']);
+    expect(r.ftSlug).toBe('4-room');
+    expect(r.flatType).toBe('4 ROOM');
+  });
+  it('keeps hyphenated town slugs intact', () => {
+    const r = App.parseCompareRoute('/compare/kallang-whampoa-vs-ang-mo-kio/executive');
+    expect([...r.slugs]).toEqual(['kallang-whampoa', 'ang-mo-kio']);
+    expect(r.flatType).toBe('EXECUTIVE');
+  });
+  it.each([
+    '/compare/bedok',
+    '/compare/bedok-vs-bedok',
+    '/compare/a-vs-b-vs-c-vs-d',
+    '/compare/bedok-vs-tampines/6-room',
+    '/compare/bedok-vs-',
+    '/compare/',
+    '/hdb/bedok',
+    '',
+  ])('returns null for %s', (p) => expect(App.parseCompareRoute(p)).toBeNull());
+});
+
+describe('App.buildComparePath', () => {
+  it('sorts towns alphabetically so both orders share one URL', () => {
+    expect(App.buildComparePath(['TAMPINES', 'BEDOK'])).toBe('/compare/bedok-vs-tampines');
+    expect(App.buildComparePath(['BEDOK', 'TAMPINES'])).toBe('/compare/bedok-vs-tampines');
+  });
+  it('appends the flat-type slug and slugifies punctuation', () => {
+    expect(App.buildComparePath(['TOA PAYOH', 'KALLANG/WHAMPOA'], '5 ROOM')).toBe('/compare/kallang-whampoa-vs-toa-payoh/5-room');
+  });
+  it('round-trips through parseCompareRoute', () => {
+    const r = App.parseCompareRoute(App.buildComparePath(['YISHUN', 'SEMBAWANG', 'WOODLANDS'], 'EXECUTIVE'));
+    expect([...r.slugs]).toEqual(['sembawang', 'woodlands', 'yishun']);
+    expect(r.flatType).toBe('EXECUTIVE');
+  });
+});

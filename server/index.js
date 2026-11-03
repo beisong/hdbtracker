@@ -2503,8 +2503,10 @@ function titleCase(str) {
 
 function fmtPrice(p) {
   if (!p) return 'N/A';
-  if (p >= 1000000) return `$${(p / 1000000).toFixed(2)}M`;
-  if (p >= 1000) return `$${Math.round(p / 1000)}k`;
+  // Round to thousands first so e.g. 999,600 becomes $1.00M, not "$1000k".
+  const k = Math.round(p / 1000);
+  if (k >= 1000) return `$${(p / 1000000).toFixed(2)}M`;
+  if (p >= 1000) return `$${k}k`;
   return `$${Math.round(p)}`;
 }
 
@@ -3505,4 +3507,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween, launchStatus } };
+module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween, launchStatus, fmtPrice } };

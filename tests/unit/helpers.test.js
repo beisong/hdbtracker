@@ -1,7 +1,7 @@
 'use strict';
 const { _test } = require('../../server/index.js');
 
-const { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween, launchStatus } = _test;
+const { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween, launchStatus, fmtPrice } = _test;
 
 describe('median', () => {
   it('returns null for empty array', () => expect(median([])).toBeNull());
@@ -140,4 +140,13 @@ describe('launchStatus', () => {
     const today = new Date('2026-07-01');
     expect(launchStatus('2026-06-17', '2026-06-24', today)).toBe('closed');
   });
+});
+
+describe('fmtPrice', () => {
+  it('returns N/A for falsy input', () => expect(fmtPrice(0)).toBe('N/A'));
+  it('formats thousands as $Xk', () => expect(fmtPrice(450000)).toBe('$450k'));
+  it('stays in k just below the rounding boundary (999,499 → $999k)', () => expect(fmtPrice(999499)).toBe('$999k'));
+  it('switches to M when rounding reaches 1000k (999,600 → $1.00M, not $1000k)', () => expect(fmtPrice(999600)).toBe('$1.00M'));
+  it('switches to M at 999,500 (rounds to 1000k)', () => expect(fmtPrice(999500)).toBe('$1.00M'));
+  it('formats millions as $X.XXM', () => expect(fmtPrice(1234567)).toBe('$1.23M'));
 });

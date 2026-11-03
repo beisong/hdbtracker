@@ -281,3 +281,29 @@ describe('App.parsePrice', () => {
   it('returns null for garbage', () => expect(App.parsePrice('abc')).toBe(null));
   it('returns null for zero/negative', () => expect(App.parsePrice('-5')).toBe(null));
 });
+
+describe('App.fetchAcResults — stale response guard', () => {
+  it('does not let a slower older query overwrite the dropdown for a newer one', async () => {
+    const resolvers = {};
+    ctx.API.searchPrivateProjects = (query) => new Promise(res => { resolvers[query] = res; });
+    ctx.API.searchBtoProjects = () => Promise.resolve({ projects: [] });
+    App._towns = [];
+    App._districts = [];
+    const rendered = [];
+    const origRender = App.renderAc;
+    App.renderAc = function () { rendered.push(this._acItems.map(i => i.value)); };
+    try {
+      const older = App.fetchAcResults('SKY');
+      const newer = App.fetchAcResults('SKYLINE');
+      // Newer resolves first, then the slower older one arrives.
+      resolvers['SKYLINE']({ projects: [{ project: 'SKYLINE RESIDENCES', district: '10' }] });
+      await newer;
+      resolvers['SKY']({ projects: [{ project: 'SKY HABITAT', district: '20' }] });
+      await older;
+      expect(rendered).toEqual([['SKYLINE RESIDENCES']]);
+      expect(App._acItems.map(i => i.value)).toEqual(['SKYLINE RESIDENCES']);
+    } finally {
+      App.renderAc = origRender;
+    }
+  });
+});

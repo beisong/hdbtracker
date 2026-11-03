@@ -1188,6 +1188,15 @@ const App = {
     };
 
     const mobileCards = [];
+    // Nearest-MRT line on mobile cards (hidden until stations load / when coords are unknown)
+    const _hasCoords = tx => tx.lat != null && tx.lng != null;
+    const _fillMrt = (card, tx) => {
+      const el = card.querySelector('.tx-mrt');
+      const text = _hasCoords(tx) ? MrtNearest.label(tx.lat, tx.lng) : '';
+      if (!el || !text) return;
+      el.textContent = text;
+      el.hidden = false;
+    };
 
     transactions.forEach(tx => {
       const address = `${tx.block} ${tx.street_name || ''} Singapore`.trim();
@@ -1256,10 +1265,18 @@ const App = {
           <span>Lease ${leaseDisplay}</span>
           ${(!tx.is_private && tx.block && tx.street_name) ? '<button class="val-row-btn ml-auto px-2 py-1 rounded-lg text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 active:bg-emerald-500/20 whitespace-nowrap">💰 Check a price</button>' : ''}
         </div>
+        <div class="tx-mrt mt-1.5 text-xs text-gray-500 dark:text-gray-400" hidden></div>
       `;
+      _fillMrt(card, tx);
+      card._tx = tx;
       card.querySelector('.val-row-btn')?.addEventListener('click', (e) => { e.stopPropagation(); this.checkLikeThis(tx); });
       mobileCards.push(card);
     });
+
+    // Stations not fetched yet — fill the MRT lines once they arrive (one shared fetch)
+    if (!MrtNearest.stations && transactions.some(_hasCoords)) {
+      MrtNearest.load().then(s => { if (s) mobileCards.forEach(card => _fillMrt(card, card._tx)); });
+    }
 
     // Paginate mobile cards: show first 25, then "Show more" button
     const MOBILE_PAGE = 25;
@@ -1632,6 +1649,9 @@ const App = {
       flat_type: tx.property_type || tx.flat_type,
       block: proj.project,
       street_name: proj.street_name,
+      // Project coords (for the nearest-MRT line on mobile cards)
+      lat: tx.lat ?? this.lastResolvedData?.lat ?? null,
+      lng: tx.lng ?? this.lastResolvedData?.lng ?? null,
       remaining_lease_years: tx.remaining_lease_years,
       is_freehold: tx.tenure === 'FREEHOLD',
     }));

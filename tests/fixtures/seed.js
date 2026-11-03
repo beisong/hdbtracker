@@ -160,7 +160,16 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   const punggolFreshview = [
     ['PUNGGOL','4 ROOM','601A','PUNGGOL FIELD','07 TO 09',93,'MODEL A',97,610000,6559,'2025-05','HDB',null,null,null,'Resale',null],
   ];
-  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...sky, ...punggolFreshview]);
+  // HDB CENTRAL AREA — 5 skewed rows (one outlier) so mean ≠ median in /api/area-overview.
+  // 3 ROOM prices 300k/310k/320k/900k → median 315k (mean 457.5k); town median 320k (mean 466k).
+  const centralAreaSkewed = [
+    ['CENTRAL AREA','3 ROOM','1','SELEGIE RD','01 TO 03',65,'MODEL A',60,300000,4615,'2025-01','HDB',null,null,null,'Resale',null],
+    ['CENTRAL AREA','3 ROOM','2','SELEGIE RD','04 TO 06',65,'MODEL A',60,310000,4769,'2025-02','HDB',null,null,null,'Resale',null],
+    ['CENTRAL AREA','3 ROOM','3','SELEGIE RD','07 TO 09',65,'MODEL A',60,320000,4923,'2025-03','HDB',null,null,null,'Resale',null],
+    ['CENTRAL AREA','3 ROOM','4','SELEGIE RD','40 TO 42',65,'MODEL A',90,900000,13846,'2025-04','HDB',null,null,null,'Resale',null],
+    ['CENTRAL AREA','4 ROOM','5','SELEGIE RD','10 TO 12',90,'MODEL A',60,500000,5555,'2025-05','HDB',null,null,null,'Resale',null],
+  ];
+  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...sky, ...punggolFreshview, ...centralAreaSkewed]);
 
   // Project coords
   const insertCoord = db.prepare(`

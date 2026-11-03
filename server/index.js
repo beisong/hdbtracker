@@ -898,38 +898,54 @@ app.get('/api/area-overview', (req, res) => {
 
     const latestMonth = db.prepare('SELECT MAX(month) as m FROM transactions').get().m;
 
-    // 1. Median prices by flat type (last 12 months) — apply street + flat_type filter
+    // 1+2. Median prices by flat type + town summary (last 12 months) — apply street + flat_type
+    // filter. One query for the raw rows; true medians are computed in JS (SQLite has no MEDIAN).
     const monthsAgo12 = monthsAgoStr(12);
-    let pricesByTypeQuery = `
-      SELECT
-        flat_type,
-        COUNT(*) as count,
-        ROUND(AVG(resale_price)) as median_price,
-        ROUND(AVG(price_per_sqm), 0) as median_psm
+    let summaryRowsQuery = `
+      SELECT flat_type, resale_price, price_per_sqm
       FROM transactions
       WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
     `;
-    const pricesByTypeParams = [townUpper, monthsAgo12];
-    pricesByTypeQuery = addFlatClause(pricesByTypeQuery, pricesByTypeParams);
-    if (streetClause) { pricesByTypeQuery += streetClause; pricesByTypeParams.push(...streetParams); }
-    pricesByTypeQuery += ' GROUP BY flat_type ORDER BY median_price';
-    const pricesByType = db.prepare(pricesByTypeQuery).all(...pricesByTypeParams);
+    const summaryRowsParams = [townUpper, monthsAgo12];
+    summaryRowsQuery = addFlatClause(summaryRowsQuery, summaryRowsParams);
+    if (streetClause) { summaryRowsQuery += streetClause; summaryRowsParams.push(...streetParams); }
+    const summaryRows = db.prepare(summaryRowsQuery).all(...summaryRowsParams);
 
-    // 2. Town summary (last 12 months) — apply street filter if present
-    let townSummaryQuery = `
-      SELECT
-        COUNT(*) as total_transactions,
-        ROUND(AVG(resale_price)) as median_price,
-        ROUND(AVG(price_per_sqm), 0) as median_psm,
-        MIN(resale_price) as min_price,
-        MAX(resale_price) as max_price
-      FROM transactions
-      WHERE town = ? AND resale_price IS NOT NULL AND month >= ?
-    `;
-    const townSummaryParams = [townUpper, monthsAgo12];
-    townSummaryQuery = addFlatClause(townSummaryQuery, townSummaryParams);
-    if (streetClause) { townSummaryQuery += streetClause; townSummaryParams.push(...streetParams); }
-    const townSummary = db.prepare(townSummaryQuery).get(...townSummaryParams);
+    const summarize = (rows) => {
+      const prices = rows.map(r => r.resale_price);
+      const psms = rows.map(r => r.price_per_sqm).filter(v => v != null);
+      return {
+        count: rows.length,
+        median_price: median(prices),
+        median_psm: psms.length ? Math.round(median(psms)) : null,
+      };
+    };
+
+    const rowsByType = new Map();
+    for (const r of summaryRows) {
+      if (!rowsByType.has(r.flat_type)) rowsByType.set(r.flat_type, []);
+      rowsByType.get(r.flat_type).push(r);
+    }
+    const pricesByType = [...rowsByType.entries()]
+      .map(([flat_type, rows]) => ({ flat_type, ...summarize(rows) }))
+      .sort((a, b) => a.median_price - b.median_price);
+
+    let townSummary = null;
+    if (summaryRows.length > 0) {
+      const { count, median_price, median_psm } = summarize(summaryRows);
+      let minPrice = Infinity, maxPrice = -Infinity;
+      for (const r of summaryRows) {
+        if (r.resale_price < minPrice) minPrice = r.resale_price;
+        if (r.resale_price > maxPrice) maxPrice = r.resale_price;
+      }
+      townSummary = {
+        total_transactions: count,
+        median_price,
+        median_psm,
+        min_price: minPrice,
+        max_price: maxPrice,
+      };
+    }
 
     // Most popular type
     const popularType = db.prepare(`

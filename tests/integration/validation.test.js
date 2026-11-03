@@ -13,23 +13,6 @@ describe('Parameter validation — 400 responses', () => {
   });
 
 
-  it('POST /api/geocode — no body → 400', async () => {
-    const res = await request.post('/api/geocode').send({});
-    expect(res.status).toBe(400);
-  });
-
-  it('POST /api/geocode — addresses is not an array → 400', async () => {
-    const res = await request.post('/api/geocode').send({ addresses: 'not-an-array' });
-    expect(res.status).toBe(400);
-  });
-
-  it('POST /api/geocode — 101 addresses exceeds limit → 400', async () => {
-    const addresses = Array.from({ length: 101 }, (_, i) => ({ block: String(i), street_name: 'TEST ST' }));
-    const res = await request.post('/api/geocode').send({ addresses });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/exceeds limit/i);
-  });
-
   it('GET /api/seo/metadata — missing route → 400', async () => {
     const res = await request.get('/api/seo/metadata');
     expect(res.status).toBe(400);

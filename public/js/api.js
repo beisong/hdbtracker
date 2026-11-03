@@ -45,16 +45,6 @@ const API = {
     return resp.json();
   },
 
-  async geocodeAddresses(addresses) {
-    const resp = await fetch(`${this.baseUrl}/api/geocode`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ addresses }),
-    });
-    if (!resp.ok) throw new Error('Failed to geocode addresses');
-    return resp.json();
-  },
-
   // Private property endpoints
   async searchPrivateProjects(query, limit = 10) {
     const params = new URLSearchParams({ q: query, limit: String(limit) });
@@ -91,6 +81,15 @@ const API = {
   async getBtoProjectOverview(project) {
     const params = new URLSearchParams({ project });
     const resp = await fetch(`${this.baseUrl}/api/bto/project-overview?${params}`);
+    if (!resp.ok) throw new Error('Failed to get BTO project overview');
+    return resp.json();
+  },
+
+  /** Resolve a /bto/<slug> deep link to its exact project (returns null if no project matches) */
+  async getBtoProjectOverviewBySlug(slug) {
+    const params = new URLSearchParams({ slug });
+    const resp = await fetch(`${this.baseUrl}/api/bto/project-overview?${params}`);
+    if (resp.status === 404) return null;
     if (!resp.ok) throw new Error('Failed to get BTO project overview');
     return resp.json();
   },

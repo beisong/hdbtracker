@@ -20,6 +20,8 @@ transformer = Transformer.from_crs('EPSG:3414', 'EPSG:4326', always_xy=True)
 URA_API_BASE = 'https://eservice.ura.gov.sg/uraDataService'
 URA_SERVICE = 'PMI_Resi_Transaction'
 BATCHES = [1, 2, 3, 4]
+MAX_ATTEMPTS = 3          # per batch: 1 initial request + 2 retries
+RETRY_BACKOFF_SECS = 10   # 10s, then 20s
 
 # Paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -98,6 +100,20 @@ def download_batch(access_key, token, batch_num):
     total_tx = sum(len(p.get('transaction', [])) for p in projects)
     print(f"   ✅ Batch {batch_num}: {len(projects)} projects, {total_tx:,} transactions")
     return projects
+
+
+def download_batch_with_retry(access_key, token, batch_num):
+    """download_batch() with retries; re-raises the last error after MAX_ATTEMPTS."""
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            return download_batch(access_key, token, batch_num)
+        except Exception as e:
+            print(f"   ❌ Batch {batch_num} error (attempt {attempt}/{MAX_ATTEMPTS}): {e}")
+            if attempt == MAX_ATTEMPTS:
+                raise
+            wait = RETRY_BACKOFF_SECS * attempt
+            print(f"   Retrying in {wait} seconds...")
+            time.sleep(wait)
 
 
 def parse_contract_date(date_str):
@@ -414,77 +430,6 @@ def geocode_missing_projects(conn):
     return geocoded
 
 
-def update_aggregations(conn):
-    """Update pre-computed aggregations to include private property data."""
-    print("\n📊 Updating aggregations...")
-
-    # Town stats — include private districts
-    conn.execute('DROP TABLE IF EXISTS town_stats')
-    conn.execute('''
-        CREATE TABLE town_stats AS
-        SELECT
-            town,
-            flat_type,
-            COUNT(*) as total_transactions,
-            AVG(resale_price) as avg_price,
-            MIN(resale_price) as min_price,
-            MAX(resale_price) as max_price,
-            AVG(price_per_sqm) as avg_psm,
-            MIN(price_per_sqm) as min_psm,
-            MAX(price_per_sqm) as max_psm,
-            AVG(floor_area_sqm) as avg_area,
-            AVG(remaining_lease_years) as avg_remaining_lease
-        FROM transactions
-        WHERE resale_price IS NOT NULL
-        GROUP BY town, flat_type
-    ''')
-    conn.execute('CREATE INDEX idx_town_stats ON town_stats(town, flat_type)')
-
-    # Monthly medians
-    conn.execute('DROP TABLE IF EXISTS monthly_medians')
-    conn.execute('''
-        CREATE TABLE monthly_medians AS
-        SELECT
-            month,
-            town,
-            flat_type,
-            COUNT(*) as transaction_count,
-            AVG(resale_price) as avg_price,
-            AVG(price_per_sqm) as avg_psm
-        FROM transactions
-        WHERE resale_price IS NOT NULL
-        GROUP BY month, town, flat_type
-        ORDER BY month DESC, town, flat_type
-    ''')
-    conn.execute('CREATE INDEX idx_monthly_medians ON monthly_medians(town, flat_type, month)')
-
-    # Storey adjustments
-    conn.execute('DROP TABLE IF EXISTS storey_adjustments')
-    conn.execute('''
-        CREATE TABLE storey_adjustments AS
-        SELECT
-            town,
-            flat_type,
-            storey_range,
-            storey_midpoint,
-            COUNT(*) as transaction_count,
-            AVG(price_per_sqm) as avg_psm,
-            AVG(resale_price) as avg_price
-        FROM transactions
-        WHERE resale_price IS NOT NULL AND storey_range IS NOT NULL
-        GROUP BY town, flat_type, storey_range
-    ''')
-    conn.execute('CREATE INDEX idx_storey_adj ON storey_adjustments(town, flat_type, storey_range)')
-
-    # Create indexes for private property lookups
-    conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_project ON transactions(project)')
-    conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_district ON transactions(district)')
-    conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_source ON transactions(dataset_source)')
-
-    conn.commit()
-    print("   ✅ Aggregations updated")
-
-
 def main():
     print("=" * 60)
     print("🏢 URA Private Property Transaction Data Downloader")
@@ -497,6 +442,18 @@ def main():
 
     access_key = get_ura_access_key()
     token = get_daily_token(access_key)
+
+    # Download ALL batches before touching the database. If any batch still
+    # fails after retries, exit non-zero with the DB untouched — never write a
+    # DB with only some (or none) of the private data.
+    batches = {}
+    for batch_num in BATCHES:
+        try:
+            batches[batch_num] = download_batch_with_retry(access_key, token, batch_num)
+        except Exception as e:
+            print(f"\n❌ URA batch {batch_num} failed after {MAX_ATTEMPTS} attempts: {e}")
+            print("   Aborting without modifying the database.")
+            sys.exit(1)
 
     # Connect to existing database
     conn = sqlite3.connect(DB_PATH)
@@ -517,29 +474,24 @@ def main():
     print("\n📋 Checking database schema...")
     add_columns_if_needed(conn)
 
-    # Download all 4 batches
+    # Insert all batches
     total_inserted = 0
     total_coords = 0
-    for batch_num in BATCHES:
-        try:
-            projects = download_batch(access_key, token, batch_num)
-            count = insert_transactions(conn, projects, batch_num)
-            total_inserted += count
-            # Save project coordinates
-            coords_count = save_project_coords(conn, projects)
-            total_coords += coords_count
-            conn.commit()
-        except Exception as e:
-            print(f"   ❌ Batch {batch_num} error: {e}")
-            continue
+    for batch_num, projects in batches.items():
+        total_inserted += insert_transactions(conn, projects, batch_num)
+        total_coords += save_project_coords(conn, projects)
+        conn.commit()
 
     print(f"\n📍 Saved coordinates for {total_coords:,} projects")
 
     # Geocode any projects still missing coordinates via OneMap
     geocode_missing_projects(conn)
 
-    # Update aggregations
-    update_aggregations(conn)
+    # Indexes for private property lookups
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_project ON transactions(project)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_district ON transactions(district)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_source ON transactions(dataset_source)')
+    conn.commit()
 
     # Optimize
     conn.execute("PRAGMA optimize")

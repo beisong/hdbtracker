@@ -129,3 +129,83 @@ describe('edge bot metadata handling', () => {
     expect(html).toContain('rel="canonical" href="https://worthit.canlah.app/hdb/tampines"');
   });
 });
+
+describe('edge sitemap.xml', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const jsonResponse = (body, status = 200) => new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  it('returns 503 + Retry-After when the API returns 503 (DB swap)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Database not ready' }, 503)));
+    const res = await onRequest(makeContext('/sitemap.xml'));
+    expect(res.status).toBe(503);
+    expect(res.headers.get('retry-after')).toBe('3600');
+    expect(res.headers.get('cache-control')).toBeNull();
+  });
+
+  it('returns 503 when the API returns an empty urls list', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ urls: [] })));
+    const res = await onRequest(makeContext('/sitemap.xml'));
+    expect(res.status).toBe(503);
+    expect(res.headers.get('retry-after')).toBe('3600');
+  });
+
+  it('returns 503 when the API payload has no urls key', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({})));
+    const res = await onRequest(makeContext('/sitemap.xml'));
+    expect(res.status).toBe(503);
+  });
+
+  it('passes an abort signal to the sitemap fetch', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('The operation was aborted'));
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await onRequest(makeContext('/sitemap.xml'));
+    expect(res.status).toBe(503);
+    expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('serves the sitemap with 200 when the API returns urls', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({
+      urls: [{ url: 'https://worthit.canlah.app/hdb/bedok', lastmod: '2026-11-01', changefreq: 'weekly', priority: 0.8 }],
+    })));
+    const res = await onRequest(makeContext('/sitemap.xml'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('public, max-age=86400');
+    const xml = await res.text();
+    expect(xml).toContain('<loc>https://worthit.canlah.app/hdb/bedok</loc>');
+  });
+});
+
+describe('edge meta attribute escaping', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('escapes double quotes in description and og fields as &quot;', async () => {
+    const html = INDEX_HTML.replace('</head>',
+      '<meta property="og:title" content="x">\n<meta property="og:description" content="x">\n</head>');
+    const meta = {
+      title: 'Bedok HDB Resale | WorthIt',
+      description: 'The "best" estate',
+      og_title: 'Bedok "East"',
+      og_description: 'Say "hi"',
+      canonical: 'https://worthit.canlah.app/hdb/bedok',
+    };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
+      JSON.stringify(meta),
+      { headers: { 'Content-Type': 'application/json' } }
+    )));
+    const res = await onRequest(makeContext('/hdb/bedok', GOOGLEBOT, html));
+    expect(res.status).toBe(200);
+    const out = await res.text();
+    expect(out).toContain('<meta name="description" content="The &quot;best&quot; estate">');
+    expect(out).toContain('<meta property="og:title" content="Bedok &quot;East&quot;">');
+    expect(out).toContain('<meta property="og:description" content="Say &quot;hi&quot;">');
+    expect(out).not.toContain('content="The "best"');
+  });
+});

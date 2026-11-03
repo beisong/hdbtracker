@@ -460,27 +460,32 @@ def main():
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
 
-    # Check if URA data already exists
-    existing_ura = conn.execute(
-        "SELECT COUNT(*) FROM transactions WHERE dataset_source = 'URA_PRIVATE'"
-    ).fetchone()[0]
-    if existing_ura > 0:
-        print(f"\n⚠️  Found {existing_ura:,} existing URA records. Removing old data...")
-        conn.execute("DELETE FROM transactions WHERE dataset_source = 'URA_PRIVATE'")
-        conn.commit()
-        print("   ✅ Old URA data removed")
-
-    # Add new columns
+    # Schema changes first (idempotent, safe to commit on their own)
     print("\n📋 Checking database schema...")
     add_columns_if_needed(conn)
 
-    # Insert all batches
+    # Replace URA rows in ONE transaction: if anything below raises, roll back
+    # so the old private data survives and the script exits non-zero.
     total_inserted = 0
     total_coords = 0
-    for batch_num, projects in batches.items():
-        total_inserted += insert_transactions(conn, projects, batch_num)
-        total_coords += save_project_coords(conn, projects)
+    try:
+        existing_ura = conn.execute(
+            "SELECT COUNT(*) FROM transactions WHERE dataset_source = 'URA_PRIVATE'"
+        ).fetchone()[0]
+        if existing_ura > 0:
+            print(f"\n⚠️  Replacing {existing_ura:,} existing URA records...")
+            conn.execute("DELETE FROM transactions WHERE dataset_source = 'URA_PRIVATE'")
+
+        for batch_num, projects in batches.items():
+            total_inserted += insert_transactions(conn, projects, batch_num)
+            total_coords += save_project_coords(conn, projects)
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        print(f"\n❌ Failed while inserting URA data: {e}")
+        print("   Rolled back; existing private data left unchanged.")
+        sys.exit(1)
 
     print(f"\n📍 Saved coordinates for {total_coords:,} projects")
 

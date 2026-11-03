@@ -2610,19 +2610,26 @@ function compareSeoMetadata(route, meta, { freshnessNote, dateModified }) {
   const m24 = monthsAgoStr(24);
   const ftClause = cmp.flatType ? ' AND flat_type = ?' : '';
   const ftArgs = cmp.flatType ? [cmp.flatType] : [];
+  // True medians (SQLite has no MEDIAN), matching the "Median" figures the compare cards show
+  // from /api/area-overview. Rows are fetched per town and reduced with median().
   const curStmt = db.prepare(`
-    SELECT COUNT(*) as cnt, ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm
+    SELECT resale_price, price_per_sqm
     FROM transactions WHERE town = ? AND resale_price IS NOT NULL AND month >= ? AND dataset_source != 'URA_PRIVATE'${ftClause}
   `);
   const prevStmt = db.prepare(`
-    SELECT ROUND(AVG(price_per_sqm), 0) as avg_psm
+    SELECT price_per_sqm
     FROM transactions WHERE town = ? AND month >= ? AND month < ? AND dataset_source != 'URA_PRIVATE'${ftClause}
   `);
+  const medPsmOf = rows => {
+    const v = median(rows.map(r => r.price_per_sqm).filter(p => p != null));
+    return v == null ? null : Math.round(v);
+  };
   const stats = cmp.towns.map((town, i) => {
-    const cur = curStmt.get(town, m12, ...ftArgs) || {};
-    const prev = prevStmt.get(town, m24, m12, ...ftArgs) || {};
-    const yoy = cur.avg_psm && prev.avg_psm ? Math.round((cur.avg_psm - prev.avg_psm) / prev.avg_psm * 100) : null;
-    return { town, slug: cmp.slugs[i], display: titleCase(town), cnt: cur.cnt || 0, avgPrice: cur.avg_price || 0, avgPsm: cur.avg_psm || 0, yoy };
+    const cur = curStmt.all(town, m12, ...ftArgs);
+    const curPsm = medPsmOf(cur);
+    const prevPsm = medPsmOf(prevStmt.all(town, m24, m12, ...ftArgs));
+    const yoy = curPsm && prevPsm ? Math.round((curPsm - prevPsm) / prevPsm * 100) : null;
+    return { town, slug: cmp.slugs[i], display: titleCase(town), cnt: cur.length, medPrice: median(cur.map(r => r.resale_price)) || 0, medPsm: curPsm || 0, yoy };
   });
 
   const ftLabel = cmp.flatType ? flatTypeLabel(cmp.flatType) : null;
@@ -2635,10 +2642,10 @@ function compareSeoMetadata(route, meta, { freshnessNote, dateModified }) {
     ? `${ftLabel} HDB: ${names} Resale Prices ${year} | WorthIt`
     : `${names} HDB Resale Prices ${year} — Compared | WorthIt`;
   const subject = ftLabel ? `${ftLabel} HDB` : 'HDB';
-  const perTown = stats.filter(s => s.cnt > 0).map(s => `${s.display} ${fmtPrice(s.avgPrice)} (${fmtPsf(s.avgPsm)})`).join(' vs ');
+  const perTown = stats.filter(s => s.cnt > 0).map(s => `${s.display} ${fmtPrice(s.medPrice)} (${fmtPsf(s.medPsm)})`).join(' vs ');
   meta.description = clampDescription(perTown
     ? `${names} ${subject} resale, last 12 months: ${perTown}. Compare prices, trends & volume side by side.`
-    : `Compare ${subject} resale prices in ${names} side by side: average price, $psf, 1-year change and sales volume.`);
+    : `Compare ${subject} resale prices in ${names} side by side: median price, $psf, 1-year change and sales volume.`);
   meta.og_title = `${names}: ${subject} Resale Prices Compared`;
   meta.og_description = meta.description;
   meta.og_url = meta.canonical;
@@ -2650,8 +2657,8 @@ function compareSeoMetadata(route, meta, { freshnessNote, dateModified }) {
     return `
       <tr>
         <td style="${cell}"><a href="${href}" style="color:#3b82f6;text-decoration:none">${s.display}</a></td>
-        <td style="${cell};text-align:right">${s.cnt ? fmtPrice(s.avgPrice) : 'N/A'}</td>
-        <td style="${cell};text-align:right">${s.cnt ? fmtPsf(s.avgPsm) : 'N/A'}</td>
+        <td style="${cell};text-align:right">${s.cnt ? fmtPrice(s.medPrice) : 'N/A'}</td>
+        <td style="${cell};text-align:right">${s.cnt ? fmtPsf(s.medPsm) : 'N/A'}</td>
         <td style="${cell};text-align:right">${s.yoy != null ? `${s.yoy >= 0 ? '+' : ''}${s.yoy}%` : 'N/A'}</td>
         <td style="${cell};text-align:right">${s.cnt.toLocaleString()}</td>
       </tr>`;
@@ -2674,12 +2681,12 @@ function compareSeoMetadata(route, meta, { freshnessNote, dateModified }) {
   });
   meta.content_html = `<section id="seo-content" style="padding:2rem 1rem;margin-top:1rem;border-top:1px solid #e5e7eb">
   <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">${names}: ${subject} Resale Prices Compared</h2>
-  <p style="color:#4b5563;margin-bottom:1rem">Average ${subject} resale prices over the last 12 months, with year-on-year change in average price per sqft.</p>
+  <p style="color:#4b5563;margin-bottom:1rem">Median ${subject} resale prices over the last 12 months, with year-on-year change in median price per sqft.</p>
   <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-bottom:1.5rem">
     <thead><tr style="background:#f3f4f6">
       <th style="${th};text-align:left">Town</th>
-      <th style="${th};text-align:right">Avg Price</th>
-      <th style="${th};text-align:right">Avg PSF</th>
+      <th style="${th};text-align:right">Median Price</th>
+      <th style="${th};text-align:right">Median PSF</th>
       <th style="${th};text-align:right">1-Year Change</th>
       <th style="${th};text-align:right">Transactions (12m)</th>
     </tr></thead>

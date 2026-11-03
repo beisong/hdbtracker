@@ -326,3 +326,46 @@ describe('App.buildComparePath', () => {
     expect(r.flatType).toBe('EXECUTIVE');
   });
 });
+
+// /compare/ deep link opened before /api/towns answers (cold API): wait, don't fall through
+describe('handleUrlRoute — /compare/ waits for towns', () => {
+  let saved, loads;
+  beforeEach(() => {
+    saved = { towns: App._towns, loaded: App._townsLoaded, ready: App._townsReady, load: App.loadCompare, path: ctx.location.pathname };
+    loads = [];
+    App.loadCompare = async (towns, ft) => { loads.push({ towns, ft }); };
+  });
+  afterEach(() => {
+    Object.assign(App, { _towns: saved.towns, _townsLoaded: saved.loaded, _townsReady: saved.ready, loadCompare: saved.load });
+    ctx.location.pathname = saved.path;
+  });
+
+  const pendingTowns = () => {
+    let resolve;
+    App._towns = [];
+    App._townsLoaded = false;
+    App._townsReady = new Promise(r => { resolve = r; });
+    return () => { App._towns = ['BEDOK', 'TAMPINES']; App._townsLoaded = true; resolve(); };
+  };
+
+  it('routes to the comparison once towns arrive', async () => {
+    const arrive = pendingTowns();
+    ctx.location.pathname = '/compare/bedok-vs-tampines/4-room';
+    const routing = App.handleUrlRoute();
+    await Promise.resolve();
+    expect(loads).toHaveLength(0);
+    arrive();
+    await routing;
+    expect(loads).toEqual([{ towns: ['BEDOK', 'TAMPINES'], ft: '4 ROOM' }]);
+  });
+
+  it('drops the stale route if the URL changed while waiting', async () => {
+    const arrive = pendingTowns();
+    ctx.location.pathname = '/compare/bedok-vs-tampines';
+    const routing = App.handleUrlRoute();
+    ctx.location.pathname = '/';
+    arrive();
+    await routing;
+    expect(loads).toHaveLength(0);
+  });
+});

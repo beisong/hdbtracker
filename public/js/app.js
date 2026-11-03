@@ -75,6 +75,12 @@ const App = {
     // /compare/<a>-vs-<b>[-vs-<c>][/<flat-type>] — side-by-side town comparison
     const cmp = this.parseCompareRoute(path);
     if (cmp) {
+      // Opened before /api/towns has answered (cold API, see init()) — wait for the town list
+      // rather than falling through. _townsReady only exists once init() loads towns lazily.
+      if (!this._townsLoaded && this._townsReady) {
+        await this._townsReady;
+        if (window.location.pathname !== path) return; // user navigated away meanwhile
+      }
       const towns = cmp.slugs.map(s => this._townFromSlug(s));
       if (towns.every(Boolean)) {
         await this.loadCompare(towns, cmp.flatType);

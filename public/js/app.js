@@ -1646,7 +1646,7 @@ const App = {
         console.warn('Failed to load nearby transactions:', err.message);
       });
     } else {
-      // No pre-geocoded coords — fall back to geocoding via project street address
+      // No project coords — plot whatever transactions carry lat/lng (usually none)
       TransactionMap.load(this.allTransactions, this.lastResolvedData);
     }
   },

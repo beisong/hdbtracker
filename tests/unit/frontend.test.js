@@ -46,7 +46,6 @@ function makeBrowserContext() {
     API: {
       getStatus: () => Promise.resolve({}),
       getTowns: () => Promise.resolve({ towns: [], districts: [] }),
-      geocodeAddresses: () => Promise.resolve({ results: [] }),
     },
     Charts: {
       initDefaults: () => {},
@@ -205,30 +204,28 @@ describe('App.psmToPsf', () => {
   it('converts string input', () => expect(App.psmToPsf('10764')).toBe(1000));
 });
 
-// ─── Geocode address cap (client-server contract) ──────────────────────────
-// These tests guard the invariant: the client must never send more than 100
-// addresses to /api/geocode (the server rejects >100 with HTTP 400).
-// A violation causes silent map failure — the bug that shipped in commit 082d253.
-describe('TransactionMap.load — geocode address cap', () => {
-  function makeTx(i) {
-    return { block: String(i + 1), street_name: `STREET ${i + 1}`, month: '2025-01', resale_price: 500000, price_per_sqm: 5000 };
-  }
-
-  it('sends ≤ 100 addresses even when given 150 unique-address transactions', async () => {
-    let capturedAddresses = null;
-    ctx.API.geocodeAddresses = (addresses) => {
-      capturedAddresses = addresses;
-      throw new Error('spy stop');
-    };
-    const transactions = Array.from({ length: 150 }, (_, i) => makeTx(i));
-    await TransactionMap.load(transactions, {});
-    expect(capturedAddresses).not.toBeNull();
-    expect(capturedAddresses.length).toBeLessThanOrEqual(100);
+// ─── TransactionMap.load plots only transactions that carry coords ─────────
+describe('TransactionMap.load — no geocoding fallback', () => {
+  it('renders only transactions with lat/lng and never calls the network', async () => {
+    let rendered = null;
+    const origRender = TransactionMap.render;
+    TransactionMap.render = (markerData) => { rendered = markerData; };
+    try {
+      const txs = [
+        { block: '1', street_name: 'A ST', lat: 1.3, lng: 103.8 },
+        { block: '2', street_name: 'B ST' },
+        { block: '3', street_name: 'C ST', lat: 1.31, lng: 103.81 },
+      ];
+      await TransactionMap.load(txs, {});
+      expect(rendered.map(t => t.block)).toEqual(['1', '3']);
+    } finally {
+      TransactionMap.render = origRender;
+    }
   });
 });
 
 describe('TransactionMap.addNearbyHDB — pre-attached coords (no geocoding)', () => {
-  // Transactions now carry lat/lng from the server; addNearbyHDB must not call geocodeAddresses.
+  // Transactions carry lat/lng from the server.
   function makeTx(i) {
     return {
       block: String(i + 1), street_name: `STREET ${Math.floor(i / 5) + 1}`,
@@ -238,13 +235,10 @@ describe('TransactionMap.addNearbyHDB — pre-attached coords (no geocoding)', (
     };
   }
 
-  it('does not call geocodeAddresses — uses coords attached to transactions', () => {
-    let geocodeCalled = false;
-    ctx.API.geocodeAddresses = () => { geocodeCalled = true; return Promise.resolve({ results: [] }); };
+  it('uses coords attached to transactions', () => {
     TransactionMap.map = { on: () => {}, setView: () => {}, addLayer: () => {}, getBounds: () => ({ extend: () => {} }), fitBounds: () => {} };
     const transactions = Array.from({ length: 10 }, (_, i) => makeTx(i));
-    TransactionMap.addNearbyHDB(transactions);
-    expect(geocodeCalled).toBe(false);
+    expect(() => TransactionMap.addNearbyHDB(transactions)).not.toThrow();
   });
 
   it('caps at 200 transactions even when given more', () => {

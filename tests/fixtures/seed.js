@@ -7,6 +7,16 @@ const path = require('path');
 // Cross-platform temp path (Windows has no /tmp). vitest.config.js imports this
 // so the fixture DB and the server's DB_PATH always agree.
 const FIXTURE_DB_PATH = path.join(os.tmpdir(), 'worthornot-test.db');
+// Separate feedback store so feedback tests never touch a real feedback.db; wiped before and
+// after each run so the global daily cap starts from zero.
+const FEEDBACK_TEST_DB_PATH = path.join(os.tmpdir(), 'worthornot-feedback-test.db');
+
+function removeFeedbackTestDb() {
+  for (const suffix of ['', '-wal', '-shm']) {
+    const p = FEEDBACK_TEST_DB_PATH + suffix;
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  }
+}
 
 function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   // Remove existing file so we get a clean slate each test run
@@ -224,4 +234,4 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   };
 }
 
-module.exports = { createFixtureDb, FIXTURE_DB_PATH };
+module.exports = { createFixtureDb, FIXTURE_DB_PATH, FEEDBACK_TEST_DB_PATH, removeFeedbackTestDb };

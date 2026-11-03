@@ -18,6 +18,18 @@ Before executing any tasks, you MUST read the existing memory bank files located
 ### Maintenance Directive
 When a task is completed, or when the user asks you to update the status, you are responsible for updating `activeContext.md` and `progress.md` to reflect the current state of the workspace, what was changed, and what next steps remain. Do not alter architecture or tech stack notes unless structural changes were deliberately made.
 
+### Cloud / PR sessions (claude.ai/code)
+These override the Maintenance Directive above when you are working on a branch for a PR:
+- Never deploy (no Fly/Cloudflare credentials here anyway).
+- Do NOT edit `memory-bank/*`, the test counts in CLAUDE.md, or the `?v=N` cache-bust numbers —
+  the owner updates these after merging, to avoid conflicts between parallel PRs.
+- `npm test` must pass before you finish. For Python changes also run
+  `python -m py_compile scripts/<file>.py`.
+- `server/db/resale.db` is not in the repo; tests use the fixture DB in `tests/fixtures/`. Don't try
+  to download real data or call OneMap/data.gov.sg/URA.
+- If you add fixture rows to `tests/fixtures/seed.js`, update the count in `tests/integration/status.test.js`.
+- Keep changes scoped to the task; list assumptions in the PR description.
+
 ## Commands
 
 ```bash

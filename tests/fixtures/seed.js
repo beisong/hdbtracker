@@ -202,6 +202,10 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
     // Resold only at ≥95y remaining lease — not yet treated as past MOP.
     ['2020-01', 'January 2020 BTO', '2020-01-20', '2020-01-27', 'PUNGGOL FRESHVIEW', 'Punggol Freshview', 'PUNGGOL', null, 'Punggol Field', 1.3950, 103.9000, null, '4-Room', '4 ROOM', 90, 100, 300000, 330000],
     ['2012-03', 'March 2012 BTO', '2012-03-27', '2012-04-02', 'GOLDEN CLOVER', 'Golden Clover', 'TOA PAYOH', null, 'Kim Keat Avenue', 1.3310, 103.8560, null, 'Studio Apartment (Type 1)', null, 35, 50, 90000, 100000],
+    // Punctuated keys a de-slugged name can't recover ("@", "(PHASE 1)"). Phase 2's display_name
+    // differs from its key — /bto/<slug> deep links must resolve both exactly.
+    ['2007-12', 'December 2007 BTO', '2007-12-27', null, 'JADE SPRING @ YISHUN (PHASE 1)', 'Jade Spring @ Yishun (Phase 1)', 'YISHUN', null, 'Yishun Ring Road', 1.4300, 103.8400, null, '4-Room', '4 ROOM', null, 336, 183000, 246000],
+    ['2008-03', 'March 2008 BTO', '2008-03-26', null, 'JADE SPRING @ YISHUN', 'Jade Spring @ Yishun (Phase 2)', 'YISHUN', null, 'Yishun Ring Road', 1.4300, 103.8400, null, '4-Room', '4 ROOM', null, 192, 190000, 250000],
     ['2026-11', 'November 2026 BTO (upcoming)', null, null, 'TOA PAYOH SUMMIT', 'Toa Payoh Summit', 'TOA PAYOH', 'Plus', 'TBD', null, null, null, '', null, null, null, null, null],
   ]);
 

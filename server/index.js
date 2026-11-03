@@ -64,7 +64,7 @@ try {
   seedBtoProjects(DB_PATH);
 } catch (err) {
   console.warn(`⚠️  Database not found at ${DB_PATH}`);
-  console.warn(`   Run download scripts via SSH to populate it.`);
+  console.warn(`   Build it off-box (Refresh Data GitHub Actions workflow, or locally: python scripts/download_data.py) and upload it to ${DB_PATH}.`);
   console.warn(`   Server will start but API endpoints will return errors until DB is ready.`);
 }
 
@@ -250,7 +250,7 @@ app.get('/api/status', (req, res) => {
       res.json({ status: 'error', db_path: DB_PATH, message: err.message });
     }
   } else {
-    res.json({ status: 'no_database', db_path: DB_PATH, message: 'Run download scripts via SSH' });
+    res.json({ status: 'no_database', db_path: DB_PATH, message: 'Database missing. It is built off-box (Refresh Data GitHub Actions workflow) and uploaded to the volume, not built on this machine.' });
   }
 });
 
@@ -292,7 +292,7 @@ app.use('/api/', (req, res, next) => {
   if (!db) {
     return res.status(503).json({
       error: 'Database not ready',
-      message: 'Run download scripts via SSH: python3 /app/scripts/download_data.py',
+      message: 'Database missing. Run the Refresh Data GitHub Actions workflow (or build locally with python scripts/download_data.py and upload to the volume); the API image cannot build it.',
     });
   }
   next();
@@ -2405,8 +2405,10 @@ function titleCase(str) {
 
 function fmtPrice(p) {
   if (!p) return 'N/A';
-  if (p >= 1000000) return `$${(p / 1000000).toFixed(2)}M`;
-  if (p >= 1000) return `$${Math.round(p / 1000)}k`;
+  // Round to thousands first so e.g. 999,600 becomes $1.00M, not "$1000k".
+  const k = Math.round(p / 1000);
+  if (k >= 1000) return `$${(p / 1000000).toFixed(2)}M`;
+  if (p >= 1000) return `$${k}k`;
   return `$${Math.round(p)}`;
 }
 
@@ -3402,9 +3404,9 @@ if (require.main === module) {
       console.log(`   Database has ${count.toLocaleString()} transactions\n`);
     } else {
       console.log(`\n🏠 WorthIt Server running at http://localhost:${PORT}`);
-      console.log(`   ⚠️  No database — run download scripts via SSH\n`);
+      console.log(`   ⚠️  No database — build it off-box (Refresh Data workflow or scripts/download_data.py) and upload to ${DB_PATH}\n`);
     }
   });
 }
 
-module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween, launchStatus } };
+module.exports = { app, _test: { median, percentile, trendPct, compressStreetName, expandStreetName, haversineM, dealScore, computeStoreyFactor, monthsBetween, launchStatus, fmtPrice } };

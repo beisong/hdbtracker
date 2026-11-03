@@ -1967,6 +1967,8 @@ const App = {
   },
 
   async fetchAcResults(query) {
+    // Remember the latest query so a slower response for an older one can't overwrite the dropdown.
+    this._acLatestQuery = query;
     const q = query.toUpperCase();
     const items = [];
 
@@ -2008,6 +2010,7 @@ const App = {
       } catch (e) { /* ignore */ }
     }
 
+    if (this._acLatestQuery !== query) return; // a newer query started while we were awaiting
     this._acItems = items;
     this._acIndex = -1;
     this.renderAc();

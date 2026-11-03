@@ -1,7 +1,7 @@
 /**
  * WorthIt — Map Module
  * Combines TransactionMap (transaction markers, geocoding)
- * and MrtOverlay (MRT/LRT lines and stations).
+ * MrtNearest (nearest-station labels) and MrtOverlay (MRT/LRT lines and stations).
  */
 
 // ============================================================
@@ -294,6 +294,10 @@ const TransactionMap = {
       zoomControl: true,
       scrollWheelZoom: window.innerWidth >= 640,
     }).setView([1.3521, 103.8198], 13);
+
+    // Nearest-MRT line on every popup (computed on open; stations fetched once)
+    this.map.on('popupopen', e => MrtNearest.decoratePopup(e.popup));
+    MrtNearest.load();
 
     // Add themed tiles
     this.updateTheme();
@@ -595,6 +599,94 @@ const TransactionMap = {
 };
 
 // ============================================================
+// Nearest MRT station (popups + mobile transaction cards)
+// ============================================================
+
+const MrtNearest = {
+  stations: null,
+  _loading: null,
+  WALK_M_PER_MIN: 80,
+
+  /** Fetch /data/mrt_stations.json once; every caller shares the same promise. */
+  load() {
+    if (this.stations) return Promise.resolve(this.stations);
+    if (!this._loading) {
+      if (typeof fetch !== 'function') return Promise.resolve(null);
+      this._loading = fetch('/data/mrt_stations.json')
+        .then(resp => resp.json())
+        .then(stations => { this.stations = stations; return stations; })
+        .catch(err => {
+          console.warn('Failed to load MRT stations:', err.message);
+          this._loading = null; // allow a later retry
+          return null;
+        });
+    }
+    return this._loading;
+  },
+
+  /**
+   * Pure: nearest station to (lat, lng) by haversine distance.
+   * Returns { name, code, codes, distanceM, walkMin } or null when inputs/data are missing.
+   * `code` is the station's first code only (e.g. Bishan → "NS17", not "NS17/CC15").
+   */
+  nearestStation(lat, lng, stations = this.stations) {
+    lat = Number(lat);
+    lng = Number(lng);
+    if (!stations || !stations.length || !isFinite(lat) || !isFinite(lng) || (lat === 0 && lng === 0)) return null;
+    const R = 6371000;
+    const toRad = d => d * Math.PI / 180;
+    let best = null;
+    let bestD = Infinity;
+    for (const s of stations) {
+      const dLat = toRad(s.lat - lat);
+      const dLng = toRad(s.lng - lng);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat)) * Math.cos(toRad(s.lat)) * Math.sin(dLng / 2) ** 2;
+      const d = 2 * R * Math.asin(Math.sqrt(a));
+      if (d < bestD) { bestD = d; best = s; }
+    }
+    if (!best) return null;
+    return {
+      name: best.name,
+      code: (best.codes && best.codes[0]) || '',
+      codes: best.codes || [],
+      distanceM: Math.round(bestD),
+      walkMin: Math.max(1, Math.ceil(bestD / this.WALK_M_PER_MIN)),
+    };
+  },
+
+  /** "450m" (rounded to 10m) below 1km, "1.2km" above. */
+  formatDistance(m) {
+    return m < 1000 ? `${Math.round(m / 10) * 10}m` : `${(m / 1000).toFixed(1)}km`;
+  },
+
+  /** "🚇 450m to Bishan (NS17) · ~6 min walk", or '' when unknown. */
+  label(lat, lng) {
+    const n = this.nearestStation(lat, lng);
+    if (!n) return '';
+    return `🚇 ${this.formatDistance(n.distanceM)} to ${n.name}${n.code ? ` (${n.code})` : ''} · ~${n.walkMin} min walk`;
+  },
+
+  /**
+   * Map-level `popupopen` handler: appends the nearest-MRT line to any popup with
+   * known coords (HDB, private, search/BTO pin). Skips MRT station popups and
+   * popups already decorated (both carry a data-mrt-* attribute).
+   */
+  decoratePopup(popup) {
+    if (!popup) return;
+    const content = popup.getContent();
+    if (typeof content !== 'string' || content.includes('data-mrt-')) return;
+    if (!this.stations) {
+      this.load().then(s => { if (s && popup.isOpen()) this.decoratePopup(popup); });
+      return;
+    }
+    const ll = popup.getLatLng();
+    const text = ll ? this.label(ll.lat, ll.lng) : '';
+    if (!text) return;
+    popup.setContent(content + `<div data-mrt-near style="font-family:Inter,system-ui,sans-serif; font-size:11px; line-height:1.4; color:var(--popup-muted); margin-top:6px; padding-top:6px; border-top:1px solid var(--popup-border);">${text}</div>`);
+  },
+};
+
+// ============================================================
 // MRT Overlay
 // ============================================================
 
@@ -630,13 +722,8 @@ const MrtOverlay = {
     if (!map) return;
 
     if (!this.stations) {
-      try {
-        const resp = await fetch('/data/mrt_stations.json');
-        this.stations = await resp.json();
-      } catch (err) {
-        console.error('Failed to load MRT data:', err);
-        return;
-      }
+      this.stations = await MrtNearest.load();
+      if (!this.stations) return;
     }
 
     this.visible = !this.visible;
@@ -713,7 +800,7 @@ const MrtOverlay = {
       }).join('');
 
       marker.bindPopup(`
-        <div style="font-family:Inter,system-ui,sans-serif;font-size:12px;line-height:1.5;min-width:160px;">
+        <div data-mrt-station style="font-family:Inter,system-ui,sans-serif;font-size:12px;line-height:1.5;min-width:160px;">
           <div style="font-weight:700;font-size:13px;margin-bottom:4px;">🚇 ${station.name}</div>
           <div style="margin-bottom:6px;">${badges}</div>
           <div style="color:var(--popup-muted);font-size:11px;">Station codes: ${station.codes.join(' / ')}</div>

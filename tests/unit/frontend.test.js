@@ -80,15 +80,16 @@ function makeBrowserContext() {
   return ctx;
 }
 
-let App, TransactionMap, ctx;
+let App, TransactionMap, MrtNearest, ctx;
 
 beforeAll(() => {
   ctx = vm.createContext(makeBrowserContext());
 
   // Load map.js — append globalThis assignment to expose const TransactionMap
   const mapSrc = fs.readFileSync(path.join(__dirname, '../../public/js/map.js'), 'utf8');
-  vm.runInContext(mapSrc + '\nglobalThis.TransactionMap = TransactionMap;', ctx);
+  vm.runInContext(mapSrc + '\nglobalThis.TransactionMap = TransactionMap; globalThis.MrtNearest = MrtNearest;', ctx);
   TransactionMap = ctx.TransactionMap;
+  MrtNearest = ctx.MrtNearest;
 
   // Load app.js — append globalThis assignment to expose const App
   const appSrc = fs.readFileSync(path.join(__dirname, '../../public/js/app.js'), 'utf8');
@@ -280,4 +281,94 @@ describe('App.parsePrice', () => {
   it('returns null for empty input', () => expect(App.parsePrice('')).toBe(null));
   it('returns null for garbage', () => expect(App.parsePrice('abc')).toBe(null));
   it('returns null for zero/negative', () => expect(App.parsePrice('-5')).toBe(null));
+});
+
+// ─── MrtNearest.nearestStation ────────────────────────────────────────────
+describe('MrtNearest.nearestStation', () => {
+  const stations = JSON.parse(fs.readFileSync(path.join(__dirname, '../../public/data/mrt_stations.json'), 'utf8'));
+
+  it('returns null before stations are loaded / with no data', () => {
+    expect(MrtNearest.nearestStation(1.35, 103.85, null)).toBeNull();
+    expect(MrtNearest.nearestStation(1.35, 103.85, [])).toBeNull();
+  });
+
+  it('returns null for missing or non-numeric coords', () => {
+    expect(MrtNearest.nearestStation(null, null, stations)).toBeNull();
+    expect(MrtNearest.nearestStation(undefined, 103.85, stations)).toBeNull();
+    expect(MrtNearest.nearestStation('abc', 103.85, stations)).toBeNull();
+  });
+
+  it('exact station coords → that station, 0m, 1 min walk', () => {
+    const n = MrtNearest.nearestStation(1.3506, 103.8489, stations);
+    expect(n.name).toBe('Bishan');
+    expect(n.distanceM).toBe(0);
+    expect(n.walkMin).toBe(1);
+  });
+
+  it('uses only the first code of an interchange', () => {
+    const n = MrtNearest.nearestStation(1.3506, 103.8489, stations);
+    expect(n.code).toBe('NS17');
+    expect(n.codes).toEqual(['NS17', 'CC15']);
+  });
+
+  it('Bishan HDB block (~450m away) → Bishan, 400–500m band, walk = ceil(m / 80)', () => {
+    // 0.004° of latitude ≈ 445m due north of Bishan station
+    const n = MrtNearest.nearestStation(1.3546, 103.8489, stations);
+    expect(n.name).toBe('Bishan');
+    expect(n.distanceM).toBeGreaterThanOrEqual(400);
+    expect(n.distanceM).toBeLessThan(500);
+    expect(n.walkMin).toBe(Math.ceil(n.distanceM / 80));
+    expect(n.walkMin).toBe(6);
+  });
+
+  it('Tampines Central → Tampines within 300m', () => {
+    const n = MrtNearest.nearestStation(1.3530, 103.9440, stations);
+    expect(n.name).toBe('Tampines');
+    expect(n.distanceM).toBeLessThan(300);
+  });
+
+  it('defaults to the loaded station list', () => {
+    const prev = MrtNearest.stations;
+    MrtNearest.stations = stations;
+    try {
+      expect(MrtNearest.nearestStation(1.2836, 103.8517).name).toBe('Raffles Place');
+    } finally {
+      MrtNearest.stations = prev;
+    }
+  });
+});
+
+describe('MrtNearest.label', () => {
+  const stations = JSON.parse(fs.readFileSync(path.join(__dirname, '../../public/data/mrt_stations.json'), 'utf8'));
+
+  it('formats "🚇 <dist> to <name> (<code>) · ~N min walk"', () => {
+    const prev = MrtNearest.stations;
+    MrtNearest.stations = stations;
+    try {
+      expect(MrtNearest.label(1.3546, 103.8489)).toBe('🚇 450m to Bishan (NS17) · ~6 min walk');
+    } finally {
+      MrtNearest.stations = prev;
+    }
+  });
+
+  it('is empty when coords are unknown or stations are not loaded', () => {
+    const prev = MrtNearest.stations;
+    MrtNearest.stations = stations;
+    try {
+      expect(MrtNearest.label(null, null)).toBe('');
+    } finally {
+      MrtNearest.stations = prev;
+    }
+    MrtNearest.stations = null;
+    try {
+      expect(MrtNearest.label(1.3546, 103.8489)).toBe('');
+    } finally {
+      MrtNearest.stations = prev;
+    }
+  });
+
+  it('formatDistance switches to km at 1000m', () => {
+    expect(MrtNearest.formatDistance(449)).toBe('450m');
+    expect(MrtNearest.formatDistance(1234)).toBe('1.2km');
+  });
 });

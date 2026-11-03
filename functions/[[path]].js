@@ -63,6 +63,7 @@ const SPA_ROUTE_PATTERNS = [
   /^\/postal\/\d{6}$/,
   /^\/check$/,
   /^\/check\/\d{6}$/,
+  /^\/compare\/[^/]+(?:\/[^/]+)?$/,
 ];
 
 // Escape a value for use inside a double-quoted HTML attribute.

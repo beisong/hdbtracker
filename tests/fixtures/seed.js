@@ -201,6 +201,9 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   // BEDOK SOUTH AVE 1 blocks — ~2km away from BEDOK NORTH ST 1
   insertBlock.run('300', 'BEDOK SOUTH AVE 1', 1.3100, 103.9200, '460300');
   insertBlock.run('400', 'BEDOK SOUTH AVE 1', 1.3102, 103.9202, '460400');
+  // TOA PAYOH blocks — give the town a centroid for /compare/ sitemap pairs (~9km from Bedok)
+  insertBlock.run('10', 'TOA PAYOH RISE', 1.3350, 103.8480, '310010');
+  insertBlock.run('30', 'TOA PAYOH CTRL 1', 1.3340, 103.8500, '310030');
 
   // BTO projects — one priced (inside the BEDOK NORTH ST 1 cluster, so the 1000m
   // comps ladder finds the 3-ROOM/4-ROOM resale rows above), one upcoming (no

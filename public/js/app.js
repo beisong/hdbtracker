@@ -147,6 +147,22 @@ const App = {
   async handleUrlRoute() {
     const path = window.location.pathname;
 
+    // /compare/<a>-vs-<b>[-vs-<c>][/<flat-type>] — side-by-side town comparison
+    const cmp = this.parseCompareRoute(path);
+    if (cmp) {
+      // Opened before /api/towns has answered (cold API, see init()) — wait for the town list
+      // rather than falling through. _townsReady only exists once init() loads towns lazily.
+      if (!this._townsLoaded && this._townsReady) {
+        await this._townsReady;
+        if (window.location.pathname !== path) return; // user navigated away meanwhile
+      }
+      const towns = cmp.slugs.map(s => this._townFromSlug(s));
+      if (towns.every(Boolean)) {
+        await this.loadCompare(towns, cmp.flatType);
+        return;
+      }
+    }
+
     // /hdb/<town-slug> and /hdb/<town-slug>/<flat-type>
     const hdbMatch = path.match(/^\/hdb\/([^/]+)(?:\/([^/]+))?$/);
     if (hdbMatch) {
@@ -323,6 +339,8 @@ const App = {
       path = `/bto/${slug}`;
     } else if (type === 'bto-index') {
       path = '/bto';
+    } else if (type === 'compare' && data?.path) {
+      path = data.path;
     }
 
     // Update browser URL (no reload)
@@ -476,6 +494,9 @@ const App = {
     const fab = document.getElementById('new-search-fab');
     if (jumpBar) jumpBar.classList.remove('hidden');
     if (fab) fab.classList.remove('hidden');
+    // Leaving a town comparison; renderResults() re-shows "+ Compare" for HDB town results
+    document.getElementById('compare-section')?.classList.add('hidden');
+    document.getElementById('compare-add-select')?.classList.add('hidden');
     // Reset the valuation card — postal searches re-populate it after facts load
     this._val = null;
     const valSec = document.getElementById('valuation-section');
@@ -857,6 +878,8 @@ const App = {
       // Town-name search — load district-wide private summary
       this.loadPrivateSummaryForTown(data.town);
     }
+
+    this._showCompareButton(data.town);
   },
 
   // Town → district mapping (mirrors server-side TOWN_TO_DISTRICTS)
@@ -1978,6 +2001,7 @@ const App = {
   async renderBtoIndex() {
     const data = await API.getBtoLaunches();
     document.getElementById('results-section')?.classList.add('hidden');
+    document.getElementById('compare-section')?.classList.add('hidden');
     const section = document.getElementById('bto-index-section');
     section.classList.remove('hidden');
     section.innerHTML = data.launches.map(launch => {
@@ -2005,6 +2029,199 @@ const App = {
       </div>`;
     }).join('');
     this.updateSeoForSearch('bto-index', {});
+  },
+
+  // ─── Town comparison (/compare/<a>-vs-<b>[-vs-<c>][/<flat-type>]) ───────────
+
+  COMPARE_FLAT_TYPES: { '2-room': '2 ROOM', '3-room': '3 ROOM', '4-room': '4 ROOM', '5-room': '5 ROOM', 'executive': 'EXECUTIVE' },
+  // Tailwind classes matching Charts.seriesPalette, so each card's dot matches its trend line
+  COMPARE_DOT_CLASSES: ['bg-brand-500', 'bg-purple-500', 'bg-amber-500'],
+  _compare: null, // { towns: [...], flatType } for the comparison on screen
+
+  _slugify(name) {
+    return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  },
+
+  _titleCase(str) {
+    return String(str).replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+  },
+
+  /**
+   * Parse a /compare/ path → { slugs, ftSlug, flatType } (slugs in URL order), or null when it
+   * isn't a 2–3 distinct-town comparison with an optional known flat-type slug. Pure — town
+   * slugs are resolved against the town list separately (_townFromSlug).
+   */
+  parseCompareRoute(path) {
+    const m = String(path || '').match(/^\/compare\/([^/]+)(?:\/([^/]+))?\/?$/);
+    if (!m) return null;
+    const slugs = m[1].toLowerCase().split('-vs-');
+    if (slugs.length < 2 || slugs.length > 3 || slugs.some(s => !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s))) return null;
+    if (new Set(slugs).size !== slugs.length) return null;
+    const ftSlug = m[2] ? m[2].toLowerCase() : null;
+    if (ftSlug && !this.COMPARE_FLAT_TYPES[ftSlug]) return null;
+    return { slugs, ftSlug, flatType: ftSlug ? this.COMPARE_FLAT_TYPES[ftSlug] : null };
+  },
+
+  /** Canonical /compare/ path: town slugs sorted alphabetically, so a-vs-b and b-vs-a match */
+  buildComparePath(towns, flatType = null) {
+    const slugs = towns.map(t => this._slugify(t)).sort();
+    const ftSlug = this._compareFtSlug(flatType);
+    return `/compare/${slugs.join('-vs-')}${ftSlug ? `/${ftSlug}` : ''}`;
+  },
+
+  _compareFtSlug(flatType) {
+    return flatType ? Object.keys(this.COMPARE_FLAT_TYPES).find(k => this.COMPARE_FLAT_TYPES[k] === flatType) || null : null;
+  },
+
+  _townFromSlug(slug) {
+    return (this._towns || []).find(t => this._slugify(t) === slug) || null;
+  },
+
+  /** "+ Compare" select on HDB town results — lists every other town */
+  _showCompareButton(town) {
+    const sel = document.getElementById('compare-add-select');
+    if (!sel || !town) return;
+    sel.innerHTML = '<option value="">+ Compare</option>' + (this._towns || [])
+      .filter(t => t !== town)
+      .map(t => `<option value="${t}">${this._titleCase(t)}</option>`).join('');
+    sel.value = '';
+    sel.classList.remove('hidden');
+    sel.onchange = () => {
+      const other = sel.value;
+      sel.value = '';
+      if (!other) return;
+      const flatType = this.selectedFlatTypes.size === 1 ? [...this.selectedFlatTypes][0] : null;
+      this.track('compare_start', { town, other_town: other });
+      this.loadCompare([town, other], flatType);
+    };
+  },
+
+  /** Fetch /api/area-overview for each town in parallel, then render the comparison */
+  async loadCompare(towns, flatType = null) {
+    const unique = [...new Set(towns)].sort((a, b) => this._slugify(a).localeCompare(this._slugify(b)));
+    if (unique.length < 2 || unique.length > 3) return;
+    const subtitle = document.getElementById('compare-subtitle');
+    if (subtitle) subtitle.textContent = 'Loading…';
+    try {
+      const results = await Promise.all(unique.map(t => API.getAreaOverview(t, flatType || 'ALL')));
+      this.renderCompareResults(results, flatType);
+    } catch (err) {
+      console.error('Compare error:', err);
+      this.showAlert(`Comparison failed: ${err.message}`);
+    }
+  },
+
+  renderCompareResults(datas, flatType = null) {
+    const towns = datas.map(d => d.town);
+    this._compare = { towns, flatType };
+    this.track('view_results', { result_type: 'compare', location: towns.join(' vs '), flat_type: flatType || 'ALL' });
+
+    // Exclusive view — hide the single-area results and the BTO index
+    this.currentTown = null; // flat-type chips must not re-run a town search behind the comparison
+    document.getElementById('results-section')?.classList.add('hidden');
+    document.getElementById('bto-index-section')?.classList.add('hidden');
+    const section = document.getElementById('compare-section');
+    section.classList.remove('hidden');
+    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    document.getElementById('new-search-fab')?.classList.remove('hidden');
+
+    const names = towns.map(t => this._titleCase(t));
+    const ftLabel = flatType ? this._titleCase(flatType) : 'All flat types';
+    document.getElementById('compare-title').textContent = names.join(' vs ');
+    document.getElementById('compare-subtitle').textContent =
+      `${ftLabel} • HDB resale • Data as of ${this.formatMonth(datas[0]?.data_as_of)}`;
+    document.getElementById('compare-share-btn').onclick = () => this.share();
+
+    // Lowest $/sqft among towns with recent sales gets a badge (only meaningful with 2+)
+    const psfs = datas.map(d => d.town_summary?.total_transactions_12m ? this.psmToPsf(d.town_summary.median_psm) : null);
+    const valid = psfs.filter(p => p != null);
+    const lowestPsf = valid.length > 1 ? Math.min(...valid) : null;
+    const ftSlug = this._compareFtSlug(flatType);
+
+    const fmtPct = (v) => {
+      if (v === null || v === undefined || v === 0) return '<span class="text-gray-400">--</span>';
+      const cls = v > 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400';
+      return `<span class="${cls}">${v > 0 ? '+' : ''}${v}%</span>`;
+    };
+    const stat = (label, value) => `
+      <div>
+        <div class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">${label}</div>
+        <div class="text-lg sm:text-xl font-bold">${value}</div>
+      </div>`;
+
+    document.getElementById('compare-cards').innerHTML = datas.map((d, i) => {
+      const ts = d.town_summary || {};
+      const has = ts.total_transactions_12m > 0;
+      const slug = this._slugify(d.town);
+      const href = `/hdb/${slug}${ftSlug ? `/${ftSlug}` : ''}`;
+      const removeBtn = datas.length > 2
+        ? `<button data-remove-town="${d.town}" class="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors" aria-label="Remove ${names[i]}" title="Remove">
+             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+           </button>` : '';
+      const badge = lowestPsf != null && psfs[i] === lowestPsf
+        ? '<span class="badge-positive rounded-md px-2 py-0.5 text-xs font-semibold whitespace-nowrap shrink-0">Lowest $/sqft</span>' : '';
+      return `
+      <div class="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-white/5 p-4 sm:p-6 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+        <div class="flex items-start justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-2.5 h-2.5 rounded-full shrink-0 ${this.COMPARE_DOT_CLASSES[i % this.COMPARE_DOT_CLASSES.length]}"></span>
+            <a href="${href}" class="text-base sm:text-lg font-semibold truncate hover:text-brand-500 transition-colors">${names[i]}</a>
+            ${badge}
+          </div>
+          ${removeBtn}
+        </div>
+        ${has ? `
+        <div class="grid grid-cols-2 gap-3">
+          ${stat('Median Price', `$${this.formatNumber(ts.median_price)}`)}
+          ${stat('Median $/sqft', `$${this.formatNumber(this.psmToPsf(ts.median_psm))}`)}
+          ${stat('1-Year Change', fmtPct(d.price_trend?.['1y_change']))}
+          ${stat('Sales (12m)', this.formatNumber(ts.total_transactions_12m))}
+          ${flatType ? '' : stat('Most Popular', ts.most_popular_type ? this._titleCase(ts.most_popular_type) : '--')}
+        </div>` : `<p class="text-sm text-gray-400 dark:text-gray-500">No ${flatType ? this._titleCase(flatType) + ' ' : ''}resale transactions in the last 12 months.</p>`}
+      </div>`;
+    }).join('');
+    document.querySelectorAll('#compare-cards [data-remove-town]').forEach(btn => {
+      btn.addEventListener('click', () => this.loadCompare(towns.filter(t => t !== btn.dataset.removeTown), flatType));
+    });
+
+    this.renderCompareControls();
+
+    Charts.renderTrendChart({
+      canvasId: 'compare-trend-chart',
+      series: datas.map((d, i) => ({ label: names[i], data: d.trend_data || [] })),
+    });
+
+    // Canonical URL. Re-entering the same comparison in a different order (e.g. a hand-typed
+    // /compare/b-vs-a, or back/forward onto it) normalises in place — pushing would trap Back.
+    const path = this.buildComparePath(towns, flatType);
+    const cur = this.parseCompareRoute(window.location.pathname);
+    if (cur && window.location.pathname !== path &&
+        [...cur.slugs].sort().join() === towns.map(t => this._slugify(t)).sort().join() &&
+        (cur.flatType || null) === (flatType || null)) {
+      history.replaceState({ type: 'compare', path }, '', path);
+    }
+    this.updateSeoForSearch('compare', { path });
+  },
+
+  /** "+ Add town" (up to 3) and flat-type selects for the comparison on screen */
+  renderCompareControls() {
+    const el = document.getElementById('compare-controls');
+    if (!el || !this._compare) return;
+    const { towns, flatType } = this._compare;
+    const selCls = 'px-3 py-2 rounded-lg text-sm bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-200 hover:border-brand-500/50 cursor-pointer outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500';
+    const addOptions = (this._towns || []).filter(t => !towns.includes(t))
+      .map(t => `<option value="${t}">${this._titleCase(t)}</option>`).join('');
+    const ftOptions = [['', 'All flat types'], ...Object.values(this.COMPARE_FLAT_TYPES).map(ft => [ft, this._titleCase(ft)])]
+      .map(([v, l]) => `<option value="${v}"${(flatType || '') === v ? ' selected' : ''}>${l}</option>`).join('');
+    el.innerHTML = `
+      ${towns.length < 3 ? `<select id="compare-more-select" aria-label="Add a town to compare" class="${selCls}"><option value="">+ Add town</option>${addOptions}</select>` : ''}
+      <select id="compare-ft-select" aria-label="Flat type" class="${selCls}">${ftOptions}</select>`;
+    document.getElementById('compare-more-select')?.addEventListener('change', (e) => {
+      if (e.target.value) this.loadCompare([...towns, e.target.value], flatType);
+    });
+    document.getElementById('compare-ft-select').addEventListener('change', (e) => {
+      this.loadCompare(towns, e.target.value || null);
+    });
   },
 
   estimateBedrooms(areaSqm, propertyType) {

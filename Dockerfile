@@ -1,15 +1,13 @@
 # WorthIt - Fly.io Dockerfile
-# Node.js + Python for data pipeline scripts
+# Node.js API (data pipeline runs in GitHub Actions, not here)
 
 FROM node:20-slim
 
-# Install Python 3, pip, and build tools (needed for better-sqlite3 native addon)
+# Python 3 + build tools: only for the better-sqlite3 native build fallback (node-gyp).
+# The data pipeline runs in GitHub Actions, never on Fly, so no pip/venv/requirements.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
-    python3-pip \
-    python3-venv \
     build-essential \
-    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -18,10 +16,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 RUN npm install --omit=dev
-
-# Install Python dependencies
-COPY requirements.txt ./
-RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
 # Copy application code (no public/ — frontend served by Cloudflare Pages)
 COPY server/ ./server/

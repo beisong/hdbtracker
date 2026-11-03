@@ -55,7 +55,6 @@ fly auth login
 
 ```bash
 fly launch           # Follow prompts (choose region, set app name)
-fly secrets set ONEMAP_TOKEN=your_token_here   # optional, for geocoding
 ```
 
 ### Deploy
@@ -227,8 +226,7 @@ curl -I https://worthit.canlah.app
 | `GET /api/resolve?q=` | Resolve town name or postal code |
 | `GET /api/area-overview?town=` | Main HDB market overview endpoint (accepts `lat`/`lng` for 500m radius) |
 | `GET /api/valuation?postal=&price=` | Deal Score + fair value from storey-adjusted nearby comps |
-| `POST /api/geocode` | Batch geocode addresses |
-| `POST /api/feedback` | In-app feedback (rate-limited, separate feedback.db) |
+| `POST /api/feedback` | In-app feedback (5/IP/hour + 200/day global cap, separate feedback.db) |
 | `GET /api/private/projects?q=` | Search private property projects |
 | `GET /api/private/project-overview?project=` | Private project details |
 | `GET /api/private/property-types` | List private property types |

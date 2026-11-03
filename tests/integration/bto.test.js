@@ -85,6 +85,44 @@ describe('GET /api/bto/project-overview', () => {
   });
 });
 
+describe('GET /api/bto/project-overview?slug= (exact deep-link lookup)', () => {
+  it('resolves a slug whose key contains "(PHASE 1)" and "@"', async () => {
+    const res = await request.get('/api/bto/project-overview?slug=jade-spring-yishun-phase-1');
+    expect(res.status).toBe(200);
+    expect(res.body.project).toBe('JADE SPRING @ YISHUN (PHASE 1)');
+    expect(res.body.flats).toHaveLength(1);
+  });
+
+  it('resolves via display_name when it differs from the project key ("@" key, Phase 2 label)', async () => {
+    const res = await request.get('/api/bto/project-overview?slug=jade-spring-yishun-phase-2');
+    expect(res.status).toBe(200);
+    expect(res.body.project).toBe('JADE SPRING @ YISHUN');
+    expect(res.body.display_name).toBe('Jade Spring @ Yishun (Phase 2)');
+  });
+
+  it('resolves a plain slug', async () => {
+    const res = await request.get('/api/bto/project-overview?slug=bedok-vista-crest');
+    expect(res.status).toBe(200);
+    expect(res.body.project).toBe('BEDOK VISTA CREST');
+  });
+
+  it('does not fuzzy-match a partial slug', async () => {
+    const res = await request.get('/api/bto/project-overview?slug=jade-spring');
+    expect(res.status).toBe(404);
+  });
+
+  it('unknown slug returns the not-found 404, not a 400', async () => {
+    const res = await request.get('/api/bto/project-overview?slug=no-such-bto');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Project not found');
+  });
+
+  it('rejects an over-long slug', async () => {
+    const res = await request.get(`/api/bto/project-overview?slug=${'a'.repeat(201)}`);
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('GET /api/bto/project-overview — project_resale', () => {
   it('returns the project\'s own resales once past MOP', async () => {
     const res = await request.get('/api/bto/project-overview?project=BEDOK+NORTH+GROVE');

@@ -217,10 +217,12 @@ const App = {
       return;
     }
 
-    // /bto/<project-slug> — mirrors the /private/<slug> pattern exactly: reconstruct
-    // a human-readable guess and let search() + /api/resolve recover it.
+    // /bto/<project-slug> — resolve the exact project server-side first (mirrors /private/<slug>).
+    // A de-slugged guess can't recover "@", "&", "(PHASE 1)" or apostrophes, and /api/resolve
+    // only exact-matches BTO keys, so search() is just the fallback for slugs that don't round-trip.
     const btoMatch = path.match(/^\/bto\/(.+)$/);
     if (btoMatch) {
+      if (await this._openBtoBySlug(btoMatch[1])) return;
       const projectName = btoMatch[1].replace(/-/g, ' ');
       document.getElementById('search-input').value = projectName.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
       await this.search();
@@ -257,6 +259,28 @@ const App = {
       document.getElementById('search-input').value = q;
       await this.search();
     }
+  },
+
+  /** Open a BTO project by its exact slug; returns false (nothing rendered) when no project matches */
+  async _openBtoBySlug(slug) {
+    try {
+      const data = await API.getBtoProjectOverviewBySlug(slug);
+      if (!data || data.error) return false;
+      document.getElementById('search-input').value = data.display_name || data.project;
+      this._showBtoProject(data);
+      return true;
+    } catch (err) {
+      console.error('BTO slug lookup failed:', err);
+      return false;
+    }
+  },
+
+  _showBtoProject(data) {
+    this.currentTown = null;
+    this.pinnedBlock = null;
+    this.currentPostalCode = null;
+    this.lastResolvedData = { lat: data.lat || null, lng: data.lng || null, town: data.town, projectName: data.project, isBto: true };
+    this.renderBtoResults(data);
   },
 
   /** Show a private project overview; lat/lng override the project's own coordinates (postal lookups) */
@@ -627,11 +651,7 @@ const App = {
       if (resolved.resolved && resolved.type === 'bto') {
         const data = await API.getBtoProjectOverview(resolved.project);
         if (data && !data.error) {
-          this.currentTown = null;
-          this.pinnedBlock = null;
-          this.currentPostalCode = null;
-          this.lastResolvedData = { lat: data.lat || null, lng: data.lng || null, town: data.town, projectName: data.project, isBto: true };
-          this.renderBtoResults(data);
+          this._showBtoProject(data);
           return;
         }
         this.track('search_failed', { query: input, failure_reason: 'bto_overview_missing' });
@@ -1248,6 +1268,15 @@ const App = {
     };
 
     const mobileCards = [];
+    // Nearest-MRT line on mobile cards (hidden until stations load / when coords are unknown)
+    const _hasCoords = tx => tx.lat != null && tx.lng != null;
+    const _fillMrt = (card, tx) => {
+      const el = card.querySelector('.tx-mrt');
+      const text = _hasCoords(tx) ? MrtNearest.label(tx.lat, tx.lng) : '';
+      if (!el || !text) return;
+      el.textContent = text;
+      el.hidden = false;
+    };
 
     transactions.forEach(tx => {
       const address = `${tx.block} ${tx.street_name || ''} Singapore`.trim();
@@ -1316,10 +1345,18 @@ const App = {
           <span>Lease ${leaseDisplay}</span>
           ${(!tx.is_private && tx.block && tx.street_name) ? '<button class="val-row-btn ml-auto px-2 py-1 rounded-lg text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 active:bg-emerald-500/20 whitespace-nowrap">💰 Check a price</button>' : ''}
         </div>
+        <div class="tx-mrt mt-1.5 text-xs text-gray-500 dark:text-gray-400" hidden></div>
       `;
+      _fillMrt(card, tx);
+      card._tx = tx;
       card.querySelector('.val-row-btn')?.addEventListener('click', (e) => { e.stopPropagation(); this.checkLikeThis(tx); });
       mobileCards.push(card);
     });
+
+    // Stations not fetched yet — fill the MRT lines once they arrive (one shared fetch)
+    if (!MrtNearest.stations && transactions.some(_hasCoords)) {
+      MrtNearest.load().then(s => { if (s) mobileCards.forEach(card => _fillMrt(card, card._tx)); });
+    }
 
     // Paginate mobile cards: show first 25, then "Show more" button
     const MOBILE_PAGE = 25;
@@ -1692,6 +1729,9 @@ const App = {
       flat_type: tx.property_type || tx.flat_type,
       block: proj.project,
       street_name: proj.street_name,
+      // Project coords (for the nearest-MRT line on mobile cards)
+      lat: tx.lat ?? this.lastResolvedData?.lat ?? null,
+      lng: tx.lng ?? this.lastResolvedData?.lng ?? null,
       remaining_lease_years: tx.remaining_lease_years,
       is_freehold: tx.tenure === 'FREEHOLD',
     }));
@@ -1726,7 +1766,7 @@ const App = {
         console.warn('Failed to load nearby transactions:', err.message);
       });
     } else {
-      // No pre-geocoded coords — fall back to geocoding via project street address
+      // No project coords — plot whatever transactions carry lat/lng (usually none)
       TransactionMap.load(this.allTransactions, this.lastResolvedData);
     }
   },
@@ -2027,6 +2067,8 @@ const App = {
   },
 
   async fetchAcResults(query) {
+    // Remember the latest query so a slower response for an older one can't overwrite the dropdown.
+    this._acLatestQuery = query;
     const q = query.toUpperCase();
     const items = [];
 
@@ -2063,11 +2105,12 @@ const App = {
         const results = await API.searchBtoProjects(query, 3);
         for (const p of (results.projects || [])) {
           const townLabel = p.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
-          items.push({ type: 'bto', label: p.display_name || p.project, sub: `${townLabel} · ${p.classification ? p.classification + ' ' : ''}BTO`, value: p.display_name || p.project, icon: '🏗️' });
+          items.push({ type: 'bto', label: p.display_name || p.project, sub: `${townLabel} · ${p.classification ? p.classification + ' ' : ''}BTO`, value: p.display_name || p.project, slug: (p.display_name || p.project).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), icon: '🏗️' });
         }
       } catch (e) { /* ignore */ }
     }
 
+    if (this._acLatestQuery !== query) return; // a newer query started while we were awaiting
     this._acItems = items;
     this._acIndex = -1;
     this.renderAc();
@@ -2119,11 +2162,18 @@ const App = {
     }
   },
 
-  selectAc(index) {
+  async selectAc(index) {
     const item = this._acItems[index];
     if (!item) return;
     document.getElementById('search-input').value = item.value;
     this.hideAc();
+    // BTO picks open by exact slug: the label is the display_name, which can differ from the
+    // project key /api/resolve exact-matches ("Jade Spring @ Yishun (Phase 2)" vs "JADE SPRING @ YISHUN").
+    // Track only on success — on a miss, search() fires its own 'search' event (no double count).
+    if (item.type === 'bto' && item.slug && await this._openBtoBySlug(item.slug)) {
+      this.track('search', { search_type: 'bto', query: item.value });
+      return;
+    }
     this.search();
   },
 

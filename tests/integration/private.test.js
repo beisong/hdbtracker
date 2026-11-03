@@ -68,7 +68,7 @@ describe('GET /api/private/project-overview', () => {
     }
   });
 
-  // Contract: app.js uses coordinates for map pre-geocoding; missing → geocode fallback (slow).
+  // Contract: app.js uses coordinates to place the project on the map; missing → no project pin.
   it('returns coordinates for a project that has project_coords', async () => {
     const res = await request.get('/api/private/project-overview?project=SKY+HABITAT');
     expect(res.body).toHaveProperty('coordinates');

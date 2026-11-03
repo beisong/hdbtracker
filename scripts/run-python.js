@@ -80,5 +80,6 @@ const child = spawn(pythonBin, [scriptPath, ...args.slice(1)], {
 });
 
 child.on('exit', (code) => {
-  process.exit(code || 0);
+  // code is null when the child is killed by a signal (e.g. OOM) — treat as failure
+  process.exit(code === null ? 1 : code);
 });

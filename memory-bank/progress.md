@@ -36,7 +36,7 @@
 - ✅ IndexNow ping on every frontend deploy; Cloudflare Crawler Hints on.
 
 **Platform**
-- ✅ Cloudflare Pages frontend + Fly.io API + SQLite on a Fly volume; $0/month.
+- ✅ Cloudflare Pages frontend + Fly.io API + SQLite on a Fly volume; ~US$2–3/month (always-on Fly machine).
 - ✅ Daily automated data refresh (GitHub Actions → build → gzip → SFTP → atomic swap → restart).
 - ✅ Light/dark theme; mobile UX (jump bar, FAB, share, card tap → map highlight).
 - ✅ In-app feedback → separate `feedback.db`; GA4 with SPA page views + custom events.
@@ -63,8 +63,8 @@
 - 🔲 Split the monolithic `server/index.js` (~3,400 lines) into modules.
 - 🔲 Remove unused precomputed tables (`town_stats`, `monthly_medians`, `storey_adjustments`) from
   `download_data.py`, or start using them.
-- ✅ Init `status`/`towns` failure is non-fatal (PR #9). 🔲 Consider Fly `min_machines_running = 1`
-  to avoid cold starts.
+- ✅ Init `status`/`towns` failure is non-fatal (PR #9). ✅ Fly `min_machines_running = 1`
+  (always-on, 2026-11-04).
 - ✅ 2026-11-04 audit fixes deployed (PRs #1–#7): true medians, exact BTO slugs, fail-loud refresh,
   geocode proxy removed, feedback caps, `cors`/`node-fetch` dropped, slimmer Dockerfile, pytest suite.
 - 🔲 Audit leftovers: cache the town list and `/api/status` counts; `(block, street_name)` index for

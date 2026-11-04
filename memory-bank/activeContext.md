@@ -27,7 +27,19 @@
 - **BTO post-MOP resale** — re-run `python scripts/fetch_bto_blocks.py` every few months to pick
   up projects reaching MOP (incremental; then `npm run deploy:api`). Next new BTO launch: seed it
   with the `seed-bto-launch` skill.
-- **Not done (deliberately deferred)**: Fly `min_machines_running = 1` to avoid cold starts; MRT
+- **GSC Request Indexing (~10–12/day quota)** — 2026-11-04 requested (11): `/`, `/bto`,
+  `/hdb/tampines`, `/hdb/woodlands`, `/hdb/sengkang`, `/hdb/yishun`, `/hdb/punggol`,
+  `/hdb/sengkang/4-room`, `/hdb/tampines/4-room`, `/compare/punggol-vs-sengkang`, `/hdb/jurong-west`.
+  **Next**: `/hdb/hougang`, `/hdb/bukit-batok`, `/hdb/woodlands/4-room`, `/hdb/punggol/4-room`,
+  `/hdb/yishun/4-room`, `/compare/pasir-ris-vs-tampines`, `/compare/ang-mo-kio-vs-bishan`,
+  `/methodology`, `/check`. GSC coverage 2026-11-04: 820 "Discovered – not indexed", 36 "Crawled –
+  not indexed" (validation not started). Bing 2026-11-04: submitted 48 `/compare/` + BTO ranks
+  173–223; remaining 128 `/private/` (by URA volume, ranks 73–200) then 124 town × flat-type pages.
+- **Internal-linking gap (proposed, not built)**: bot HTML — town pages don't link `/compare/` or
+  `/private/`, BTO project pages link only the nav, compare pages link only each other.
+- **Fly is always-on since 2026-11-04** (`min_machines_running = 1`, ~US$2–3/month) — watch Bing's
+  crawl-stats `all_other_codes` (cold-start 503s) stop growing.
+- **Not done (deliberately deferred)**: MRT
   search phase B (`/mrt/<station>` pages); split `server/index.js`; remove the unused aggregation
   tables in `download_data.py`.
 - **Watch**: the first nightly refresh after 2026-11-04 is the first run with the fail-loudly

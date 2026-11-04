@@ -43,17 +43,16 @@
 - **API**: Fly.io (`worthit-api.fly.dev`) — Docker container with persistent volume
 - **Frontend**: Cloudflare Pages (`worthit.canlah.app`) — static files from `public/` + `functions/`, deployed via `node scripts/deploy-frontend.js` (loads `.env` cross-platform, then runs wrangler), DNS on Cloudflare (domain from Porkbun)
 - **Data refresh**: GitHub Actions `refresh-data.yml`, daily 03:00 SGT (`npm run download` → `npm run deploy:data`); secrets `URA_API_ACCESS_KEY` + `FLY_API_TOKEN` (org token, expires ~Jun 2027)
-- **Cost**: $0/month on free tiers
+- **Cost**: ~US$2–3/month (always-on Fly machine + 1GB volume); Cloudflare Pages free
 
 ### Fly.io Configuration
 - **Dockerfile**: `node:20-slim` + python3/build-essential (only for the better-sqlite3 native build fallback; no pip, no data pipeline)
 - **Volume**: 1GB persistent at `/data` — stores `resale.db`
 - **Env vars**: `DB_PATH=/data/resale.db`, `ONEMAP_TOKEN`, `URA_API_ACCESS_KEY` (via `fly secrets`)
 - **Machine ID**: `e7845746c2d918` (also hard-coded in the `deploy:data` npm script)
-- **Auto-stop**: `min_machines_running = 0` — the machine sleeps after ~8 min idle and a cold boot
-  takes ~8s+. The edge caches SEO metadata 24h to absorb this; bots get `503` + `Retry-After` on a
-  cold miss (see CLAUDE.md § Known Issues). Setting `min_machines_running = 1` removes the cold
-  starts but costs a small monthly fee.
+- **Always-on** (since 2026-11-04): `min_machines_running = 1` (~US$2–3/month) — with only one
+  machine it never auto-stops. Before that it slept after ~8 min idle and a cold boot took ~8s+;
+  the edge's 24h SEO-metadata cache and `503` + `Retry-After` fallback remain for deploys/restarts.
 
 ### Data updates
 The Python pipeline can't run on Fly (256MB RAM → OOM): the DB is built in GitHub Actions (daily) or locally and uploaded — steps in CLAUDE.md.

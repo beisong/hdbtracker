@@ -3,7 +3,7 @@
 > Restructured 2026-10-02. Detailed per-change history is in git and in `activeContext.md`
 > § Feature History.
 
-## What Works (all deployed — cache `v=29`)
+## What Works (all deployed — cache `v=32`)
 
 **Search & analysis**
 - ✅ Search by town, postal code (500m true-radius via `hdb_block_coords`), district (D01–D28),
@@ -13,7 +13,10 @@
 - ✅ Dual-line $/sqm trend chart (HDB + private) with 6m/1y/3y/5y trend % (3-month rolling avg).
 - ✅ Price distribution histogram; filterable/sortable transactions (table on desktop, cards on mobile).
 - ✅ Map: deal-score coloured markers (HDB + private), MRT overlay, lease in popups, every block in
-  the radius gets a marker, nearby private projects within 800m.
+  the radius gets a marker, nearby private projects within 800m, nearest-MRT distance + walk time
+  in every popup and mobile card.
+- ✅ Town comparison: `/compare/<a>-vs-<b>[-vs-<c>][/<flat-type>]` — 2–3 towns side by side
+  (median, $psf, 1y change, volume, most popular type) with one trend line per town.
 - ✅ Check My Price: `/api/valuation` Deal Score + fair-value range from storey-adjusted nearby comps;
   entry via postal results card, 💰 buttons on transaction rows, `/check/<postal>?price=` links.
 - ✅ Private projects: project overview, district context, EC / MOP detection.
@@ -26,7 +29,8 @@
 
 **SEO**
 - ✅ Edge-side rendering for bots (incl. AI crawlers) with data-driven titles, JSON-LD, page content.
-- ✅ Programmatic pages: towns, town × flat-type, districts, private projects, BTO projects; 856-URL sitemap.
+- ✅ Programmatic pages: towns, town × flat-type, districts, private projects, BTO projects, 48
+  adjacent-town comparisons; 904-URL sitemap.
 - ✅ E-E-A-T pages `/about`, `/methodology`, `/data-sources`; soft-404 guard; freshness notes.
 - ✅ Same-origin `/api/*` proxy so Googlebot can render pages (fixed 2026-09-26).
 - ✅ IndexNow ping on every frontend deploy; Cloudflare Crawler Hints on.
@@ -36,24 +40,17 @@
 - ✅ Daily automated data refresh (GitHub Actions → build → gzip → SFTP → atomic swap → restart).
 - ✅ Light/dark theme; mobile UX (jump bar, FAB, share, card tap → map highlight).
 - ✅ In-app feedback → separate `feedback.db`; GA4 with SPA page views + custom events.
-- ✅ 276 unit + integration tests + 19 smoke tests; every deploy gated on `npm test`.
+- ✅ 356 unit + integration tests + 133 pytest tests (data scripts) + 19 smoke tests; every deploy
+  gated on `npm test`.
+- ✅ Nightly refresh fails loudly on partial downloads and refuses to deploy a short DB.
 
 ## Outstanding
 
 ### Features
-- 🔲 **Town comparison view** — compare 2–3 towns (or town × flat-type) side by side: median, $psf,
-  YoY, lease profile, volume, with all trend lines on one chart. URL e.g.
-  `/compare/tampines-vs-bedok/4-room`.
-  - v1 needs no new server aggregation: call `/api/area-overview` per town in parallel.
-  - `app.js`: "+ Compare" button on town results, new `renderCompareResults()`; generalise
-    `charts.js` `renderTrendChart()` to N labelled lines.
-  - SEO: `/compare/` metadata branch + sitemap entries for the top ~50 adjacent-town pairs
-    ("tampines vs bedok 4 room resale price" long-tail).
-- 🔲 **MRT search + nearest-MRT labels**
-  - **Phase A (~half a day, no server change)**: `nearestStation(lat, lng)` in `map.js` (haversine over
-    ~180 stations); show "🚇 450m to Bishan (NS17) · ~6 min walk" (80m/min) in all popups and on
-    mobile transaction cards.
-  - **Phase B (~1–2 days)**: search by station — MRT branch in `/api/resolve` after exact-town match
+- ✅ **Town comparison view** — deployed 2026-11-04 (PR #10).
+- **MRT search + nearest-MRT labels**
+  - ✅ **Phase A** (nearest-MRT labels in popups + mobile cards) — deployed 2026-11-04 (PR #8).
+  - 🔲 **Phase B (~1–2 days)**: search by station — MRT branch in `/api/resolve` after exact-town match
     (bare "bishan" → town; "bishan mrt" / "bishan station" / "NS17" → station), autocomplete entries
     with an MRT badge, then reuse the postal pipeline (`/api/area-overview?lat=&lng=`) with an
     optional `radius` param (800m for MRT, capped ≤1000m). Route `/mrt/<station-slug>` + SEO branch +
@@ -63,12 +60,15 @@
     with a sync-check test.
 
 ### Engineering
-- 🔲 Geocode cache (`geocodeCache`) has no size limit — add eviction.
 - 🔲 Split the monolithic `server/index.js` (~3,400 lines) into modules.
 - 🔲 Remove unused precomputed tables (`town_stats`, `monthly_medians`, `storey_adjustments`) from
   `download_data.py`, or start using them.
-- 🔲 Make the init `status`/`towns` failure non-fatal (dismiss the overlay instead of a full-screen
-  error); consider Fly `min_machines_running = 1` to avoid cold starts.
+- ✅ Init `status`/`towns` failure is non-fatal (PR #9). 🔲 Consider Fly `min_machines_running = 1`
+  to avoid cold starts.
+- ✅ 2026-11-04 audit fixes deployed (PRs #1–#7): true medians, exact BTO slugs, fail-loud refresh,
+  geocode proxy removed, feedback caps, `cors`/`node-fetch` dropped, slimmer Dockerfile, pytest suite.
+- 🔲 Audit leftovers: cache the town list and `/api/status` counts; `(block, street_name)` index for
+  `/api/valuation`; JSON 404 for unknown `/api/*` paths (currently fall through to `index.html`).
 - ⏭️ Deferred by choice: replace the Tailwind Play CDN with prebuilt static CSS (biggest Core Web
   Vitals win, higher regression risk).
 
@@ -108,8 +108,7 @@ lever. Link to the most relevant deep page (e.g. `/hdb/tampines/4-room`), never 
 Avoid paid link farms and mass-posting the same link (penalty / spam risk).
 
 ## Known Issues
-1. Geocode cache has no size limit (see Engineering backlog).
-2. GSC: 0 of 856 URLs indexed (sitemap 856 submitted / 0 indexed, no page impressions);
+1. GSC: 0 of 856 URLs indexed (sitemap 856 submitted / 0 indexed, no page impressions);
    re-checked 2026-10-24 — 12/15 sampled pages "Crawled – currently not indexed", 3 "URL is unknown
    to Google", only 30 lifetime impressions / 0 clicks (crawl OK, canonical OK, indexing allowed →
    authority/backlinks, plus the now-fixed cold-start duplicate-content bug). Bing, by contrast,

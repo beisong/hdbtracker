@@ -23,7 +23,7 @@
   which returns 503 for other `/api/*` calls while `resale.db` is missing.
 - **Endpoints**
   - HDB: `/api/status`, `/api/towns`, `/api/flat-types`, `/api/resolve`, `/api/area-overview`,
-    `/api/nearby-hdb`, `/api/valuation`, `POST /api/geocode`
+    `/api/nearby-hdb`, `/api/valuation`
   - Private: `/api/private/projects`, `/api/private/project-overview`, `/api/private/property-types`,
     `/api/private/district-overview`, `/api/private/district-summary`
   - BTO: `/api/bto/launches`, `/api/bto/projects`, `/api/bto/project-overview`

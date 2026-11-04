@@ -10,8 +10,7 @@
 - **Runtime**: Node.js
 - **Framework**: Express.js 4.21
 - **Database driver**: better-sqlite3 11.7 (synchronous SQLite3 binding)
-- **HTTP client**: node-fetch 2.7 (CommonJS compatible)
-- **CORS**: cors 2.8
+- **HTTP client**: native `fetch` (Node 20+); no CORS middleware (the SPA calls same-origin `/api/*`)
 - **Config**: dotenv 17.4
 
 ### Data Pipeline
@@ -34,8 +33,7 @@
 - **Edge functions**: `functions/[[path]].js` — Cloudflare Pages Function: same-origin `/api/*` proxy to Fly, bot SEO injection, robots/sitemap, static E-E-A-T pages
 
 ### External APIs
-- **OneMap SG API**: Postal code → address/coordinates lookup, geocoding, BTO block names (`BUILDING` field). Silently rate-limits — keep ≥0.35s between geocode calls in batch scripts and ~1.5s for search-heavy scripts like `fetch_bto_blocks.py`
-- **Nominatim (OpenStreetMap)**: Reverse geocoding, fallback geocoding (map display only — no longer used for postal search radius)
+- **OneMap SG API**: Postal code → address/coordinates lookup, BTO block names (`BUILDING` field). Silently rate-limits — keep ≥0.35s between geocode calls in batch scripts and ~1.5s for search-heavy scripts like `fetch_bto_blocks.py`
 - **data.gov.sg**: HDB resale transaction data download
 - **URA API**: Private property transaction data
 
@@ -48,7 +46,7 @@
 - **Cost**: $0/month on free tiers
 
 ### Fly.io Configuration
-- **Dockerfile**: Node.js 20 + Python 3 slim
+- **Dockerfile**: `node:20-slim` + python3/build-essential (only for the better-sqlite3 native build fallback; no pip, no data pipeline)
 - **Volume**: 1GB persistent at `/data` — stores `resale.db`
 - **Env vars**: `DB_PATH=/data/resale.db`, `ONEMAP_TOKEN`, `URA_API_ACCESS_KEY` (via `fly secrets`)
 - **Machine ID**: `e7845746c2d918` (also hard-coded in the `deploy:data` npm script)

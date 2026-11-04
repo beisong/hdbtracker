@@ -268,6 +268,7 @@ WorthIt/
 │       └── map.js               # Leaflet map
 ├── Dockerfile                   # Fly.io Docker config
 ├── fly.toml                     # Fly.io app config
+├── tests/                       # Vitest + supertest (npm test); tests/python/ = pytest
 ├── package.json
 ├── requirements.txt
 └── README.md

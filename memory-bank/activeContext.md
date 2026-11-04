@@ -27,12 +27,39 @@
 - **BTO post-MOP resale** — re-run `python scripts/fetch_bto_blocks.py` every few months to pick
   up projects reaching MOP (incremental; then `npm run deploy:api`). Next new BTO launch: seed it
   with the `seed-bto-launch` skill.
-- **Not done (deliberately deferred)**: make the init `status`/`towns` failure non-fatal (dismiss
-  overlay instead of full-screen error); Fly `min_machines_running = 1` to avoid cold starts.
+- **Not done (deliberately deferred)**: Fly `min_machines_running = 1` to avoid cold starts; MRT
+  search phase B (`/mrt/<station>` pages); split `server/index.js`; remove the unused aggregation
+  tables in `download_data.py`.
+- **Watch**: the first nightly refresh after 2026-11-04 is the first run with the fail-loudly
+  download scripts (PR #5) — if it goes red, check which page/batch failed rather than re-running blindly.
 - **Ops reminder**: the GitHub Actions `FLY_API_TOKEN` (org token) expires ~**Jun 2027** — renew
   with `fly tokens create org`.
 
-## Recent Changes (Sep–Oct 2026)
+## Recent Changes (Sep–Nov 2026)
+
+### Audit fixes + town comparison + MRT labels — DEPLOYED 2026-11-04 (API + frontend, `v=32`)
+A `/ponytail-audit` (14 findings) was implemented as 10 parallel claude.ai/code cloud PRs (#1–#10,
+merged to main; workflow rules in CLAUDE.md § Cloud / PR sessions).
+- **#1 edge**: sitemap returns 503 (not an empty sitemap) when the API 503s / returns no URLs;
+  `"` in meta really escaped to `&quot;`.
+- **#2** `/api/area-overview` `median_price` is a true median (was AVG: Central Area $862k → $669k).
+- **#3** `/bto/<slug>` uses exact `slugToBtoProject()` via `/api/bto/project-overview?slug=`
+  (111 of 474 deep links used to fail for humans; all 473 sitemap BTO slugs now open).
+- **#4** `fmtPrice` no longer prints "$1000k"; autocomplete ignores stale responses; Dockerfile
+  drops pip/requirements (python3 + build-essential kept only for the better-sqlite3 build fallback).
+- **#5** `download_data.py` / `download_ura_data.py` exit 1 and keep the old DB/URA rows on any
+  failed page/batch or short count; workflow also has a min-row-count guard before `deploy:data`.
+- **#6** `/api/geocode` removed (open proxy + unbounded cache); feedback ≤4000 chars, 5/IP/h +
+  200/day global cap; `cors` and `node-fetch` dependencies removed.
+- **#7** 133 pytest tests in `tests/python/` (`pip install pytest pyproj`).
+- **#8** nearest-MRT label in all map popups + mobile cards (`MrtNearest` in `map.js`).
+- **#9** startup `status`/`towns` failures show a retryable notice instead of a full-screen error.
+- **#10** town comparison `/compare/<a>-vs-<b>[-vs-<c>][/<flat-type>]` with SEO branch + 48
+  adjacent-pair sitemap URLs (sitemap now 904 URLs).
+- Tests 276 → **356** Vitest (+133 pytest). Verified locally (all 904 sitemap routes return a
+  title/description without noindex) and on production (19/19 smoke tests).
+- Known, harmless: unknown `/api/*` paths fall through to the SPA catch-all (200 + `index.html`).
+
 
 ### Cold-start SEO fallback fix — DEPLOYED 2026-10-24 (frontend `v=31`)
 Re-checked GSC + Bing. **Google: 856 submitted / 0 indexed**; 12 of 15 sampled URLs "Crawled –
@@ -270,7 +297,7 @@ Conventions (full detail in CLAUDE.md and the `seed-bto-launch` skill):
 
 ## Still-Relevant Gotchas
 
-- **WAL checkpoint** before any DB upload (`PRAGMA wal_checkpoint(TRUNCATE)`), or geocoded data in
+- **WAL checkpoint** before any DB upload (`PRAGMA wal_checkpoint(TRUNCATE)`), or data still in
   the WAL is silently lost; delete stale `-wal`/`-shm` on the server when swapping DBs.
 - **Fly**: free machines auto-stop and SSH doesn't wake them (`fly machines start` + sleep first);
   `fly ssh console --command` doesn't run a shell — wrap multi-step commands in `sh -c '...'`;

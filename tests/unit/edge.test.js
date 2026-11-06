@@ -60,6 +60,12 @@ describe('edge 404 for unknown routes', () => {
     expect(res.status).toBe(200);
   });
 
+  it('301-redirects a renamed provisional BTO slug, keeping the query string', async () => {
+    const res = await onRequest(makeContext('/bto/bedok-bayshore-ii/?utm_source=x', GOOGLEBOT));
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('https://worthit.canlah.app/bto/bayshore-sails?utm_source=x');
+  });
+
   it('serves robots.txt with the /_headers disallow', async () => {
     const res = await onRequest(makeContext('/robots.txt'));
     expect(res.status).toBe(200);

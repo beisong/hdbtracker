@@ -66,6 +66,18 @@ const SPA_ROUTE_PATTERNS = [
   /^\/compare\/[^/]+(?:\/[^/]+)?$/,
 ];
 
+// Renamed pages → permanent redirect. Provisional Nov 2026 BTO slugs replaced by HDB's
+// official project names once Annex A was published (2026-11-06).
+const REDIRECTS = new Map([
+  ['/bto/bedok-bayshore-i', '/bto/bayshore-oasis'],
+  ['/bto/bedok-bayshore-ii', '/bto/bayshore-sails'],
+  ['/bto/geylang-mattar', '/bto/merpati-meadow'],
+  ['/bto/toa-payoh-caldecott', '/bto/toa-payoh-hillside'],
+  ['/bto/tengah-garden-avenue', '/bto/plantation-dew'],
+  ['/bto/yishun-chencharu', '/bto/chencharu-acres'],
+  ['/bto/sembawang-north', '/bto/sembawang-anchor'],
+]);
+
 // Escape a value for use inside a double-quoted HTML attribute.
 function escapeAttr(value) {
   return String(value).replace(/"/g, '&quot;');
@@ -339,6 +351,10 @@ ${data.urls.map(u => `  <url>
   // Real 404 for unknown extension-less paths — nothing below this point should answer 200
   // to a URL the SPA can't route (deep routes that fail to resolve stay 200 + server noindex).
   const routePath = url.pathname.replace(/\/+$/, '') || '/';
+  const redirectTo = REDIRECTS.get(routePath);
+  if (redirectTo) {
+    return Response.redirect(`${url.origin}${redirectTo}${url.search}`, 301);
+  }
   if (!SPA_ROUTE_PATTERNS.some(re => re.test(routePath))) {
     return new Response('Not Found', {
       status: 404,

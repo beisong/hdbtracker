@@ -22,7 +22,7 @@
 - ✅ Private projects: project overview, district context, EC / MOP detection.
 
 **BTO**
-- ✅ 121 launches / 474 projects (Apr 2001 → Nov 2026 provisional) from `scripts/bto_launches.json`;
+- ✅ 121 launches / 474 projects (Apr 2001 → Nov 2026, all official) from `scripts/bto_launches.json`;
   `/bto` index + `/bto/<slug>` pages with flats, prices, BTO-vs-nearby-resale comparison.
 - ✅ Post-MOP projects show their own resale transactions (`scripts/bto_project_blocks.json`, 219/262
   projects; MOP gate = remaining lease < 95y); studio-only projects show a 30-year-lease note.

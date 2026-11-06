@@ -37,6 +37,10 @@
   173–223; remaining 128 `/private/` (by URA volume, ranks 73–200) then 124 town × flat-type pages.
 - **Internal-linking gap (proposed, not built)**: bot HTML — town pages don't link `/compare/` or
   `/private/`, BTO project pages link only the nav, compare pages link only each other.
+- **Nov 2026 BTO now official** (2026-11-06): 7 projects seeded from HDB Annex A/B — the 7
+  provisional `/bto/<slug>` URLs (e.g. `bedok-bayshore-ii`) now noindex and drop out of the sitemap,
+  replaced by `sembawang-anchor`, `plantation-dew`, `chencharu-acres`, `bayshore-sails`,
+  `bayshore-oasis`, `merpati-meadow`, `toa-payoh-hillside`. Live after API deploy + nightly rebuild.
 - **Fly is always-on since 2026-11-04** (`min_machines_running = 1`, ~US$2–3/month) — watch Bing's
   crawl-stats `all_other_codes` (cold-start 503s) stop growing.
 - **Not done (deliberately deferred)**: MRT
@@ -288,7 +292,7 @@ Dataset now covers **121 launches / 474 projects, April 2001 → Nov 2026** (see
 | 2001–2009 | 40 | 59 | Sparsest. Often min-only prices, approximate application dates, combined-type rows; 4 projects with null coords (cancelled / never built). |
 | 2010–2015 | 41 | 169 | From Apr 2010 the brochures have no price table — unit counts from Maps&Plans block tables, prices from secondary sources. |
 | 2016–2020 | 19 | 99 | Mostly housingmap.sg brochures (Annex A often unrecoverable). Aug 2020 `price_max` values are estimated (flagged in its `_curation_note`). |
-| 2021–2026 | 21 | 147 | Official HDB Annex A press releases. Nov 2026 is provisional (third-party trackers). |
+| 2021–2026 | 21 | 147 | Official HDB Annex A press releases. Nov 2026 official since 2026-11-06 (7,964 flats incl. 256 CCA; replaced the provisional entry). |
 | **Total** | **121** | **474** | `bto_launches_info/` archives 695 source PDFs + per-project reference notes. |
 
 Conventions (full detail in CLAUDE.md and the `seed-bto-launch` skill):

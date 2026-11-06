@@ -23354,259 +23354,457 @@
     },
     {
       "launch_id": "2026-11",
-      "label": "November 2026 BTO (upcoming)",
-      "application_start": null,
-      "application_end": null,
+      "label": "November 2026 BTO",
+      "application_start": "2026-11-04",
+      "application_end": "2026-11-11",
       "sources": [
-        "https://www.recordbto.com/bto-sales-launch/nov-2026-bto",
-        "https://propertynet.sg/october-2026-bto-launch-preview-bedok-toa-payoh-geylang-flats/",
-        "https://uchify.com/hdb-bto-november-2026-launch/",
-        "https://stackedhomes.com/we-review-the-october-2026-bto-launch-sites/"
+        "https://www.hdb.gov.sg/hdb-pulse/news/2026/hdb-launches-7964-flats-across-seven-projects-in-nov-2026-bto-sales-exercise",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2026/hdb-launches-7964-flats-across-seven-projects-in-nov-2026-bto-sales-exercise/Annex-A---Nov-2026-BTO---Final.pdf",
+        "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2026/hdb-launches-7964-flats-across-seven-projects-in-nov-2026-bto-sales-exercise/Annex-B---Nov-2026-BTO---Final.pdf",
+        "https://recordbto.com/news/november-2026-bto-7-projects-7960-flats"
       ],
-      "_curation_note": "NOT YET LAUNCHED — HDB has not published an official press release or Annex A for this exercise. Every project below is PROVISIONAL, sourced from third-party BTO preview blogs (not HDB), and every 'flats' entry has price_min/price_max = null since no pricing exists yet. Project names are location/estate labels used consistently across trackers, not confirmed final HDB project names. Unit-type breakdowns are included only where a source gave an unambiguous, internally-consistent count (Mattar, Caldecott's BTO portion, Tengah Garden Avenue, Chencharu, Sembawang North); Bayshore's two sites have no clean per-type split reported, so their flats stay empty with the known aggregate noted in location_desc. REPLACE all of this with real data via the seed-bto-launch skill once HDB's official Annex A is published after the launch.",
+      "_curation_note": "Official HDB Annex A/B (published 2026-11-04), replacing the earlier provisional entry. Headline 7,964 flats = 7,708 in flats[] + 256 Community Care Apartments at Toa Payoh Hillside (excluded). Location descriptions and block counts from RecordBTO (the HDB press-release page is JS-rendered). Provisional -> official name mapping: BEDOK BAYSHORE I -> BAYSHORE OASIS, BEDOK BAYSHORE II -> BAYSHORE SAILS, GEYLANG MATTAR -> MERPATI MEADOW, TOA PAYOH CALDECOTT -> TOA PAYOH HILLSIDE, TENGAH GARDEN AVENUE -> PLANTATION DEW, YISHUN CHENCHARU -> CHENCHARU ACRES, SEMBAWANG NORTH -> SEMBAWANG ANCHOR.",
       "projects": [
         {
-          "project": "BEDOK BAYSHORE I",
-          "display_name": "Bedok Bayshore I",
-          "town": "BEDOK",
-          "classification": null,
-          "location_desc": "Near Bayshore MRT (TE29), Thomson-East Coast Line. Provisional: ~860 units (2-Room Flexi, 4-Room), exact type split not yet reported.",
-          "lat": 1.313122,
-          "lng": 103.94231,
-          "waiting_months": null,
+          "project": "SEMBAWANG ANCHOR",
+          "display_name": "Sembawang Anchor",
+          "town": "SEMBAWANG",
+          "classification": "Standard",
+          "location_desc": "Bounded by Admiralty Lane and Sembawang Drive (~15-min walk to Sembawang MRT); 6 blocks, 22–26 storeys",
+          "lat": 1.457781,
+          "lng": 103.81611,
+          "waiting_months": 34,
           "flats": [
             {
-              "bto_label": "All flat types (breakdown not yet released)",
-              "resale_flat_type": null,
-              "floor_area_sqm": null,
-              "units": 860,
-              "price_min": null,
-              "price_max": null
-            }
-          ],
-          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB. Aggregate unit count only; per-type split not yet reported by any tracker."
-        },
-        {
-          "project": "BEDOK BAYSHORE II",
-          "display_name": "Bedok Bayshore II",
-          "town": "BEDOK",
-          "classification": null,
-          "location_desc": "Near Bayshore MRT (TE29), Thomson-East Coast Line. Provisional: ~1,640 units (2-Room Flexi, 3-Room, 4-Room), exact type split not yet reported.",
-          "lat": 1.313122,
-          "lng": 103.94231,
-          "waiting_months": null,
-          "flats": [
-            {
-              "bto_label": "All flat types (breakdown not yet released)",
-              "resale_flat_type": null,
-              "floor_area_sqm": null,
-              "units": 1640,
-              "price_min": null,
-              "price_max": null
-            }
-          ],
-          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB. Aggregate unit count only; per-type split not yet reported by any tracker."
-        },
-        {
-          "project": "GEYLANG MATTAR",
-          "display_name": "Geylang Mattar",
-          "town": "GEYLANG",
-          "classification": null,
-          "location_desc": "Along Merpati Road, 5-min walk from Mattar MRT (DT25). Provisional pre-launch estimate — not confirmed by HDB.",
-          "lat": 1.327498,
-          "lng": 103.882779,
-          "waiting_months": null,
-          "flats": [
-            {
-              "bto_label": "2-Room Flexi",
+              "bto_label": "2-Room Flexi (Type 1)",
               "resale_flat_type": "2 ROOM",
-              "floor_area_sqm": null,
-              "units": 170,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 40,
+              "units": 92,
+              "price_min": 156000,
+              "price_max": 203000
             },
             {
-              "bto_label": "4-Room",
-              "resale_flat_type": "4 ROOM",
-              "floor_area_sqm": null,
-              "units": 270,
-              "price_min": null,
-              "price_max": null
-            }
-          ],
-          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
-        },
-        {
-          "project": "TOA PAYOH CALDECOTT",
-          "display_name": "Toa Payoh Caldecott",
-          "town": "TOA PAYOH",
-          "classification": null,
-          "location_desc": "Beside Caldecott MRT interchange (Circle/Thomson-East Coast Lines). Also includes ~260 Community Care Apartments (a separate rental scheme, not shown here as BTO flats). Provisional pre-launch estimate — not confirmed by HDB.",
-          "lat": 1.337347,
-          "lng": 103.839544,
-          "waiting_months": null,
-          "flats": [
-            {
-              "bto_label": "2-Room Flexi",
+              "bto_label": "2-Room Flexi (Type 2)",
               "resale_flat_type": "2 ROOM",
-              "floor_area_sqm": null,
-              "units": 590,
-              "price_min": null,
-              "price_max": null
-            },
-            {
-              "bto_label": "4-Room",
-              "resale_flat_type": "4 ROOM",
-              "floor_area_sqm": null,
-              "units": 580,
-              "price_min": null,
-              "price_max": null
-            }
-          ],
-          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
-        },
-        {
-          "project": "TENGAH GARDEN AVENUE",
-          "display_name": "Tengah Garden Avenue",
-          "town": "TENGAH",
-          "classification": null,
-          "location_desc": "Plantation district, near Pioneer Primary School. Provisional pre-launch estimate — not confirmed by HDB.",
-          "lat": 1.355608,
-          "lng": 103.731026,
-          "waiting_months": null,
-          "flats": [
-            {
-              "bto_label": "2-Room Flexi",
-              "resale_flat_type": "2 ROOM",
-              "floor_area_sqm": null,
-              "units": 160,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 48,
+              "units": 241,
+              "price_min": 178000,
+              "price_max": 245000
             },
             {
               "bto_label": "3-Room",
               "resale_flat_type": "3 ROOM",
-              "floor_area_sqm": null,
-              "units": 50,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 69,
+              "units": 96,
+              "price_min": 274000,
+              "price_max": 348000
             },
             {
               "bto_label": "4-Room",
               "resale_flat_type": "4 ROOM",
-              "floor_area_sqm": null,
-              "units": 250,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 93,
+              "units": 464,
+              "price_min": 312000,
+              "price_max": 428000
             },
             {
               "bto_label": "5-Room",
               "resale_flat_type": "5 ROOM",
-              "floor_area_sqm": null,
-              "units": 200,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 113,
+              "units": 417,
+              "price_min": 479000,
+              "price_max": 614000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "2 ROOM",
+              "min": 370000,
+              "max": 400000,
+              "note": "~93y lease, 47 sqm"
+            },
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 500000,
+              "max": 528888,
+              "note": "~93y lease, 69 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 588888,
+              "max": 635000,
+              "note": "~93y lease, 93 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 760000,
+              "max": 823000,
+              "note": "~93y lease, 113-116 sqm"
+            }
+          ],
+          "_curation_note": "Prices include floor finishes, internal doors and sanitary fittings. Without them: 2RF T1 $153k-$200k, T2 $175k-$242k, 3-Room $268k-$341k, 4-Room $304k-$419k, 5-Room $469k-$605k."
+        },
+        {
+          "project": "PLANTATION DEW",
+          "display_name": "Plantation Dew",
+          "town": "TENGAH",
+          "classification": "Standard",
+          "location_desc": "Bounded by Tengah Garden Avenue and Plantation Walk, Plantation district (near future Tengah Park / Tengah Plantation JRL stations); 5 blocks, 15 storeys",
+          "lat": 1.355608,
+          "lng": 103.731026,
+          "waiting_months": 38,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 42,
+              "price_min": 131000,
+              "price_max": 166000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 136,
+              "price_min": 158000,
+              "price_max": 207000
+            },
+            {
+              "bto_label": "3-Room",
+              "resale_flat_type": "3 ROOM",
+              "floor_area_sqm": 69,
+              "units": 84,
+              "price_min": 266000,
+              "price_max": 317000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 168,
+              "price_min": 339000,
+              "price_max": 445000
+            },
+            {
+              "bto_label": "5-Room",
+              "resale_flat_type": "5 ROOM",
+              "floor_area_sqm": 113,
+              "units": 252,
+              "price_min": 494000,
+              "price_max": 626000
             },
             {
               "bto_label": "3Gen",
               "resale_flat_type": "MULTI-GENERATION",
-              "floor_area_sqm": null,
-              "units": 50,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 121,
+              "units": 28,
+              "price_min": 551000,
+              "price_max": 637000
             }
           ],
-          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "2 ROOM",
+              "min": 322500,
+              "max": 388000,
+              "note": "~91y lease, 37-47 sqm"
+            },
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 475000,
+              "max": 532000,
+              "note": "~91y lease, 67 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 570888,
+              "max": 705888,
+              "note": "~91y lease, 92 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 729888,
+              "max": 858000,
+              "note": "~91y lease, 112 sqm"
+            }
+          ],
+          "_curation_note": "OneMap has no entry for 'Plantation Dew' yet; coordinates are the Tengah Garden Avenue / Plantation district site (kept from the provisional entry). White-flat layout option: $6,000 / $8,600 / $9,000 less for 3- / 4- / 5-Room."
         },
         {
-          "project": "YISHUN CHENCHARU",
-          "display_name": "Yishun Chencharu",
+          "project": "CHENCHARU ACRES",
+          "display_name": "Chencharu Acres",
           "town": "YISHUN",
-          "classification": null,
-          "location_desc": "Near Khatib MRT (NS14), North-South Line. Provisional pre-launch estimate — not confirmed by HDB.",
-          "lat": 1.417383,
-          "lng": 103.83298,
-          "waiting_months": null,
+          "classification": "Standard",
+          "location_desc": "Bounded by Yishun Street 82, Yishun Walk and Yishun Avenue 2 (~10-min walk to Khatib MRT); 12 blocks",
+          "lat": 1.413595,
+          "lng": 103.82923,
+          "waiting_months": 41,
           "flats": [
             {
-              "bto_label": "2-Room Flexi",
+              "bto_label": "2-Room Flexi (Type 1)",
               "resale_flat_type": "2 ROOM",
-              "floor_area_sqm": null,
-              "units": 390,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 40,
+              "units": 84,
+              "price_min": 151000,
+              "price_max": 191000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 308,
+              "price_min": 177000,
+              "price_max": 224000
             },
             {
               "bto_label": "3-Room",
               "resale_flat_type": "3 ROOM",
-              "floor_area_sqm": null,
-              "units": 80,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 69,
+              "units": 84,
+              "price_min": 297000,
+              "price_max": 355000
             },
             {
               "bto_label": "4-Room",
               "resale_flat_type": "4 ROOM",
-              "floor_area_sqm": null,
-              "units": 460,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 93,
+              "units": 462,
+              "price_min": 353000,
+              "price_max": 428000
             },
             {
               "bto_label": "5-Room",
               "resale_flat_type": "5 ROOM",
-              "floor_area_sqm": null,
-              "units": 650,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 113,
+              "units": 644,
+              "price_min": 484000,
+              "price_max": 604000
             }
           ],
-          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 470000,
+              "max": 530000,
+              "note": "~90y lease, 68 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 548000,
+              "max": 660000,
+              "note": "~90y lease, 93 sqm"
+            },
+            {
+              "resale_flat_type": "5 ROOM",
+              "min": 660000,
+              "max": 775000,
+              "note": "~90y lease, 113 sqm"
+            }
+          ],
+          "_curation_note": "Annex A waiting time is '39 / 41' months (six blocks each); the higher figure is recorded. HDB lists no comparable 2-room resale flats nearby."
         },
         {
-          "project": "SEMBAWANG NORTH",
-          "display_name": "Sembawang North",
-          "town": "SEMBAWANG",
-          "classification": null,
-          "location_desc": "No MRT within walking distance. Provisional pre-launch estimate — not confirmed by HDB.",
-          "lat": 1.448644,
-          "lng": 103.81682,
-          "waiting_months": null,
+          "project": "BAYSHORE SAILS",
+          "display_name": "Bayshore Sails",
+          "town": "BEDOK",
+          "classification": "Plus",
+          "location_desc": "Next to Bayshore MRT (TE29), Thomson-East Coast Line; walking distance to East Coast Park",
+          "lat": 1.313887,
+          "lng": 103.94252,
+          "waiting_months": 44,
           "flats": [
             {
-              "bto_label": "2-Room Flexi",
+              "bto_label": "2-Room Flexi (Type 1)",
               "resale_flat_type": "2 ROOM",
-              "floor_area_sqm": null,
-              "units": 330,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 40,
+              "units": 322,
+              "price_min": 208000,
+              "price_max": 292000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 568,
+              "price_min": 272000,
+              "price_max": 360000
             },
             {
               "bto_label": "3-Room",
               "resale_flat_type": "3 ROOM",
-              "floor_area_sqm": null,
-              "units": 100,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 67,
+              "units": 90,
+              "price_min": 409000,
+              "price_max": 526000
             },
             {
               "bto_label": "4-Room",
               "resale_flat_type": "4 ROOM",
-              "floor_area_sqm": null,
-              "units": 460,
-              "price_min": null,
-              "price_max": null
-            },
-            {
-              "bto_label": "5-Room",
-              "resale_flat_type": "5 ROOM",
-              "floor_area_sqm": null,
-              "units": 420,
-              "price_min": null,
-              "price_max": null
+              "floor_area_sqm": 90,
+              "units": 657,
+              "price_min": 580000,
+              "price_max": 758000
             }
           ],
-          "_provisional_note": "Unofficial pre-launch preview estimate — not confirmed by HDB."
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "3 ROOM",
+              "min": 662000,
+              "max": 705000,
+              "note": "~82y lease, 62-69 sqm"
+            },
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 905000,
+              "max": 985000,
+              "note": "~82y lease, 87-97 sqm"
+            }
+          ],
+          "_curation_note": "2-Room Flexi Type 1 is listed by HDB as 38-40 sqm; 40 recorded. HDB lists no comparable 2-room resale flats nearby. Replaces the provisional 'BEDOK BAYSHORE II' (~1,640 units incl. 3-Room)."
+        },
+        {
+          "project": "BAYSHORE OASIS",
+          "display_name": "Bayshore Oasis",
+          "town": "BEDOK",
+          "classification": "Plus",
+          "location_desc": "Bounded by Bayshore Drive and Bayshore Walk, next to Bayshore MRT (TE29)",
+          "lat": 1.312824,
+          "lng": 103.94395,
+          "waiting_months": 38,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 87,
+              "price_min": 230000,
+              "price_max": 298000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 260,
+              "price_min": 261000,
+              "price_max": 378000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 90,
+              "units": 508,
+              "price_min": 559000,
+              "price_max": 786000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 905000,
+              "max": 985000,
+              "note": "~82y lease, 87-97 sqm"
+            }
+          ],
+          "_curation_note": "HDB lists no comparable 2-room resale flats nearby. Replaces the provisional 'BEDOK BAYSHORE I' (~860 units, 2-Room Flexi + 4-Room)."
+        },
+        {
+          "project": "MERPATI MEADOW",
+          "display_name": "Merpati Meadow",
+          "town": "GEYLANG",
+          "classification": "Plus",
+          "location_desc": "Along Merpati Road, ~5-min walk to Mattar MRT (DT25), beside Aljunied Park; 3 blocks, 18 storeys",
+          "lat": 1.328462,
+          "lng": 103.88101,
+          "waiting_months": 39,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 33,
+              "price_min": 253000,
+              "price_max": 300000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 48,
+              "units": 134,
+              "price_min": 306000,
+              "price_max": 378000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 89,
+              "units": 271,
+              "price_min": 545000,
+              "price_max": 726000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 920000,
+              "max": 1100000,
+              "note": "~92y lease, 93-96 sqm"
+            }
+          ],
+          "_curation_note": "HDB lists no comparable 2-room resale flats nearby."
+        },
+        {
+          "project": "TOA PAYOH HILLSIDE",
+          "display_name": "Toa Payoh Hillside",
+          "town": "TOA PAYOH",
+          "classification": "Prime",
+          "location_desc": "Next to Caldecott MRT interchange (Circle / Thomson-East Coast Lines)",
+          "lat": 1.337565,
+          "lng": 103.8416,
+          "waiting_months": 45,
+          "flats": [
+            {
+              "bto_label": "2-Room Flexi (Type 1)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 40,
+              "units": 156,
+              "price_min": 243000,
+              "price_max": 322000
+            },
+            {
+              "bto_label": "2-Room Flexi (Type 2)",
+              "resale_flat_type": "2 ROOM",
+              "floor_area_sqm": 49,
+              "units": 436,
+              "price_min": 301000,
+              "price_max": 400000
+            },
+            {
+              "bto_label": "4-Room",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 90,
+              "units": 428,
+              "price_min": 558000,
+              "price_max": 796000
+            },
+            {
+              "bto_label": "4-Room (with balcony)",
+              "resale_flat_type": "4 ROOM",
+              "floor_area_sqm": 93,
+              "units": 156,
+              "price_min": 619000,
+              "price_max": 832000
+            }
+          ],
+          "hdb_quoted_resale": [
+            {
+              "resale_flat_type": "4 ROOM",
+              "min": 820000,
+              "max": 1200000,
+              "note": "~91y lease, 93 sqm"
+            }
+          ],
+          "_curation_note": "Excludes 256 Community Care Apartments (39 sqm, 40-yr lease, $151k-$192k) — project total incl. CCA is 1,432. HDB lists no comparable 2-room resale flats nearby."
         }
       ]
     }

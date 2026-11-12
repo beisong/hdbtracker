@@ -147,6 +147,27 @@ describe('App.leaseBucket', () => {
   });
 });
 
+// ─── App.compareLease ─────────────────────────────────────────────────────
+// Regression: lease sorts used `remaining_lease_years || 0`, so freehold (shown as ∞) sorted as
+// the shortest lease, and unknown-lease rows ("--") crowded the top of "Short → Long".
+describe('App.compareLease', () => {
+  const freeholdOld = { id: 'fh-old', is_freehold: true, remaining_lease_years: null, month: '2025-01' };
+  const freeholdNew = { id: 'fh-new', is_freehold: true, remaining_lease_years: null, month: '2026-09' };
+  const lease999 = { id: '999', is_freehold: false, remaining_lease_years: 858, month: '2026-01' };
+  const lease80 = { id: '80', is_freehold: false, remaining_lease_years: 80, month: '2026-02' };
+  const hdb60 = { id: 'hdb60', remaining_lease_years: 60.5, month: '2026-03' };
+  const unknown = { id: 'unknown', is_freehold: false, remaining_lease_years: null, month: '2026-10' };
+  const rows = [unknown, hdb60, freeholdOld, lease80, freeholdNew, lease999];
+  const order = dir => [...rows].sort((a, b) => App.compareLease(a, b, dir)).map(t => t.id);
+
+  it('Long → Short: freehold first (newest first), 999-yr next, unknown last', () =>
+    expect(order(-1)).toEqual(['fh-new', 'fh-old', '999', '80', 'hdb60', 'unknown']));
+  it('Short → Long: shortest first, freehold after 999-yr, unknown still last', () =>
+    expect(order(1)).toEqual(['hdb60', '80', '999', 'fh-new', 'fh-old', 'unknown']));
+  it('two unknown leases tie-break newest first', () =>
+    expect(App.compareLease({ ...unknown, month: '2025-01' }, unknown, 1)).toBeGreaterThan(0));
+});
+
 // ─── TransactionMap.getLeaseTier ──────────────────────────────────────────
 describe('TransactionMap.getLeaseTier', () => {
   it('≥95 years → "fresh"', () => expect(TransactionMap.getLeaseTier(99)).toBe('fresh'));

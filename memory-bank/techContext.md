@@ -86,7 +86,7 @@ Python dependencies: `pip install -r requirements.txt` (venv managed by `scripts
 | storey_range | e.g., "04 TO 06" |
 | floor_area_sqm | Floor area in sqm |
 | flat_model | Flat model type |
-| remaining_lease_years | Years of lease remaining |
+| remaining_lease_years | Years of lease remaining **at the sale** (HDB: from data.gov.sg; private: lease term − (sale year − commence year), since 2026-11-12) |
 | resale_price | Transaction price (SGD) |
 | price_per_sqm | Pre-computed price per sqm |
 | dataset_source | "HDB" or "URA_PRIVATE" |

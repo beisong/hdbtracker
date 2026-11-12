@@ -251,3 +251,47 @@ describe('generic LANDED HOUSING DEVELOPMENT project', () => {
     }
   });
 });
+
+// The generic names cover hundreds of unrelated streets island-wide, so they're not a "project":
+// keep them out of project lists, search, slugs and the sitemap — but keep their sales in area stats.
+describe('generic project names are not treated as projects', () => {
+  const LHD = 'LANDED HOUSING DEVELOPMENT';
+
+  it('district-overview top_projects excludes them, area totals still count them', async () => {
+    const res = await request.get('/api/private/district-overview?district=16');
+    expect(res.body.top_projects.map(p => p.project)).not.toContain(LHD);
+    expect(res.body.recent_transactions.some(t => t.project === LHD)).toBe(true);
+  });
+
+  it('district-summary top_projects excludes them', async () => {
+    const res = await request.get('/api/private/district-summary?districts=16');
+    expect(res.body.top_projects.map(p => p.project)).not.toContain(LHD);
+    expect(res.body.summary.total_transactions).toBeGreaterThan(0);
+  });
+
+  it('project autocomplete does not offer them', async () => {
+    const res = await request.get('/api/private/projects?q=landed');
+    expect(res.body.projects).toHaveLength(0);
+  });
+
+  it('their slug does not resolve, even via the fuzzy fallback', async () => {
+    const exact = await request.get('/api/private/project-overview?slug=landed-housing-development');
+    expect(exact.body.found).toBe(false);
+    const fuzzy = await request.get('/api/private/project-overview?slug=landed');
+    expect(fuzzy.body.found).toBe(false);
+  });
+
+  it('their /private/ page is noindex and absent from the sitemap', async () => {
+    const meta = await request.get('/api/seo/metadata?route=/private/landed-housing-development');
+    expect(meta.body.robots).toBe('noindex, follow');
+    const sitemap = await request.get('/api/seo/sitemap');
+    const urls = sitemap.body.urls.map(u => u.url);
+    expect(urls.some(u => u.endsWith('/private/landed-housing-development'))).toBe(false);
+    expect(urls.some(u => u.endsWith('/private/sky-habitat'))).toBe(true);
+  });
+
+  it('the bot district page does not link to them', async () => {
+    const res = await request.get('/api/seo/metadata?route=/district/16');
+    expect(res.body.content_html || '').not.toContain('/private/landed-housing-development');
+  });
+});

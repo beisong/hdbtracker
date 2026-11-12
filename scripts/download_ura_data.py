@@ -20,7 +20,7 @@ transformer = Transformer.from_crs('EPSG:3414', 'EPSG:4326', always_xy=True)
 URA_API_BASE = 'https://eservice.ura.gov.sg/uraDataService'
 URA_SERVICE = 'PMI_Resi_Transaction'
 BATCHES = [1, 2, 3, 4]
-# URA placeholder project names that cover many unrelated streets (keep in sync with app.js)
+# URA placeholder project names that cover many unrelated streets (keep in sync with app.js and server/index.js)
 GENERIC_PROJECT_NAMES = {'LANDED HOUSING DEVELOPMENT', 'RESIDENTIAL APARTMENTS'}
 MAX_ATTEMPTS = 3          # per batch: 1 initial request + 2 retries
 RETRY_BACKOFF_SECS = 10   # 10s, then 20s
@@ -132,8 +132,11 @@ def parse_contract_date(date_str):
         return None
 
 
-def parse_tenure(tenure_str):
-    """Parse tenure string to extract lease years and commence date."""
+def parse_tenure(tenure_str, sale_year):
+    """Parse tenure string to extract lease years and commence date.
+
+    Remaining lease is measured at the sale (sale_year), like data.gov.sg's HDB remaining_lease,
+    so it never goes stale and both datasets mean the same thing in one column."""
     if not tenure_str:
         return None, None, None  # flat_model, lease_commence_date, remaining_lease_years
 
@@ -152,8 +155,8 @@ def parse_tenure(tenure_str):
     commence_year = int(commence_match.group(1)) if commence_match else None
 
     if lease_years and commence_year:
-        # Compute remaining lease as of 2026
-        remaining = lease_years - (2026 - commence_year)
+        # Capped at the full term for a sale before the lease starts (none in the data so far)
+        remaining = min(lease_years, lease_years - (sale_year - commence_year))
         return f'{lease_years}-YR LEASEHOLD', commence_year, max(0, remaining)
     elif lease_years:
         return f'{lease_years}-YR LEASEHOLD', None, None
@@ -311,7 +314,7 @@ def insert_transactions(conn, all_projects, batch_num):
                 price_per_sqm = round(price / area, 2)
 
             property_type = tx.get('propertyType', '')
-            flat_model, lease_commence, remaining_lease = parse_tenure(tx.get('tenure', ''))
+            flat_model, lease_commence, remaining_lease = parse_tenure(tx.get('tenure', ''), int(month[:4]))
             storey_range, storey_mid = parse_floor_range(tx.get('floorRange', ''))
 
             type_of_sale = tx.get('typeOfSale', '')

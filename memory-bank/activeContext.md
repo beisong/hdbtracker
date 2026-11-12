@@ -38,10 +38,19 @@
 - **Lease filter fixed + deployed 2026-11-12 (`v=37`)**: null `remaining_lease_years` used to count
   as 0y, putting every freehold in "Short (< 60y)". New `App.leaseBucket()` + a **Freehold**
   dropdown option; 999-yr leaseholds deliberately stay numeric (→ Fresh), unknown lease → no bucket.
-- **Known bugs (found 2026-11-12, not fixed)**: (2) generic `LANDED HOUSING DEVELOPMENT` / `RESIDENTIAL APARTMENTS`
-  appear in district top-projects and the sitemap (`/private/landed-housing-development`) as
-  island-wide pseudo-projects; (3) `parse_tenure()` hard-codes 2026 as the reference year. Also
-  unexplained: identical repeated URA resale rows (same street/month/area/price).
+- **Fixed + deployed 2026-11-12 (API + frontend `v=38`; lease-at-sale goes live with the next nightly)**:
+  - Generic `LANDED HOUSING DEVELOPMENT` / `RESIDENTIAL APARTMENTS` no longer act as projects:
+    excluded (server `NOT_GENERIC_PROJECT`) from district top projects (UI + bot pages),
+    autocomplete, slug resolution and the sitemap; `/private/landed-housing-development` now
+    noindex via the soft-404 guard. Sales still count in area stats. Ships with an **API deploy**.
+    Trade-off: typing "landed" in search now finds nothing — use district search + type filter.
+  - Private remaining lease now measured at the sale (`parse_tenure(tenure, sale_year)`), not a
+    hard-coded 2026 — matches HDB. ~80k rows shift up by ≤5y (~12k move up one lease bucket, mostly
+    Long → Fresh). Python-only: takes effect on the first nightly rebuild after it's on `main`.
+  - Lease sort: new `App.compareLease()` — freehold sorts as ∞ (999-yr just below it), unknown lease
+    ("--") last in both directions, ties newest first. Ships with a **frontend deploy**.
+- **Still open**: map deal-score colouring groups freehold with <75y leases (`map.js` `getLeaseTier(... || 0)`);
+  unexplained identical repeated URA resale rows (same street/month/area/price).
 - **Internal-linking gap (proposed, not built)**: bot HTML — town pages don't link `/compare/` or
   `/private/`, BTO project pages link only the nav, compare pages link only each other.
 - **Nov 2026 BTO now official** (2026-11-06): 7 projects seeded from HDB Annex A/B — the 7

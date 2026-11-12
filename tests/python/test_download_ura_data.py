@@ -30,40 +30,47 @@ class TestParseContractDate:
 
 class TestParseTenure:
     def test_freehold(self):
-        assert parse_tenure('Freehold') == ('FREEHOLD', None, None)
+        assert parse_tenure('Freehold', 2026) == ('FREEHOLD', None, None)
 
     def test_freehold_with_extra_text(self):
-        assert parse_tenure('  freehold tenure ') == ('FREEHOLD', None, None)
+        assert parse_tenure('  freehold tenure ', 2026) == ('FREEHOLD', None, None)
 
     def test_leasehold_with_commence_year(self):
-        # Remaining lease is computed against a fixed reference year (2026).
-        assert parse_tenure('99 yrs lease commencing from 2007') == ('99-YR LEASEHOLD', 2007, 80)
+        # Remaining lease is measured at the sale year passed in (here 2026).
+        assert parse_tenure('99 yrs lease commencing from 2007', 2026) == ('99-YR LEASEHOLD', 2007, 80)
+
+    def test_lease_is_measured_at_the_sale_not_today(self):
+        # The same 2007 lease sold in 2022 had 84 years left then — a fixed value, never stale.
+        assert parse_tenure('99 yrs lease commencing from 2007', 2022) == ('99-YR LEASEHOLD', 2007, 84)
+
+    def test_sale_before_lease_starts_capped_at_full_term(self):
+        assert parse_tenure('99 yrs from 2027', 2026) == ('99-YR LEASEHOLD', 2027, 99)
 
     def test_999_year_lease(self):
-        assert parse_tenure('999 yrs from 1885') == ('999-YR LEASEHOLD', 1885, 858)
+        assert parse_tenure('999 yrs from 1885', 2026) == ('999-YR LEASEHOLD', 1885, 858)
 
     def test_years_spelled_out(self):
-        assert parse_tenure('60 years from 2016') == ('60-YR LEASEHOLD', 2016, 50)
+        assert parse_tenure('60 years from 2016', 2026) == ('60-YR LEASEHOLD', 2016, 50)
 
     @pytest.mark.parametrize('raw', ['99 yr from 2020', '99yrs from 2020', '99 YEAR FROM 2020'])
     def test_unit_variants(self, raw):
-        assert parse_tenure(raw) == ('99-YR LEASEHOLD', 2020, 93)
+        assert parse_tenure(raw, 2026) == ('99-YR LEASEHOLD', 2020, 93)
 
     def test_expired_lease_clamped_to_zero(self):
-        assert parse_tenure('30 yrs from 1980') == ('30-YR LEASEHOLD', 1980, 0)
+        assert parse_tenure('30 yrs from 1980', 2026) == ('30-YR LEASEHOLD', 1980, 0)
 
     def test_leasehold_without_commence_year(self):
-        assert parse_tenure('99 yrs') == ('99-YR LEASEHOLD', None, None)
+        assert parse_tenure('99 yrs', 2026) == ('99-YR LEASEHOLD', None, None)
 
     def test_commence_year_without_lease_length_returns_raw(self):
-        assert parse_tenure('Leasehold from 2007') == ('Leasehold from 2007', None, None)
+        assert parse_tenure('Leasehold from 2007', 2026) == ('Leasehold from 2007', None, None)
 
     @pytest.mark.parametrize('empty', [None, ''])
     def test_empty(self, empty):
-        assert parse_tenure(empty) == (None, None, None)
+        assert parse_tenure(empty, 2026) == (None, None, None)
 
     def test_unknown_format_returned_verbatim(self):
-        assert parse_tenure('NA') == ('NA', None, None)
+        assert parse_tenure('NA', 2026) == ('NA', None, None)
 
 
 class TestParseFloorRange:

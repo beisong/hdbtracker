@@ -52,6 +52,12 @@ try {
 // has under ~95 years left — the gate for treating a BTO project as resellable.
 const BTO_MOP_REMAINING_LEASE = 95;
 
+// URA placeholder names that cover hundreds of unrelated streets island-wide (keep in sync with
+// GENERIC_PROJECT_NAMES in download_ura_data.py and App.GENERIC_PRIVATE_PROJECTS in app.js).
+// Their sales still count in area stats; they're only kept out of project lists, search and slugs.
+const GENERIC_PRIVATE_PROJECTS = ['LANDED HOUSING DEVELOPMENT', 'RESIDENTIAL APARTMENTS'];
+const NOT_GENERIC_PROJECT = `project NOT IN (${GENERIC_PRIVATE_PROJECTS.map(p => `'${p}'`).join(', ')})`;
+
 // Open database
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'db', 'resale.db');
 let db = null;
@@ -1173,7 +1179,7 @@ app.get('/api/private/projects', (req, res) => {
         MAX(month) as latest_transaction
       FROM transactions
       WHERE dataset_source = 'URA_PRIVATE'
-        AND UPPER(project) LIKE ?
+        AND UPPER(project) LIKE ? AND ${NOT_GENERIC_PROJECT}
       GROUP BY project, district
       ORDER BY transaction_count DESC
       LIMIT ?
@@ -1400,6 +1406,7 @@ app.get('/api/private/district-summary', (req, res) => {
         AND district IN (${placeholders})
         AND resale_price IS NOT NULL
         AND month >= ?
+        AND ${NOT_GENERIC_PROJECT}
       GROUP BY project
       ORDER BY tx_count DESC
       LIMIT 10
@@ -1512,6 +1519,7 @@ app.get('/api/private/district-overview', (req, res) => {
       FROM transactions
       WHERE dataset_source = 'URA_PRIVATE' AND district = ?
         AND resale_price IS NOT NULL AND month >= ?
+        AND ${NOT_GENERIC_PROJECT}
       GROUP BY project
       ORDER BY tx_count DESC
       LIMIT 20
@@ -2328,7 +2336,7 @@ function privateSlugMap() {
   if (privateSlugCache.db !== db) {
     const map = new Map();
     const rows = db.prepare(`
-      SELECT project FROM transactions WHERE dataset_source = 'URA_PRIVATE'
+      SELECT project FROM transactions WHERE dataset_source = 'URA_PRIVATE' AND ${NOT_GENERIC_PROJECT}
       GROUP BY project ORDER BY COUNT(*) DESC
     `).all();
     for (const { project } of rows) {
@@ -2350,7 +2358,7 @@ function slugToProject(slug) {
   const searchPattern = `%${slug.replace(/-/g, '%')}%`;
   return db.prepare(`
     SELECT project FROM transactions
-    WHERE dataset_source = 'URA_PRIVATE' AND UPPER(project) LIKE ?
+    WHERE dataset_source = 'URA_PRIVATE' AND UPPER(project) LIKE ? AND ${NOT_GENERIC_PROJECT}
     GROUP BY project ORDER BY COUNT(*) DESC LIMIT 1
   `).get(searchPattern)?.project || null;
 }
@@ -2668,7 +2676,7 @@ app.get('/api/seo/sitemap', (req, res) => {
     // Top private projects (by transaction count, limited to keep sitemap reasonable)
     const projects = db.prepare(`
       SELECT project FROM transactions
-      WHERE dataset_source = 'URA_PRIVATE'
+      WHERE dataset_source = 'URA_PRIVATE' AND ${NOT_GENERIC_PROJECT}
       GROUP BY project ORDER BY COUNT(*) DESC LIMIT 200
     `).all();
     for (const p of projects) {
@@ -3458,7 +3466,7 @@ app.get('/api/seo/metadata', (req, res) => {
       if (label) {
         const topProjects = db ? db.prepare(`
           SELECT project, flat_type, COUNT(*) as tx_count, ROUND(AVG(price_per_sqm), 0) as avg_psm
-          FROM transactions WHERE district = ? AND dataset_source = 'URA_PRIVATE'
+          FROM transactions WHERE district = ? AND dataset_source = 'URA_PRIVATE' AND ${NOT_GENERIC_PROJECT}
           GROUP BY project ORDER BY tx_count DESC LIMIT 6
         `).all(dCode) : [];
 

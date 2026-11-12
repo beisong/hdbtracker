@@ -1215,8 +1215,8 @@ const App = {
         case 'psf-asc': return (a.price_per_sqm || 0) - (b.price_per_sqm || 0);
         case 'area-desc': return (b.floor_area_sqm || 0) - (a.floor_area_sqm || 0);
         case 'area-asc': return (a.floor_area_sqm || 0) - (b.floor_area_sqm || 0);
-        case 'lease-desc': return (b.remaining_lease_years || 0) - (a.remaining_lease_years || 0);
-        case 'lease-asc': return (a.remaining_lease_years || 0) - (b.remaining_lease_years || 0);
+        case 'lease-desc': return this.compareLease(a, b, -1);
+        case 'lease-asc': return this.compareLease(a, b, 1);
         default: return 0;
       }
     });
@@ -2249,6 +2249,17 @@ const App = {
     return Math.round(num).toLocaleString('en-SG');
   },
 
+  // Lease sort comparator; dir 1 = short → long, -1 = long → short. Freehold sorts as ∞ (the ∞ shown
+  // in the Lease column; 999-yr leases rank just below it), unknown lease ("--") is last in both
+  // directions, and ties (e.g. all freehold) go newest first.
+  compareLease(a, b, dir) {
+    const key = tx => tx.is_freehold ? Infinity : tx.remaining_lease_years;
+    const x = key(a), y = key(b);
+    if ((x == null) !== (y == null)) return x == null ? 1 : -1;
+    if (x != null && x !== y) return x < y ? -dir : dir;
+    return b.month.localeCompare(a.month);
+  },
+
   // Lease-filter bucket. Freehold has no remaining lease, so it gets its own bucket; 999-yr
   // leaseholds stay numeric (→ fresh). Unknown lease matches no bucket (only "All Lease").
   leaseBucket(tx) {
@@ -2261,7 +2272,8 @@ const App = {
     return 'fresh';
   },
 
-  // URA placeholder names that span many streets (keep in sync with GENERIC_PROJECT_NAMES in download_ura_data.py)
+  // URA placeholder names that span many streets (keep in sync with GENERIC_PROJECT_NAMES in download_ura_data.py
+  // and GENERIC_PRIVATE_PROJECTS in server/index.js)
   GENERIC_PRIVATE_PROJECTS: ['LANDED HOUSING DEVELOPMENT', 'RESIDENTIAL APARTMENTS'],
 
   // Row label/address for a private tx: the street is the real location, a generic project name is dropped.

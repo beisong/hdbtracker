@@ -3,7 +3,7 @@
 > Restructured 2026-10-02. Detailed per-change history is in git and in `activeContext.md`
 > § Feature History.
 
-## What Works (all deployed — cache `v=37`)
+## What Works (all deployed — cache `v=38`)
 
 **Search & analysis**
 - ✅ Search by town, postal code (500m true-radius via `hdb_block_coords`), district (D01–D28),
@@ -40,7 +40,7 @@
 - ✅ Daily automated data refresh (GitHub Actions → build → gzip → SFTP → atomic swap → restart).
 - ✅ Light/dark theme; mobile UX (jump bar, FAB, share, card tap → map highlight).
 - ✅ In-app feedback → separate `feedback.db`; GA4 with SPA page views + custom events.
-- ✅ 364 unit + integration tests + 139 pytest tests (data scripts) + 19 smoke tests; every deploy
+- ✅ 373 unit + integration tests + 141 pytest tests (data scripts) + 19 smoke tests; every deploy
   gated on `npm test`.
 - ✅ Nightly refresh fails loudly on partial downloads and refuses to deploy a short DB.
 

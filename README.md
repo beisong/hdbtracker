@@ -22,17 +22,19 @@ WorthIt uses a **split architecture**:
 
 ```bash
 npm install
-pip install requests pyproj   # for data download scripts
+npm run setup                 # Python venv + requirements.txt for the data scripts
 ```
 
 ### 2. Download Data
 
 ```bash
-npm run download-hdb           # HDB transactions (~230K records)
-# npm run download-ura         # Optional: URA private property data (requires URA_API_ACCESS_KEY)
+npm run download              # HDB (data.gov.sg) then URA private (needs URA_API_ACCESS_KEY in .env)
+# npm run download-hdb         # HDB only — rebuilds the DB from scratch
+# npm run download-ura         # URA only — replaces the private rows in an existing DB
 ```
 
-This downloads HDB resale transaction records from data.gov.sg into `server/db/resale.db`.
+This builds `server/db/resale.db`. `download-hdb` deletes and recreates the DB, so always run
+`download-ura` after it (or use `npm run download`) or private-property data will be missing.
 
 ### 3. Start the Server
 
@@ -60,30 +62,27 @@ fly launch           # Follow prompts (choose region, set app name)
 ### Deploy
 
 ```bash
-fly deploy
+npm run deploy        # API + frontend (runs npm test first, bumps ?v=N, pings IndexNow)
+npm run deploy:api    # API only (npm test && fly deploy)
 ```
 
 ### Seed the Database
 
-The Fly.io free tier (256MB RAM) is too small to run the Python download scripts. Instead, **build the database locally and upload it**:
+The Fly.io machine (256MB RAM) is too small to run the Python download scripts. Instead, **build the database locally and upload it**:
 
 ```bash
-# 1. Build database locally
-python scripts/download_data.py
-python scripts/download_ura_data.py   # optional
-
-# 2. Upload to Fly.io volume
-fly ssh sftp put server/db/resale.db /data/resale.db
-
-# 3. Restart the machine to pick up the new DB
-fly machine restart <machine-id>
+npm run download      # build server/db/resale.db (HDB + URA)
+npm run deploy:data   # WAL checkpoint → gzip → SFTP → atomic swap on /data → restart
 ```
+
+Don't upload with a bare `fly ssh sftp put`: without `PRAGMA wal_checkpoint(TRUNCATE)` first,
+rows still in the WAL file are silently lost.
 
 ### Verify
 
 ```bash
 curl https://<your-app>.fly.dev/api/status
-# Expected: {"status":"ok","total_transactions":370252,"latest_month":"2026-05",...}
+# Expected: {"status":"ok","total_transactions":<count>,"latest_month":"<YYYY-MM>",...}
 ```
 
 ## Debugging Commands
@@ -141,46 +140,27 @@ fly machines restart                # restart all machines
 | SSH auth failed | No SSH certificate | Run `fly ssh issue` then `fly ssh establish` |
 | `no_database` status | DB missing at `/data/resale.db` | Upload via SFTP |
 
-### Update Data (Monthly)
+### Update Data
 
-```bash
-# Re-download latest data locally
-python scripts/download_data.py
+Automatic: the **Refresh Data** GitHub Action (`.github/workflows/refresh-data.yml`) runs daily at
+03:00 SGT — `npm run download`, a row-count guard, then `npm run deploy:data`. It can also be
+triggered manually from the Actions tab.
 
-# Re-upload to Fly.io
-fly ssh sftp put server/db/resale.db /data/resale.db
-fly machine restart <machine-id>
-```
+Manual: `npm run download && npm run deploy:data`. Never upload an HDB-only DB — it would wipe the
+private-property data in production.
 
 ## Deploy Frontend to Cloudflare Pages
 
-### CLI Deploy (Recommended)
-
 ```bash
-npx wrangler pages deploy public --project-name=worthit
+npm run deploy:frontend
 ```
 
-First run will prompt browser authentication. This uploads `public/` and gives you a live URL (e.g., `https://worthit.pages.dev`).
+This runs `npm test`, bumps the `?v=N` cache-bust in `index.html` (`scripts/bump-version.js`),
+uploads `public/` + `functions/` with wrangler (`scripts/deploy-frontend.js`, uses
+`CLOUDFLARE_API_TOKEN` from `.env`), then submits the sitemap to IndexNow. Avoid a bare
+`wrangler pages deploy` — it skips the tests, the version bump and the IndexNow ping.
 
-### Alternative: GitHub-connected (Auto-deploys on push)
-
-1. Push code to GitHub
-2. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → Workers & Pages → Create
-3. Connect your GitHub repo
-4. Settings:
-   - **Framework preset**: None
-   - **Build command**: leave empty
-   - **Build output directory**: `public`
-5. Deploy
-
-### Update Frontend
-
-```bash
-# Re-deploy after changes
-npx wrangler pages deploy public --project-name=worthit
-```
-
-The frontend auto-connects to the Fly.io API via `config.js`.
+The SPA calls same-origin `/api/*`; the edge function (`functions/[[path]].js`) proxies it to Fly.io.
 
 ## Custom Domain Setup
 
@@ -248,7 +228,13 @@ WorthIt/
 │   ├── download_ura_data.py     # URA private property data
 │   ├── bto_launches.json        # Hand-curated BTO launch data
 │   ├── fetch_bto_blocks.py      # BTO project → HDB blocks (OneMap)
-│   └── bto_project_blocks.json  # Output of fetch_bto_blocks.py
+│   ├── bto_project_blocks.json  # Output of fetch_bto_blocks.py
+│   ├── hdb_blocks.csv           # HDB block coordinates (seeds hdb_block_coords)
+│   ├── run-python.js            # venv wrapper for the Python scripts (npm run setup/download)
+│   ├── read-feedback.js         # dump in-app feedback (npm run feedback)
+│   ├── bump-version.js          # ?v=N cache-bust, run by deploy scripts
+│   ├── deploy-frontend.js       # wrangler deploy wrapper
+│   └── indexnow-ping.js         # sitemap → IndexNow after frontend deploy
 ├── server/
 │   ├── index.js                 # Express API server
 │   └── db/
@@ -266,9 +252,13 @@ WorthIt/
 │       ├── app.js               # Main app logic
 │       ├── charts.js            # Chart.js configs
 │       └── map.js               # Leaflet map
+│   └── data/mrt_stations.json   # MRT overlay + nearest-station labels
 ├── Dockerfile                   # Fly.io Docker config
 ├── fly.toml                     # Fly.io app config
 ├── tests/                       # Vitest + supertest (npm test); tests/python/ = pytest
+├── memory-bank/                 # Project context docs (kept current per CLAUDE.md)
+├── design.md                    # UI style guide
+├── CLAUDE.md                    # Architecture + patterns for Claude Code
 ├── package.json
 ├── requirements.txt
 └── README.md

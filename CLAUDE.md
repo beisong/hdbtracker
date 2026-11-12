@@ -37,13 +37,15 @@ npm start              # Run server (http://localhost:3000)
 npm run dev            # Run with --watch (auto-restart on changes)
 npm run download-hdb   # Download HDB transactions from data.gov.sg into resale.db
 npm run download-ura   # Download URA private property data (requires URA_API_ACCESS_KEY in .env)
+npm run download       # Both (download-hdb recreates the DB, so URA must always follow it)
+npm run deploy:data    # Upload local resale.db to Fly (WAL checkpoint, gzip, atomic swap, restart)
 npm run deploy         # Deploy API to Fly.io + frontend to Cloudflare Pages
-npm run deploy:api     # Deploy API only (fly deploy)
-npm run deploy:frontend # Deploy frontend only (wrangler pages deploy public --project-name=worthit)
+npm run deploy:api     # Deploy API only (npm test && fly deploy)
+npm run deploy:frontend # Deploy frontend only (npm test, bump ?v=N, wrangler via scripts/deploy-frontend.js, IndexNow ping)
 ```
 
 ```bash
-npm test                # Run unit + integration tests (360 tests, Vitest + supertest)
+npm test                # Run unit + integration tests (364 tests, Vitest + supertest)
 python3 -m pytest tests/python -q  # Python data-script tests (139; needs pip install pytest pyproj)
 npm run test:smoke      # Smoke tests against live worthit-api.fly.dev (19 tests)
 npm run test:smoke-local # Smoke tests against localhost:3000
@@ -129,13 +131,13 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
-**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=36`.
+**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. `npm run deploy` / `deploy:frontend` bump `N` automatically (`scripts/bump-version.js`, which also updates the number below) — don't bump it by hand. Current: `v=37`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 
 **UI style guide**: `design.md` (repo root) defines the design tokens, component classes, dark-mode and mobile rules — read it before adding or restyling any UI.
 
-**Testing**: 360 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite), plus 139 pytest tests in `tests/python/` for the data scripts (mocked HTTP, no real downloads; not run by `npm test` or the deploy scripts). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
+**Testing**: 364 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite), plus 139 pytest tests in `tests/python/` for the data scripts (mocked HTTP, no real downloads; not run by `npm test` or the deploy scripts). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
 
 **WAL checkpoint**: always run `PRAGMA wal_checkpoint(TRUNCATE)` on the SQLite DB before uploading to Fly.io. Otherwise data still in the WAL file is silently lost.
 

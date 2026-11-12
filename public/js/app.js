@@ -1202,14 +1202,7 @@ const App = {
 
     // Lease filter
     if (leaseFilter) {
-      filtered = filtered.filter(tx => {
-        const lease = tx.remaining_lease_years || 0;
-        if (leaseFilter === 'short') return lease < 60;
-        if (leaseFilter === 'med') return lease >= 60 && lease < 80;
-        if (leaseFilter === 'long') return lease >= 80 && lease < 95;
-        if (leaseFilter === 'fresh') return lease >= 95;
-        return true;
-      });
+      filtered = filtered.filter(tx => this.leaseBucket(tx) === leaseFilter);
     }
 
     filtered.sort((a, b) => {
@@ -2254,6 +2247,18 @@ const App = {
   formatNumber(num) {
     if (num === null || num === undefined) return '--';
     return Math.round(num).toLocaleString('en-SG');
+  },
+
+  // Lease-filter bucket. Freehold has no remaining lease, so it gets its own bucket; 999-yr
+  // leaseholds stay numeric (→ fresh). Unknown lease matches no bucket (only "All Lease").
+  leaseBucket(tx) {
+    if (tx.is_freehold) return 'freehold';
+    const lease = tx.remaining_lease_years;
+    if (lease == null) return null;
+    if (lease < 60) return 'short';
+    if (lease < 80) return 'med';
+    if (lease < 95) return 'long';
+    return 'fresh';
   },
 
   // URA placeholder names that span many streets (keep in sync with GENERIC_PROJECT_NAMES in download_ura_data.py)

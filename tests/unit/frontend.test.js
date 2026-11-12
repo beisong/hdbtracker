@@ -129,6 +129,24 @@ describe('App.estimateBedrooms', () => {
   it('5-bed for landed area 200-299', () => expect(App.estimateBedrooms(250, 'DETACHED')).toBe('5-bed'));
 });
 
+// ─── App.leaseBucket ──────────────────────────────────────────────────────
+// Regression: freehold (null remaining lease) used to be treated as 0y → "Short (< 60y)".
+describe('App.leaseBucket', () => {
+  it('freehold → freehold, not short', () =>
+    expect(App.leaseBucket({ is_freehold: true, remaining_lease_years: null })).toBe('freehold'));
+  it('999-yr leasehold is not freehold → fresh', () =>
+    expect(App.leaseBucket({ is_freehold: false, remaining_lease_years: 840 })).toBe('fresh'));
+  it('unknown lease matches no bucket', () =>
+    expect(App.leaseBucket({ is_freehold: false, remaining_lease_years: null })).toBe(null));
+  it('HDB rows (no is_freehold) use the numeric lease', () => {
+    expect(App.leaseBucket({ remaining_lease_years: 8 })).toBe('short');
+    expect(App.leaseBucket({ remaining_lease_years: 0 })).toBe('short');
+    expect(App.leaseBucket({ remaining_lease_years: 60 })).toBe('med');
+    expect(App.leaseBucket({ remaining_lease_years: 80 })).toBe('long');
+    expect(App.leaseBucket({ remaining_lease_years: 95 })).toBe('fresh');
+  });
+});
+
 // ─── TransactionMap.getLeaseTier ──────────────────────────────────────────
 describe('TransactionMap.getLeaseTier', () => {
   it('≥95 years → "fresh"', () => expect(TransactionMap.getLeaseTier(99)).toBe('fresh'));

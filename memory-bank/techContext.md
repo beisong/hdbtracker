@@ -33,7 +33,7 @@
 - **Edge functions**: `functions/[[path]].js` — Cloudflare Pages Function: same-origin `/api/*` proxy to Fly, bot SEO injection, robots/sitemap, static E-E-A-T pages
 
 ### External APIs
-- **OneMap SG API**: Postal code → address/coordinates lookup, BTO block names (`BUILDING` field). Silently rate-limits — keep ≥0.35s between geocode calls in batch scripts and ~1.5s for search-heavy scripts like `fetch_bto_blocks.py`
+- **OneMap SG API**: Postal code → address/coordinates lookup, BTO block names (`BUILDING` field). Silently rate-limits — keep ≥1s between geocode calls in batch scripts (0.4s hit 429s over ~388 calls in `download_ura_data.py`) and ~1.5s for search-heavy scripts like `fetch_bto_blocks.py`
 - **data.gov.sg**: HDB resale transaction data download
 - **URA API**: Private property transaction data
 
@@ -133,6 +133,6 @@ One row per BTO project × flat type, seeded from `scripts/bto_launches.json` (s
 
 ## Technical Constraints
 - **Cross-platform npm scripts**: `scripts/run-python.js` detects OS and uses correct venv path; `scripts/deploy-frontend.js` loads `.env` before wrangler for cross-platform auth
-- **Single server file**: All routes in `server/index.js` (~3,400 lines) — refactor into modules is a known backlog item
+- **Single server file**: All routes in `server/index.js` (~3,600 lines) — refactor into modules is a known backlog item
 - **SQLite limitations**: Not suitable for concurrent writes (acceptable since DB is readonly from server)
 - **No build step / tests / cache busting**: see CLAUDE.md.

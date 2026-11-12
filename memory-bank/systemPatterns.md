@@ -15,7 +15,7 @@
    bots get the page with the static title). A payload without `title` counts as a failure.
 6. Everyone else → static asset or `index.html` (SPA fallback)
 
-## Server (`server/index.js`, monolithic ~3,400 lines)
+## Server (`server/index.js`, monolithic ~3,600 lines)
 - **Startup**: load `bto_launches.json` (→ `HDB_QUOTED_RESALE`) and `bto_project_blocks.json`
   (→ `BTO_PROJECT_BLOCKS`) *before* opening the DB, then `seedHdbBlockCoords()` / `seedBtoProjects()`
   (only if those tables are missing). Separate writable `feedback.db`.

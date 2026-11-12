@@ -35,12 +35,19 @@
   `/methodology`, `/check`. GSC coverage 2026-11-04: 820 "Discovered – not indexed", 36 "Crawled –
   not indexed" (validation not started). Bing 2026-11-04: submitted 48 `/compare/` + BTO ranks
   173–223; remaining 128 `/private/` (by URA volume, ranks 73–200) then 124 town × flat-type pages.
+- **Lease filter fixed + deployed 2026-11-12 (`v=37`)**: null `remaining_lease_years` used to count
+  as 0y, putting every freehold in "Short (< 60y)". New `App.leaseBucket()` + a **Freehold**
+  dropdown option; 999-yr leaseholds deliberately stay numeric (→ Fresh), unknown lease → no bucket.
+- **Known bugs (found 2026-11-12, not fixed)**: (2) generic `LANDED HOUSING DEVELOPMENT` / `RESIDENTIAL APARTMENTS`
+  appear in district top-projects and the sitemap (`/private/landed-housing-development`) as
+  island-wide pseudo-projects; (3) `parse_tenure()` hard-codes 2026 as the reference year. Also
+  unexplained: identical repeated URA resale rows (same street/month/area/price).
 - **Internal-linking gap (proposed, not built)**: bot HTML — town pages don't link `/compare/` or
   `/private/`, BTO project pages link only the nav, compare pages link only each other.
 - **Nov 2026 BTO now official** (2026-11-06): 7 projects seeded from HDB Annex A/B — the 7
   provisional `/bto/<slug>` URLs (e.g. `bedok-bayshore-ii`) now noindex and drop out of the sitemap,
   replaced by `sembawang-anchor`, `plantation-dew`, `chencharu-acres`, `bayshore-sails`,
-  `bayshore-oasis`, `merpati-meadow`, `toa-payoh-hillside`. Live after API deploy + nightly rebuild.
+  `bayshore-oasis`, `merpati-meadow`, `toa-payoh-hillside`. Live (verified 2026-11-12).
 - **Fly is always-on since 2026-11-04** (`min_machines_running = 1`, ~US$2–3/month) — watch Bing's
   crawl-stats `all_other_codes` (cold-start 503s) stop growing.
 - **Not done (deliberately deferred)**: MRT
@@ -62,7 +69,7 @@ return `street_name`; `project_coords` PK → `(project, street_name)` (in-place
 `download_ura_data.py`; OneMap fallback geocodes generic names by street only); `/api/nearby-hdb`
 groups by project + street; frontend `privateAddress()` / `coordKey()`. **Deploy order**: API +
 frontend any time (old DB just shows no pin for generic rows), then landed pins appear after the
-next nightly data rebuild. Verified locally 2026-11-12: URA does send x/y per landed street (427 `LANDED HOUSING DEVELOPMENT` rows), ~388 pairs still need the OneMap fallback — it hit 429s at 0.4s spacing, so `onemap_search()` now spaces calls 1s, backs off 5/15/30/60s on errors, and falls back project+street → project → street. Because the nightly re-geocodes all ~388 every run (fresh DB), geocoding is capped at `GEOCODE_BUDGET_SECS = 600` (most-recently-transacted pairs first; the rest get no pin that night) so it can't push the 30-min workflow over. **Not yet committed/deployed.** If pins flicker between nights or the missing count grows, do option 3: commit a `scripts/private_project_coords.csv` cache of OneMap results (like `hdb_blocks.csv`).
+next nightly data rebuild. Verified locally 2026-11-12: URA does send x/y per landed street (427 `LANDED HOUSING DEVELOPMENT` rows), ~388 pairs still need the OneMap fallback — it hit 429s at 0.4s spacing, so `onemap_search()` now spaces calls 1s, backs off 5/15/30/60s on errors, and falls back project+street → project → street. Because the nightly re-geocodes all ~388 every run (fresh DB), geocoding is capped at `GEOCODE_BUDGET_SECS = 600` (most-recently-transacted pairs first; the rest get no pin that night) so it can't push the 30-min workflow over. Pushed 2026-11-12 (`a934cf6`) — script-only, takes effect on the next nightly; check that run's geocoding log line. If pins flicker between nights or the missing count grows, do option 3: commit a `scripts/private_project_coords.csv` cache of OneMap results (like `hdb_blocks.csv`).
 
 ### Audit fixes + town comparison + MRT labels — DEPLOYED 2026-11-04 (API + frontend, `v=32`)
 A `/ponytail-audit` (14 findings) was implemented as 10 parallel claude.ai/code cloud PRs (#1–#10,

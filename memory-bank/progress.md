@@ -3,7 +3,7 @@
 > Restructured 2026-10-02. Detailed per-change history is in git and in `activeContext.md`
 > § Feature History.
 
-## What Works (all deployed — cache `v=32`; `v=36` landed-street fix deployed 2026-11-12, see activeContext)
+## What Works (all deployed — cache `v=37`)
 
 **Search & analysis**
 - ✅ Search by town, postal code (500m true-radius via `hdb_block_coords`), district (D01–D28),
@@ -40,7 +40,7 @@
 - ✅ Daily automated data refresh (GitHub Actions → build → gzip → SFTP → atomic swap → restart).
 - ✅ Light/dark theme; mobile UX (jump bar, FAB, share, card tap → map highlight).
 - ✅ In-app feedback → separate `feedback.db`; GA4 with SPA page views + custom events.
-- ✅ 356 unit + integration tests + 133 pytest tests (data scripts) + 19 smoke tests; every deploy
+- ✅ 364 unit + integration tests + 139 pytest tests (data scripts) + 19 smoke tests; every deploy
   gated on `npm test`.
 - ✅ Nightly refresh fails loudly on partial downloads and refuses to deploy a short DB.
 
@@ -60,7 +60,7 @@
     with a sync-check test.
 
 ### Engineering
-- 🔲 Split the monolithic `server/index.js` (~3,400 lines) into modules.
+- 🔲 Split the monolithic `server/index.js` (~3,600 lines) into modules.
 - 🔲 Remove unused precomputed tables (`town_stats`, `monthly_medians`, `storey_adjustments`) from
   `download_data.py`, or start using them.
 - ✅ Init `status`/`towns` failure is non-fatal (PR #9). ✅ Fly `min_machines_running = 1`

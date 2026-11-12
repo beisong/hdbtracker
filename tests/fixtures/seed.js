@@ -47,12 +47,13 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
       type_of_area TEXT
     );
     CREATE TABLE project_coords (
-      project TEXT,
+      project TEXT NOT NULL,
       district TEXT,
       latitude REAL,
       longitude REAL,
-      street_name TEXT,
-      market_segment TEXT
+      street_name TEXT NOT NULL DEFAULT '',
+      market_segment TEXT,
+      PRIMARY KEY (project, street_name)
     );
     CREATE TABLE hdb_block_coords (
       block       TEXT NOT NULL,
@@ -163,6 +164,13 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
     [null,'CONDOMINIUM',null,'SKY ROAD',null,80,null,null,800000,10000,'2025-02','URA_PRIVATE','SKY','11','RCR','Resale','Strata'],
   ];
 
+  // URA's generic LANDED HOUSING DEVELOPMENT name — 2 rows on 2 different streets, district 16.
+  // Coords must be per (project, street), not per project.
+  const landed = [
+    [null,'TERRACE',null,'KEW CRESCENT',null,160,'FREEHOLD',null,4500000,28125,'2025-04','URA_PRIVATE','LANDED HOUSING DEVELOPMENT','16','OCR','Resale','Land'],
+    [null,'TERRACE',null,'JALAN CHEMPAKA KUNING',null,170,'FREEHOLD',null,4800000,28235,'2025-05','URA_PRIVATE','LANDED HOUSING DEVELOPMENT','16','OCR','Resale','Land'],
+  ];
+
   const insertAll = db.transaction((rows) => {
     for (const row of rows) insertTx.run(...row);
   });
@@ -179,7 +187,7 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
     ['CENTRAL AREA','3 ROOM','4','SELEGIE RD','40 TO 42',65,'MODEL A',90,900000,13846,'2025-04','HDB',null,null,null,'Resale',null],
     ['CENTRAL AREA','4 ROOM','5','SELEGIE RD','10 TO 12',90,'MODEL A',60,500000,5555,'2025-05','HDB',null,null,null,'Resale',null],
   ];
-  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...sky, ...punggolFreshview, ...centralAreaSkewed]);
+  insertAll([...bedokHdb, ...bedokNorthExtra, ...toaPayohHdb, ...skyHabitat, ...theCanopy, ...sky, ...punggolFreshview, ...centralAreaSkewed, ...landed]);
 
   // Project coords
   const insertCoord = db.prepare(`
@@ -188,6 +196,8 @@ function createFixtureDb(dbPath = FIXTURE_DB_PATH) {
   `);
   insertCoord.run('SKY HABITAT', '11', 1.3521, 103.8198, 'BISHAN ST 21', 'RCR');
   insertCoord.run('THE CANOPY', '11', 1.3400, 103.8450, 'TOA PAYOH RISE', 'RCR');
+  insertCoord.run('LANDED HOUSING DEVELOPMENT', '16', 1.3290, 103.9420, 'KEW CRESCENT', 'OCR');
+  insertCoord.run('LANDED HOUSING DEVELOPMENT', '16', 1.3310, 103.9440, 'JALAN CHEMPAKA KUNING', 'OCR');
 
   // HDB block coords — covers BEDOK fixture addresses
   const insertBlock = db.prepare(`

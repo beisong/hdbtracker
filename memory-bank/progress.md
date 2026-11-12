@@ -3,7 +3,7 @@
 > Restructured 2026-10-02. Detailed per-change history is in git and in `activeContext.md`
 > § Feature History.
 
-## What Works (all deployed — cache `v=32`)
+## What Works (all deployed — cache `v=32`; `v=36` landed-street fix deployed 2026-11-12, see activeContext)
 
 **Search & analysis**
 - ✅ Search by town, postal code (500m true-radius via `hdb_block_coords`), district (D01–D28),

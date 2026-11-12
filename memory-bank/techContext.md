@@ -97,6 +97,8 @@ Python dependencies: `pip install -r requirements.txt` (venv managed by `scripts
 | type_of_area | Area type (URA only) |
 
 ### Table: `project_coords`
+Primary key `(project, street_name)` (was `project` only until 2026-11-09; `download_ura_data.py` migrates old DBs in place).
+
 | Column | Description |
 |--------|-------------|
 | project | Project name |

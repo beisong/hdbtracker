@@ -53,6 +53,17 @@
 
 ## Recent Changes (Sep–Nov 2026)
 
+### Landed / generic-project street fix — DEPLOYED 2026-11-12 (API + frontend `v=36`; pins need the nightly rebuild from the pushed script)
+District landed searches (e.g. D16 + Terrace) showed "LANDED HOUSING DEVELOPMENT LANDED HOUSING
+DEVELOPMENT", the Google Maps link searched that string, and hover/marker pointed at one point
+(Cedarwood Grove, D25) for all 823 landed streets. Cause: private rows used the project name as
+both block and street, and `project_coords` was keyed by project only. Fix: private tx endpoints
+return `street_name`; `project_coords` PK → `(project, street_name)` (in-place migration in
+`download_ura_data.py`; OneMap fallback geocodes generic names by street only); `/api/nearby-hdb`
+groups by project + street; frontend `privateAddress()` / `coordKey()`. **Deploy order**: API +
+frontend any time (old DB just shows no pin for generic rows), then landed pins appear after the
+next nightly data rebuild. Verified locally 2026-11-12: URA does send x/y per landed street (427 `LANDED HOUSING DEVELOPMENT` rows), ~388 pairs still need the OneMap fallback — it hit 429s at 0.4s spacing, so `onemap_search()` now spaces calls 1s, backs off 5/15/30/60s on errors, and falls back project+street → project → street. Because the nightly re-geocodes all ~388 every run (fresh DB), geocoding is capped at `GEOCODE_BUDGET_SECS = 600` (most-recently-transacted pairs first; the rest get no pin that night) so it can't push the 30-min workflow over. **Not yet committed/deployed.** If pins flicker between nights or the missing count grows, do option 3: commit a `scripts/private_project_coords.csv` cache of OneMap results (like `hdb_blocks.csv`).
+
 ### Audit fixes + town comparison + MRT labels — DEPLOYED 2026-11-04 (API + frontend, `v=32`)
 A `/ponytail-audit` (14 findings) was implemented as 10 parallel claude.ai/code cloud PRs (#1–#10,
 merged to main; workflow rules in CLAUDE.md § Cloud / PR sessions).

@@ -20,6 +20,8 @@ transformer = Transformer.from_crs('EPSG:3414', 'EPSG:4326', always_xy=True)
 URA_API_BASE = 'https://eservice.ura.gov.sg/uraDataService'
 URA_SERVICE = 'PMI_Resi_Transaction'
 BATCHES = [1, 2, 3, 4]
+# URA placeholder project names that cover many unrelated streets (keep in sync with app.js)
+GENERIC_PROJECT_NAMES = {'LANDED HOUSING DEVELOPMENT', 'RESIDENTIAL APARTMENTS'}
 MAX_ATTEMPTS = 3          # per batch: 1 initial request + 2 retries
 RETRY_BACKOFF_SECS = 10   # 10s, then 20s
 
@@ -194,19 +196,35 @@ def add_columns_if_needed(conn):
             conn.execute(f'ALTER TABLE transactions ADD COLUMN {col_name} {col_type}')
             print(f"   Added column: {col_name} ({col_type})")
 
+    # Keyed by (project, street): generic URA names like LANDED HOUSING DEVELOPMENT
+    # span hundreds of streets, so a project-only key collapsed them into one point.
+    pk_cols = {row[1] for row in conn.execute("PRAGMA table_info(project_coords)") if row[5]}
+    if pk_cols == {'project'}:
+        print("   Migrating project_coords to (project, street_name) key")
+        conn.execute('ALTER TABLE project_coords RENAME TO project_coords_old')
+
     # Create project_coords table for storing SVY21→WGS84 converted coordinates
     conn.execute('''
         CREATE TABLE IF NOT EXISTS project_coords (
-            project TEXT PRIMARY KEY,
-            street_name TEXT,
+            project TEXT NOT NULL,
+            street_name TEXT NOT NULL DEFAULT '',
             district TEXT,
             market_segment TEXT,
             svy21_x REAL,
             svy21_y REAL,
             latitude REAL,
-            longitude REAL
+            longitude REAL,
+            PRIMARY KEY (project, street_name)
         )
     ''')
+    if pk_cols == {'project'}:
+        conn.execute('''
+            INSERT OR IGNORE INTO project_coords
+            SELECT project, COALESCE(street_name, ''), district, market_segment,
+                   svy21_x, svy21_y, latitude, longitude
+            FROM project_coords_old
+        ''')
+        conn.execute('DROP TABLE project_coords_old')
 
     conn.commit()
 
@@ -216,7 +234,7 @@ def save_project_coords(conn, all_projects):
     count = 0
     for project_data in all_projects:
         project_name = project_data.get('project', '')
-        street = project_data.get('street', '')
+        street = project_data.get('street', '') or ''
         market_segment = project_data.get('marketSegment', '')
         x_str = project_data.get('x', '')
         y_str = project_data.get('y', '')
@@ -351,16 +369,54 @@ def insert_transactions(conn, all_projects, batch_num):
     return count
 
 
-def geocode_missing_projects(conn):
-    """Use OneMap API to geocode projects missing from project_coords."""
+ONEMAP_URL = 'https://www.onemap.gov.sg/api/common/elastic/search'
+ONEMAP_GAP_SECS = 1.0                    # OneMap silently rate-limits; 0.4s triggered 429s
+ONEMAP_429_BACKOFF_SECS = (5, 15, 30, 60)
+# The nightly rebuilds the DB from scratch and re-geocodes every missing pair; cap the time so
+# OneMap slowness can't push the workflow past its 30-min timeout. Skipped pairs just get no pin.
+GEOCODE_BUDGET_SECS = 600
+
+
+def onemap_search(query):
+    """Return (lat, lng) of OneMap's top hit for query, or None if it has no usable result.
+    Retries 429 / network errors with backoff; raises once the retries are exhausted."""
+    for backoff in (*ONEMAP_429_BACKOFF_SECS, None):
+        time.sleep(ONEMAP_GAP_SECS)
+        try:
+            resp = requests.get(ONEMAP_URL, params={
+                'searchVal': query,
+                'returnGeom': 'Y',
+                'getAddrDetails': 'N',
+                'pageNum': 1,
+            }, headers={'User-Agent': 'WorthIt/1.0'}, timeout=10)
+            resp.raise_for_status()
+            results = resp.json().get('results', [])
+        except Exception as e:
+            if backoff is None:
+                raise
+            print(f"      ⚠️  OneMap error for '{query}': {e} — waiting {backoff}s")
+            time.sleep(backoff)
+            continue
+        if not results:
+            return None
+        lat = float(results[0].get('LATITUDE', 0) or 0)
+        lng = float(results[0].get('LONGITUDE', 0) or 0)
+        return (lat, lng) if lat and lng else None
+
+
+def geocode_missing_projects(conn, budget_secs=GEOCODE_BUDGET_SECS):
+    """Use OneMap API to geocode projects missing from project_coords, most recently
+    transacted first, stopping once budget_secs have elapsed."""
     rows = conn.execute('''
-        SELECT DISTINCT t.project, t.street_name, t.district, t.market_segment
+        SELECT t.project, t.street_name, t.district, t.market_segment
         FROM transactions t
-        LEFT JOIN project_coords pc ON t.project = pc.project
+        LEFT JOIN project_coords pc
+          ON t.project = pc.project AND COALESCE(t.street_name, '') = pc.street_name
         WHERE t.dataset_source = 'URA_PRIVATE'
           AND t.project IS NOT NULL AND t.project != ''
           AND pc.project IS NULL
-        ORDER BY t.project
+        GROUP BY t.project, t.street_name
+        ORDER BY MAX(t.month) DESC, t.project
     ''').fetchall()
 
     if not rows:
@@ -370,56 +426,48 @@ def geocode_missing_projects(conn):
     print(f"\n🌍 Geocoding {len(rows)} projects missing coordinates via OneMap...")
     geocoded = 0
     failed = []
-    ONEMAP_URL = 'https://www.onemap.gov.sg/api/common/elastic/search'
+    deadline = time.monotonic() + budget_secs
 
     for i, (project, street, district, market_segment) in enumerate(rows):
-        query = f"{project} {street}".strip()
-        for attempt in range(2):
-            try:
-                time.sleep(0.4)
-                resp = requests.get(ONEMAP_URL, params={
-                    'searchVal': query,
-                    'returnGeom': 'Y',
-                    'getAddrDetails': 'N',
-                    'pageNum': 1,
-                }, headers={'User-Agent': 'WorthIt/1.0'}, timeout=10)
-                resp.raise_for_status()
-                data = resp.json()
-                results = data.get('results', [])
-                if results:
-                    r = results[0]
-                    lat = float(r.get('LATITUDE', 0))
-                    lng = float(r.get('LONGITUDE', 0))
-                    if lat and lng:
-                        conn.execute('''
-                            INSERT OR REPLACE INTO project_coords
-                                (project, street_name, district, market_segment, svy21_x, svy21_y, latitude, longitude)
-                            VALUES (?, ?, ?, ?, NULL, NULL, ?, ?)
-                        ''', (project, street, district, market_segment, round(lat, 7), round(lng, 7)))
-                        geocoded += 1
-                        print(f"   [{i+1}/{len(rows)}] ✅ {project}: {lat:.5f}, {lng:.5f}")
-                        break
-                    else:
-                        if attempt == 0:
-                            print(f"   [{i+1}/{len(rows)}] ⚠️  Zero coords for '{query}', retrying in 3s...")
-                            time.sleep(3)
-                        else:
-                            failed.append(project)
-                            print(f"   [{i+1}/{len(rows)}] ❌ {project}: zero coordinates")
-                else:
-                    if attempt == 0:
-                        print(f"   [{i+1}/{len(rows)}] ⚠️  No results for '{query}', retrying in 3s...")
-                        time.sleep(3)
-                    else:
-                        failed.append(project)
-                        print(f"   [{i+1}/{len(rows)}] ❌ {project}: no results")
-            except Exception as e:
-                if attempt == 0:
-                    print(f"   [{i+1}/{len(rows)}] ⚠️  Error for '{query}': {e}, retrying in 3s...")
-                    time.sleep(3)
-                else:
-                    failed.append(project)
-                    print(f"   [{i+1}/{len(rows)}] ❌ {project}: {e}")
+        if time.monotonic() >= deadline:
+            print(f"   ⏱️  Geocoding budget ({budget_secs}s) used up — skipping the remaining "
+                  f"{len(rows) - i} pairs (no map pin until a later run)")
+            break
+        street = street or ''
+        label = f"{project} / {street}"
+        # Most specific first. OneMap often doesn't know an estate name, so fall back to the
+        # street (accurate enough for a landed street); generic URA names go straight to it.
+        if project in GENERIC_PROJECT_NAMES:
+            queries = [street]
+        else:
+            queries = [f"{project} {street}".strip(), project, street]
+        queries = [q for j, q in enumerate(queries) if q and q not in queries[:j]]
+
+        hit = None
+        try:
+            for query in queries:
+                hit = onemap_search(query)
+                if hit:
+                    break
+        except Exception as e:
+            failed.append(label)
+            print(f"   [{i+1}/{len(rows)}] ❌ {label}: {e}")
+            continue
+
+        if not hit:
+            failed.append(label)
+            print(f"   [{i+1}/{len(rows)}] ❌ {label}: no results")
+            continue
+
+        lat, lng = hit
+        conn.execute('''
+            INSERT OR REPLACE INTO project_coords
+                (project, street_name, district, market_segment, svy21_x, svy21_y, latitude, longitude)
+            VALUES (?, ?, ?, ?, NULL, NULL, ?, ?)
+        ''', (project, street, district, market_segment, round(lat, 7), round(lng, 7)))
+        geocoded += 1
+        via = '' if query == queries[0] else f" (via '{query}')"
+        print(f"   [{i+1}/{len(rows)}] ✅ {label}: {lat:.5f}, {lng:.5f}{via}")
 
     conn.commit()
     print(f"\n   ✅ Geocoded {geocoded}/{len(rows)} projects via OneMap")

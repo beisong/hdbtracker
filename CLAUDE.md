@@ -43,8 +43,8 @@ npm run deploy:frontend # Deploy frontend only (wrangler pages deploy public --p
 ```
 
 ```bash
-npm test                # Run unit + integration tests (356 tests, Vitest + supertest)
-python3 -m pytest tests/python -q  # Python data-script tests (133; needs pip install pytest pyproj)
+npm test                # Run unit + integration tests (360 tests, Vitest + supertest)
+python3 -m pytest tests/python -q  # Python data-script tests (139; needs pip install pytest pyproj)
 npm run test:smoke      # Smoke tests against live worthit-api.fly.dev (19 tests)
 npm run test:smoke-local # Smoke tests against localhost:3000
 ```
@@ -93,7 +93,7 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 3. Expanded form (ST→STREET, BT→BUKIT via `expandStreetName()`)
 4. Keyword fallback — strip road-type stop words, LIKE-query meaningful words
 
-**Map marker coords**: `/api/area-overview` attaches `lat`/`lng` to every transaction it returns (from `hdb_block_coords`), so `map.js` places HDB markers without geocoding; there is no geocoding endpoint, and transactions without `lat`/`lng` are simply not plotted. Block-filtered searches (postal/street) return the latest **3 transactions per block** (window function, cap 400) so every block in the radius gets a marker; town searches keep newest-200. Private markers come from `/api/nearby-hdb` `nearby_projects` (true 800m haversine radius, ≤40 projects, `dist_m` attached) and are added only after `TransactionMap.load()` resolves — `addNearbyProjects()` no-ops if the map isn't initialized.
+**Map marker coords**: `/api/area-overview` attaches `lat`/`lng` to every transaction it returns (from `hdb_block_coords`), so `map.js` places HDB markers without geocoding; there is no geocoding endpoint, and transactions without `lat`/`lng` are simply not plotted. Block-filtered searches (postal/street) return the latest **3 transactions per block** (window function, cap 400) so every block in the radius gets a marker; town searches keep newest-200. `project_coords` is keyed by **(project, street_name)** — URA files every unnamed landed sale as `LANDED HOUSING DEVELOPMENT` (and some flats as `RESIDENTIAL APARTMENTS`) across hundreds of streets, so a project-only key pinned them all on one street; the frontend `App.privateAddress()` shows only the street for these generic names and joins coords via `App.coordKey(project, street)`. Private markers come from `/api/nearby-hdb` `nearby_projects` (true 800m haversine radius, ≤40 projects, `dist_m` attached) and are added only after `TransactionMap.load()` resolves — `addNearbyProjects()` no-ops if the map isn't initialized.
 
 **SEO for bots** (`functions/[[path]].js`): Cloudflare edge function detects crawlers via User-Agent regex, fetches metadata from Fly.io (`/api/seo/metadata`), and injects `<title>`, `<meta>`, OpenGraph, and JSON-LD into the HTML before serving. Normal users get the SPA directly. The SPA sets its own `<title>`/description from the same endpoint (`/api/seo/metadata?route=&head=1`, in `_applySeoMetadata()`) so JS-rendering crawlers see the same title as non-rendering ones — edit titles only in the server's metadata branches. Private project slugs resolve exactly first (`slugToProject()` slug map), fuzzy LIKE only as a fallback; BTO slugs likewise via `slugToBtoProject()` (`/api/bto/project-overview?slug=`, used by the `/bto/<slug>` route and BTO autocomplete before falling back to `search()`). If the API returns 503 or an empty URL list, the edge sitemap returns 503 rather than an empty sitemap. Metadata is memoized per route in the **edge Cache API** (24h, `waitUntil`, complete payloads only) because the API machine auto-stops; on a cold miss the edge waits 8s, then returns `503` + `Retry-After: 300` to crawlers (link-preview bots get the page with the static title instead).
 
@@ -129,13 +129,13 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
-**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=34`.
+**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. Bump `N` on every deploy where JS or CSS changes. Current: `v=36`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 
 **UI style guide**: `design.md` (repo root) defines the design tokens, component classes, dark-mode and mobile rules — read it before adding or restyling any UI.
 
-**Testing**: 356 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite), plus 133 pytest tests in `tests/python/` for the data scripts (mocked HTTP, no real downloads; not run by `npm test` or the deploy scripts). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
+**Testing**: 360 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite), plus 139 pytest tests in `tests/python/` for the data scripts (mocked HTTP, no real downloads; not run by `npm test` or the deploy scripts). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
 
 **WAL checkpoint**: always run `PRAGMA wal_checkpoint(TRUNCATE)` on the SQLite DB before uploading to Fly.io. Otherwise data still in the WAL file is silently lost.
 

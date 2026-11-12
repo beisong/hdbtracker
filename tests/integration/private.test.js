@@ -220,3 +220,34 @@ describe('GET /api/private/district-overview', () => {
     expect(coord).toHaveProperty('longitude');
   });
 });
+
+// URA files every landed sale without a named estate under one project name across hundreds of
+// streets. Rows, coords and map markers must be per (project, street), or they all collapse
+// onto one wrong point.
+describe('generic LANDED HOUSING DEVELOPMENT project', () => {
+  const LHD = 'LANDED HOUSING DEVELOPMENT';
+
+  it('district-overview returns street_name on recent transactions', async () => {
+    const res = await request.get('/api/private/district-overview?district=16');
+    const streets = res.body.recent_transactions.filter(t => t.project === LHD).map(t => t.street_name).sort();
+    expect(streets).toEqual(['JALAN CHEMPAKA KUNING', 'KEW CRESCENT']);
+  });
+
+  it('district-overview returns one coord per street', async () => {
+    const res = await request.get('/api/private/district-overview?district=16');
+    const coords = res.body.project_coords.filter(c => c.project === LHD);
+    expect(coords.map(c => c.street_name).sort()).toEqual(['JALAN CHEMPAKA KUNING', 'KEW CRESCENT']);
+    expect(new Set(coords.map(c => c.latitude)).size).toBe(2);
+  });
+
+  it('nearby-hdb lists each landed street separately with its own transactions', async () => {
+    const res = await request.get('/api/nearby-hdb?lat=1.3300&lng=103.9430');
+    const landed = res.body.nearby_projects.filter(p => p.project === LHD);
+    expect(landed).toHaveLength(2);
+    for (const p of landed) {
+      expect(p.tx_count).toBe(1);
+      expect(p.recent_transactions).toHaveLength(1);
+      expect(p.recent_transactions[0].street_name).toBe(p.street_name);
+    }
+  });
+});

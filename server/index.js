@@ -1285,7 +1285,7 @@ app.get('/api/private/project-overview', (req, res) => {
     // Recent transactions
     const recentTransactions = db.prepare(`
       SELECT
-        month, flat_type as property_type, floor_area_sqm, resale_price,
+        month, street_name, flat_type as property_type, floor_area_sqm, resale_price,
         price_per_sqm, flat_model as tenure, remaining_lease_years, storey_range, type_of_sale, type_of_area
       FROM transactions
       WHERE dataset_source = 'URA_PRIVATE' AND project = ? ${propTypeFilter}
@@ -1425,7 +1425,7 @@ app.get('/api/private/district-summary', (req, res) => {
     // Recent private transactions (last 12 months, limited)
     const recentPrivateTx = db.prepare(`
       SELECT
-        month, project, flat_type as property_type, floor_area_sqm,
+        month, project, street_name, flat_type as property_type, floor_area_sqm,
         resale_price, price_per_sqm, flat_model as tenure,
         remaining_lease_years, storey_range, district, market_segment
       FROM transactions
@@ -1439,7 +1439,7 @@ app.get('/api/private/district-summary', (req, res) => {
 
     // Get project coordinates for map
     const projectCoords = db.prepare(`
-      SELECT project, latitude, longitude
+      SELECT project, street_name, latitude, longitude
       FROM project_coords
       WHERE district IN (${placeholders})
     `).all(...districtList);
@@ -1595,7 +1595,7 @@ app.get('/api/private/district-overview', (req, res) => {
     // Recent transactions
     const recentTransactions = db.prepare(`
       SELECT
-        month, project, flat_type as property_type, floor_area_sqm,
+        month, project, street_name, flat_type as property_type, floor_area_sqm,
         resale_price, price_per_sqm, flat_model as tenure,
         remaining_lease_years, storey_range
       FROM transactions
@@ -1767,10 +1767,11 @@ app.get('/api/nearby-hdb', async (req, res) => {
              ROUND(AVG(t.resale_price)) as avg_price,
              ROUND(AVG(t.price_per_sqm)) as avg_psm
       FROM project_coords pc
-      JOIN transactions t ON t.project = pc.project AND t.dataset_source = 'URA_PRIVATE'
+      JOIN transactions t ON t.project = pc.project AND t.street_name = pc.street_name
+        AND t.dataset_source = 'URA_PRIVATE'
       WHERE pc.latitude BETWEEN ? AND ?
         AND pc.longitude BETWEEN ? AND ?
-      GROUP BY pc.project
+      GROUP BY pc.project, pc.street_name
       ORDER BY tx_count DESC
     `).all(
       latF - 0.0072, latF + 0.0072,
@@ -1780,30 +1781,27 @@ app.get('/api/nearby-hdb', async (req, res) => {
       .filter(p => p.dist_m <= PROJECT_RADIUS_M)
       .slice(0, 40);
 
-    // Get top 10 recent transactions for each nearby project
-    const projectNames = nearbyProjects.map(p => p.project);
+    // Get top 10 recent transactions for each nearby (project, street)
     let nearbyProjectTxs = [];
-    if (projectNames.length > 0) {
-      const placeholders = projectNames.map(() => '?').join(',');
+    if (nearbyProjects.length > 0) {
+      const placeholders = nearbyProjects.map(() => '(?, ?)').join(',');
       nearbyProjectTxs = db.prepare(`
-        SELECT project, month, flat_type as property_type, floor_area_sqm, resale_price, price_per_sqm,
+        SELECT project, street_name, month, flat_type as property_type, floor_area_sqm, resale_price, price_per_sqm,
                remaining_lease_years, flat_model as tenure, storey_range
         FROM transactions
-        WHERE project IN (${placeholders}) AND dataset_source = 'URA_PRIVATE'
+        WHERE (project, street_name) IN (VALUES ${placeholders}) AND dataset_source = 'URA_PRIVATE'
         ORDER BY month DESC, resale_price DESC
-      `).all(...projectNames);
+      `).all(...nearbyProjects.flatMap(p => [p.project, p.street_name]));
 
-      // Group by project
+      // Group by project + street
       const txByProject = {};
       for (const tx of nearbyProjectTxs) {
-        if (!txByProject[tx.project]) txByProject[tx.project] = [];
-        if (txByProject[tx.project].length < 10) {
-          txByProject[tx.project].push(tx);
-        }
+        const k = `${tx.project}|${tx.street_name}`;
+        if (!txByProject[k]) txByProject[k] = [];
+        if (txByProject[k].length < 10) txByProject[k].push(tx);
       }
-      // Attach to each project
       for (const proj of nearbyProjects) {
-        proj.recent_transactions = txByProject[proj.project] || [];
+        proj.recent_transactions = txByProject[`${proj.project}|${proj.street_name}`] || [];
       }
     }
 

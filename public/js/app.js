@@ -962,7 +962,7 @@ const App = {
     if (data.project_coords) {
       for (const pc of data.project_coords) {
         if (pc.latitude && pc.longitude) {
-          projectGeoMap[pc.project.toUpperCase()] = { lat: pc.latitude, lng: pc.longitude };
+          projectGeoMap[this.coordKey(pc.project, pc.street_name)] = { lat: pc.latitude, lng: pc.longitude };
         }
       }
     }
@@ -970,13 +970,12 @@ const App = {
     // Merge private transactions into the main transaction list
     if (data.recent_transactions && data.recent_transactions.length > 0) {
       const privateTxs = data.recent_transactions.map(tx => {
-        const coords = projectGeoMap[(tx.project || '').toUpperCase()];
+        const coords = projectGeoMap[this.coordKey(tx.project, tx.street_name)];
         return {
           month: tx.month,
           town: 'PRIVATE',
           flat_type: tx.property_type || tx.flat_type,
-          block: tx.project || '--',
-          street_name: tx.project || '--',
+          ...this.privateAddress(tx.project, tx.street_name),
           storey_range: tx.storey_range || '--',
           floor_area_sqm: tx.floor_area_sqm,
           flat_model: tx.tenure || '--',
@@ -1092,9 +1091,8 @@ const App = {
         ...tx,
         // Set flat_type for display (HDB uses actual flat_type, private uses property_type)
         flat_type: isHDB ? tx.flat_type : (tx.property_type || '--'),
-        // Set block/street for display (HDB uses actual, private uses project name)
-        block: isHDB ? tx.block : (tx.project || '--'),
-        street_name: isHDB ? tx.street_name : (tx.project || '--'),
+        // Set block/street for display (private: project + its street)
+        ...(isHDB ? { block: tx.block, street_name: tx.street_name } : this.privateAddress(tx.project, tx.street_name)),
         remaining_lease_years: tx.remaining_lease_years,
         is_freehold: tx.tenure === 'FREEHOLD',
         // Mark transaction type for filtering/styling
@@ -1124,7 +1122,7 @@ const App = {
     if (data.project_coords) {
       for (const pc of data.project_coords) {
         if (pc.latitude && pc.longitude) {
-          districtGeoMap[pc.project.toUpperCase()] = { lat: pc.latitude, lng: pc.longitude };
+          districtGeoMap[this.coordKey(pc.project, pc.street_name)] = { lat: pc.latitude, lng: pc.longitude };
         }
       }
     }
@@ -1132,7 +1130,7 @@ const App = {
     // Attach lat/lng to private transactions for map rendering
     this.allTransactions = this.allTransactions.map(tx => {
       if (tx.is_private) {
-        const coords = districtGeoMap[(tx.block || '').toUpperCase()];
+        const coords = districtGeoMap[this.coordKey(tx.project, tx.street_name)];
         if (coords) return { ...tx, lat: coords.lat, lng: coords.lng };
       }
       return tx;
@@ -1750,8 +1748,7 @@ const App = {
     this.allTransactions = (data.recent_transactions || []).map(tx => ({
       ...tx,
       flat_type: tx.property_type || tx.flat_type,
-      block: proj.project,
-      street_name: proj.street_name,
+      ...this.privateAddress(proj.project, tx.street_name || proj.street_name),
       // Project coords (for the nearest-MRT line on mobile cards)
       lat: tx.lat ?? this.lastResolvedData?.lat ?? null,
       lng: tx.lng ?? this.lastResolvedData?.lng ?? null,
@@ -2257,6 +2254,20 @@ const App = {
   formatNumber(num) {
     if (num === null || num === undefined) return '--';
     return Math.round(num).toLocaleString('en-SG');
+  },
+
+  // URA placeholder names that span many streets (keep in sync with GENERIC_PROJECT_NAMES in download_ura_data.py)
+  GENERIC_PRIVATE_PROJECTS: ['LANDED HOUSING DEVELOPMENT', 'RESIDENTIAL APARTMENTS'],
+
+  // Row label/address for a private tx: the street is the real location, a generic project name is dropped.
+  privateAddress(project, street) {
+    const generic = this.GENERIC_PRIVATE_PROJECTS.includes(project) && street;
+    return { block: generic ? '' : (project || '--'), street_name: street || '' };
+  },
+
+  // project_coords is keyed per (project, street) — a generic project has one point per street.
+  coordKey(project, street) {
+    return `${project || ''}|${street || ''}`.toUpperCase();
   },
 
   sqmToSqft(sqm) {

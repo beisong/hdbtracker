@@ -40,7 +40,7 @@
 - ✅ Daily automated data refresh (GitHub Actions → build → gzip → SFTP → atomic swap → restart).
 - ✅ Light/dark theme; mobile UX (jump bar, FAB, share, card tap → map highlight).
 - ✅ In-app feedback → separate `feedback.db`; GA4 with SPA page views + custom events.
-- ✅ 373 unit + integration tests + 141 pytest tests (data scripts) + 19 smoke tests; every deploy
+- ✅ 386 unit + integration tests + 141 pytest tests (data scripts) + 19 smoke tests; every deploy
   gated on `npm test`.
 - ✅ Nightly refresh fails loudly on partial downloads and refuses to deploy a short DB.
 
@@ -122,3 +122,4 @@ Avoid paid link farms and mass-posting the same link (penalty / spam risk).
 - SEO: on-page work first (May–Jun 2026); GSC data in Sep showed the real blocker is indexing and
   backlinks, not on-page content.
 - BTO project → block mapping: OneMap `BUILDING` names, not geometric heuristics.
+- ✅ Room-button groups (2 RM / 3 RM / 4 RM / 5 RM+): buttons, `/hdb/<town>/<n>-room` pages, compare, BTO pages and transaction lists follow the groups; `/executive` pages retired (404, out of sitemap). Not yet deployed.

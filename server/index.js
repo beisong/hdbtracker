@@ -57,6 +57,15 @@ const BTO_MOP_REMAINING_LEASE = 95;
 // Their sales still count in area stats; they're only kept out of project lists, search and slugs.
 const GENERIC_PRIVATE_PROJECTS = ['LANDED HOUSING DEVELOPMENT', 'RESIDENTIAL APARTMENTS'];
 const NOT_GENERIC_PROJECT = `project NOT IN (${GENERIC_PRIVATE_PROJECTS.map(p => `'${p}'`).join(', ')})`;
+// Size group of a private unit: same cut-offs as the room buttons (ROOM_GROUPS in app.js) and
+// estimateBedrooms(); landed is always '5 ROOM'. Null floor area → null (no card label).
+const PRIVATE_SIZE_GROUP = `CASE
+  WHEN flat_type IN ('TERRACE','SEMI-DETACHED','DETACHED','STRATA TERRACE','STRATA SEMI-DETACHED','STRATA DETACHED') THEN '5 ROOM'
+  WHEN floor_area_sqm IS NULL THEN NULL
+  WHEN floor_area_sqm < 65 THEN '2 ROOM'
+  WHEN floor_area_sqm < 85 THEN '3 ROOM'
+  WHEN floor_area_sqm < 110 THEN '4 ROOM'
+  ELSE '5 ROOM' END`;
 
 // Open database
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'db', 'resale.db');
@@ -1247,13 +1256,14 @@ app.get('/api/private/project-overview', (req, res) => {
     const pricesByType = db.prepare(`
       SELECT
         flat_type as property_type,
+        ${PRIVATE_SIZE_GROUP} as size_group,
         COUNT(*) as count,
         ROUND(AVG(resale_price)) as avg_price,
         ROUND(AVG(price_per_sqm)) as avg_psm,
         ROUND(AVG(floor_area_sqm), 1) as avg_area
       FROM transactions
       WHERE dataset_source = 'URA_PRIVATE' AND project = ? AND month >= ? ${propTypeFilter}
-      GROUP BY flat_type
+      GROUP BY flat_type, size_group
       ORDER BY avg_price
     `).all(project, monthsAgo12, ...propTypeParam);
 
@@ -1416,6 +1426,7 @@ app.get('/api/private/district-summary', (req, res) => {
     const pricesByType = db.prepare(`
       SELECT
         flat_type as property_type,
+        ${PRIVATE_SIZE_GROUP} as size_group,
         COUNT(*) as count,
         ROUND(AVG(resale_price)) as avg_price,
         ROUND(AVG(price_per_sqm)) as avg_psm,
@@ -1425,7 +1436,7 @@ app.get('/api/private/district-summary', (req, res) => {
         AND district IN (${placeholders})
         AND resale_price IS NOT NULL
         AND month >= ?
-      GROUP BY flat_type
+      GROUP BY flat_type, size_group
       ORDER BY avg_price
     `).all(...districtList, monthsAgo12);
 
@@ -1529,6 +1540,7 @@ app.get('/api/private/district-overview', (req, res) => {
     const pricesByType = db.prepare(`
       SELECT
         flat_type as property_type,
+        ${PRIVATE_SIZE_GROUP} as size_group,
         COUNT(*) as count,
         ROUND(AVG(resale_price)) as avg_price,
         ROUND(AVG(price_per_sqm)) as avg_psm,
@@ -1536,7 +1548,7 @@ app.get('/api/private/district-overview', (req, res) => {
       FROM transactions
       WHERE dataset_source = 'URA_PRIVATE' AND district = ?
         AND resale_price IS NOT NULL AND month >= ?
-      GROUP BY flat_type ORDER BY avg_price
+      GROUP BY flat_type, size_group ORDER BY avg_price
     `).all(districtCode, monthsAgo12);
 
     // Price trend (last 60 months)
@@ -2378,12 +2390,33 @@ const FLAT_TYPE_SLUGS = {
   '3 ROOM': '3-room',
   '4 ROOM': '4-room',
   '5 ROOM': '5-room',
-  'EXECUTIVE': 'executive',
 };
 const SLUG_TO_FLAT_TYPE = Object.fromEntries(Object.entries(FLAT_TYPE_SLUGS).map(([k, v]) => [v, k]));
-// '4 ROOM' -> '4 Room', 'EXECUTIVE' -> 'Executive'
+// Each room button / slug page covers several real flat types (keep in sync with ROOM_GROUPS in app.js)
+const FLAT_GROUPS = {
+  '2 ROOM': ['1 ROOM', '2 ROOM'],
+  '3 ROOM': ['3 ROOM'],
+  '4 ROOM': ['4 ROOM'],
+  '5 ROOM': ['5 ROOM', 'EXECUTIVE', 'MULTI-GENERATION'],
+};
+const FLAT_TO_GROUP = Object.fromEntries(Object.entries(FLAT_GROUPS).flatMap(([g, ts]) => ts.map(t => [t, g])));
+// SQL fragment + args matching every real flat type in a group, e.g. ' AND flat_type IN (?,?,?)'
+function flatGroupClause(group) {
+  const types = FLAT_GROUPS[group];
+  return { sql: ` AND flat_type IN (${types.map(() => '?').join(',')})`, args: types };
+}
+// Real-type counts → counts per group, dropping unknown types: [{flat_type, cnt}] → {group: cnt}
+function sumByGroup(rows) {
+  const out = {};
+  for (const r of rows) {
+    const g = FLAT_TO_GROUP[r.flat_type];
+    if (g) out[g] = (out[g] || 0) + r.cnt;
+  }
+  return out;
+}
+// '4 ROOM' -> '4 Room', '5 ROOM' -> '5 Room+' (the group also covers Executive and 3Gen)
 function flatTypeLabel(ft) {
-  return titleCase(ft);
+  return titleCase(ft) + (ft === '5 ROOM' ? '+' : '');
 }
 
 // 'YYYY-MM' -> 'Month YYYY' (freshness display)
@@ -2518,8 +2551,7 @@ function compareSeoMetadata(route, meta, { freshnessNote, dateModified }) {
   if (!cmp || !db) return;
   const m12 = monthsAgoStr(12);
   const m24 = monthsAgoStr(24);
-  const ftClause = cmp.flatType ? ' AND flat_type = ?' : '';
-  const ftArgs = cmp.flatType ? [cmp.flatType] : [];
+  const { sql: ftClause, args: ftArgs } = cmp.flatType ? flatGroupClause(cmp.flatType) : { sql: '', args: [] };
   // True medians (SQLite has no MEDIAN), matching the "Median" figures the compare cards show
   // from /api/area-overview. Rows are fetched per town and reduced with median().
   const curStmt = db.prepare(`
@@ -2649,18 +2681,21 @@ app.get('/api/seo/sitemap', (req, res) => {
     const townTypes = db.prepare(`
       SELECT town, flat_type, COUNT(*) as cnt
       FROM transactions
-      WHERE dataset_source != 'URA_PRIVATE'
-        AND flat_type IN ('2 ROOM','3 ROOM','4 ROOM','5 ROOM','EXECUTIVE')
-        AND month >= ?
-      GROUP BY town, flat_type HAVING cnt >= 5
+      WHERE dataset_source != 'URA_PRIVATE' AND month >= ?
+      GROUP BY town, flat_type
     `).all(monthsAgoStr(24));
-    for (const tt of townTypes) {
-      urls.push({
-        url: `${SEO_BASE_URL}/hdb/${townToSlug(tt.town)}/${FLAT_TYPE_SLUGS[tt.flat_type]}`,
-        changefreq: 'weekly',
-        priority: '0.6',
-        lastmod,
-      });
+    const byTown = {};
+    for (const tt of townTypes) (byTown[tt.town] ||= []).push(tt);
+    for (const [town, rows] of Object.entries(byTown)) {
+      for (const [group, cnt] of Object.entries(sumByGroup(rows))) {
+        if (cnt < 5) continue;
+        urls.push({
+          url: `${SEO_BASE_URL}/hdb/${townToSlug(town)}/${FLAT_TYPE_SLUGS[group]}`,
+          changefreq: 'weekly',
+          priority: '0.6',
+          lastmod,
+        });
+      }
     }
 
     // District pages
@@ -3073,17 +3108,18 @@ app.get('/api/seo/metadata', (req, res) => {
         const year = new Date().getFullYear();
         const m12 = monthsAgoStr(12);
         const m24 = monthsAgoStr(24);
+        const { sql: ftSql, args: ftArgs } = flatGroupClause(flatType);
 
         const cur = db.prepare(`
           SELECT COUNT(*) as cnt, ROUND(AVG(resale_price)) as avg_price, ROUND(AVG(price_per_sqm), 0) as avg_psm,
             ROUND(MIN(resale_price)) as min_price, ROUND(MAX(resale_price)) as max_price, ROUND(AVG(floor_area_sqm)) as avg_area
-          FROM transactions WHERE town = ? AND flat_type = ? AND resale_price IS NOT NULL AND month >= ? AND dataset_source != 'URA_PRIVATE'
-        `).get(town, flatType, m12);
+          FROM transactions WHERE town = ? AND resale_price IS NOT NULL AND month >= ? AND dataset_source != 'URA_PRIVATE'${ftSql}
+        `).get(town, m12, ...ftArgs);
 
         const prev = db.prepare(`
           SELECT ROUND(AVG(price_per_sqm), 0) as avg_psm
-          FROM transactions WHERE town = ? AND flat_type = ? AND month >= ? AND month < ? AND dataset_source != 'URA_PRIVATE'
-        `).get(town, flatType, m24, m12);
+          FROM transactions WHERE town = ? AND month >= ? AND month < ? AND dataset_source != 'URA_PRIVATE'${ftSql}
+        `).get(town, m24, m12, ...ftArgs);
 
         const cnt = cur?.cnt || 0;
         const avgPrice = cur?.avg_price || 0;
@@ -3103,12 +3139,11 @@ app.get('/api/seo/metadata', (req, res) => {
           meta.og_description = `${cnt.toLocaleString()} ${ftLabel} transactions in ${townDisplay}.${yoyDir ? ` Prices ${yoyDir} ${yoyPct}% YoY.` : ''}`;
 
           // Sibling flat types in this town (cross-links)
-          const siblings = db.prepare(`
+          const siblings = Object.entries(sumByGroup(db.prepare(`
             SELECT flat_type, COUNT(*) as cnt FROM transactions
             WHERE town = ? AND month >= ? AND dataset_source != 'URA_PRIVATE'
-              AND flat_type IN ('2 ROOM','3 ROOM','4 ROOM','5 ROOM','EXECUTIVE')
-            GROUP BY flat_type HAVING cnt >= 5 ORDER BY flat_type
-          `).all(town, m24);
+            GROUP BY flat_type
+          `).all(town, m24))).filter(([, cnt]) => cnt >= 5).map(([flat_type]) => ({ flat_type })).sort((a, b) => a.flat_type.localeCompare(b.flat_type));
 
           const faqs = [
             {

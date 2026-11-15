@@ -36,6 +36,8 @@ describe('edge 404 for unknown routes', () => {
     '/postal/123',
     '/compare',
     '/compare/a/b/c',
+    '/hdb/bedok/executive', // retired: Executive is part of 5 Room+
+    '/compare/bedok-vs-tampines/executive',
   ])('returns 404 for %s', async (pathname) => {
     const res = await onRequest(makeContext(pathname));
     expect(res.status).toBe(404);
@@ -46,6 +48,7 @@ describe('edge 404 for unknown routes', () => {
     '/',
     '/hdb/bedok',
     '/hdb/bedok/4-room',
+    '/hdb/bedok/5-room',
     '/bto',
     '/bto/bedok-vista-crest',
     '/private/eco',

@@ -182,7 +182,7 @@ const App = {
       );
       if (town) {
         // Pre-select a flat type if the URL specifies one (drives /hdb/<town>/<flat-type>)
-        const FT_BY_SLUG = { '2-room': '2 ROOM', '3-room': '3 ROOM', '4-room': '4 ROOM', '5-room': '5 ROOM', 'executive': 'EXECUTIVE' };
+        const FT_BY_SLUG = { '2-room': '2 ROOM', '3-room': '3 ROOM', '4-room': '4 ROOM', '5-room': '5 ROOM' };
         this.selectedFlatTypes.clear();
         if (ftSlug && FT_BY_SLUG[ftSlug]) this.selectedFlatTypes.add(FT_BY_SLUG[ftSlug]);
         this._updateFlatTypeUI();
@@ -325,7 +325,7 @@ const App = {
       } else {
         const slug = data.town.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         // Single flat-type selection → dedicated /hdb/<town>/<flat-type> URL (indexable + shareable)
-        const FT_SLUG = { '2 ROOM': '2-room', '3 ROOM': '3-room', '4 ROOM': '4-room', '5 ROOM': '5-room', 'EXECUTIVE': 'executive' };
+        const FT_SLUG = { '2 ROOM': '2-room', '3 ROOM': '3-room', '4 ROOM': '4-room', '5 ROOM': '5-room' };
         const ftSlug = this.selectedFlatTypes.size === 1 ? FT_SLUG[[...this.selectedFlatTypes][0]] : null;
         path = ftSlug ? `/hdb/${slug}/${ftSlug}` : `/hdb/${slug}`;
       }
@@ -411,7 +411,14 @@ const App = {
         // GA4 Event 5: select_flat_type
         this.track('select_flat_type', { flat_types: this._getFlatTypeParam() });
         this._updateFlatTypeUI();
+        // Re-filter only the results on screen (not a hidden page left over from before a compare / BTO index view)
+        const resultsShown = !document.getElementById('results-section')?.classList.contains('hidden');
         if (this.currentTown) this.search();
+        else if (!resultsShown) return;
+        else if (this.lastResolvedData?.isBto && this._btoData) {
+          this._renderBtoFiltered(this._btoData);
+          this._loadBtoMap(this._btoData);
+        } else if (this.allTransactions.length) this.applyTransactionFilters();
       });
     });
     this._updateFlatTypeUI();
@@ -484,8 +491,60 @@ const App = {
     });
   },
 
+  // Each room button is a group of real flat types (keep in sync with FLAT_GROUPS in server/index.js).
+  // selectedFlatTypes holds the group keys; the API only ever sees the expanded real types.
+  ROOM_GROUPS: {
+    '2 ROOM': ['1 ROOM', '2 ROOM'],
+    '3 ROOM': ['3 ROOM'],
+    '4 ROOM': ['4 ROOM'],
+    '5 ROOM': ['5 ROOM', 'EXECUTIVE', 'MULTI-GENERATION'],
+  },
+  LANDED_TYPES: ['TERRACE', 'SEMI-DETACHED', 'DETACHED', 'STRATA TERRACE', 'STRATA SEMI-DETACHED', 'STRATA DETACHED'],
+
   _getFlatTypeParam() {
-    return this.selectedFlatTypes.size === 0 ? 'ALL' : [...this.selectedFlatTypes].join(',');
+    return this.selectedFlatTypes.size === 0 ? 'ALL' : [...this.selectedFlatTypes].flatMap(g => this.ROOM_GROUPS[g]).join(',');
+  },
+
+  /** '5 ROOM' -> '5 Room+' (the group also covers Executive and 3Gen) */
+  roomLabel(group) {
+    return this._titleCase(group) + (group === '5 ROOM' ? '+' : '');
+  },
+
+  roomGroupOfHdb(flatType) {
+    return Object.keys(this.ROOM_GROUPS).find(g => this.ROOM_GROUPS[g].includes(flatType)) || null;
+  },
+
+  /** Private units have no room count: group by floor area, cut-offs match estimateBedrooms(). Landed → 5 ROOM. */
+  roomGroupOfPrivate(areaSqm, propertyType) {
+    if (this.LANDED_TYPES.includes(propertyType)) return '5 ROOM';
+    const a = parseFloat(areaSqm);
+    if (isNaN(a)) return null;
+    return a < 65 ? '2 ROOM' : a < 85 ? '3 ROOM' : a < 110 ? '4 ROOM' : '5 ROOM';
+  },
+
+  /** Card label for a private size group; landed (and rows without a group) fall back to the area estimate */
+  privateSizeLabel(item) {
+    const byGroup = { '2 ROOM': 'Studio/1-bed', '3 ROOM': '2-bed', '4 ROOM': '3-bed', '5 ROOM': '4-bed+' };
+    return this.LANDED_TYPES.includes(item.property_type) || !byGroup[item.size_group]
+      ? this.estimateBedrooms(item.avg_area, item.property_type) : byGroup[item.size_group];
+  },
+
+  /** Group of a transaction row: HDB by real flat type, anything else treated as private */
+  roomGroupOfTx(tx) {
+    return this.roomGroupOfHdb(tx.flat_type) || this.roomGroupOfPrivate(tx.floor_area_sqm, tx.flat_type);
+  },
+
+  /** BTO flat → the group(s) it shows under. Studios count as 2 RM; unsplit "4-Room / 5-Room" rows show under both. */
+  roomGroupsOfBto(flat) {
+    if (/^Studio/i.test(flat.bto_label)) return ['2 ROOM'];
+    if (/^4-Room \/ 5-Room/i.test(flat.bto_label)) return ['4 ROOM', '5 ROOM'];
+    const g = this.roomGroupOfHdb(flat.resale_flat_type);
+    return g ? [g] : [];
+  },
+
+  /** True when no room button is selected or `group` is one of the selected ones */
+  roomFilterAllows(group) {
+    return this.selectedFlatTypes.size === 0 || (group != null && this.selectedFlatTypes.has(group));
   },
 
   _onResultsShown() {
@@ -771,7 +830,7 @@ const App = {
     if (data.street_filtered && data.street_names.length > 0) {
       subtitleParts.push(`📍 Near ${data.street_names[0]} — ${ts.total_transactions_12m.toLocaleString()} nearby transactions`);
     } else {
-      const flatLabel = data.flat_type === 'ALL' ? 'All Types' : data.flat_type.split(',').join(' + ');
+      const flatLabel = this.selectedFlatTypes.size ? [...this.selectedFlatTypes].sort().map(g => this.roomLabel(g)).join(' + ') : 'All Types';
       subtitleParts.push(`${flatLabel} • ${ts.total_transactions_12m.toLocaleString()} transactions in last 12 months`);
     }
     subtitleParts.push(`Data as of ${this.formatMonth(data.data_as_of)}`);
@@ -1047,7 +1106,7 @@ const App = {
     data.prices_by_type.forEach(item => {
       const card = document.createElement('div');
       card.className = 'bg-gray-100 dark:bg-dark-700 rounded-xl border border-purple-500/10 p-3 hover:border-purple-500/30 transition-colors cursor-default';
-      const bedEst = this.estimateBedrooms(item.avg_area, item.property_type);
+      const bedEst = this.privateSizeLabel(item);
       card.innerHTML = `
         <div class="text-xs text-purple-500 dark:text-purple-300 mb-1">${item.property_type} <span class="text-purple-400/60 dark:text-purple-300/60">~${bedEst}</span></div>
         <div class="text-base font-bold">$${this.formatNumber(item.avg_price)}</div>
@@ -1187,6 +1246,11 @@ const App = {
     // Type filter
     if (typeFilter) {
       filtered = filtered.filter(tx => tx.flat_type === typeFilter);
+    }
+
+    // Room buttons — HDB rows already match (the API filtered them); private rows are grouped by floor area
+    if (this.selectedFlatTypes.size) {
+      filtered = filtered.filter(tx => this.roomFilterAllows(this.roomGroupOfTx(tx)));
     }
 
     // Storey filter
@@ -1702,7 +1766,7 @@ const App = {
     data.prices_by_type.forEach(item => {
       const card = document.createElement('div');
       card.className = 'bg-gray-100 dark:bg-dark-700 rounded-xl border border-purple-500/10 p-3 hover:border-purple-500/30 transition-colors cursor-default';
-      const bedEst = this.estimateBedrooms(item.avg_area, item.property_type);
+      const bedEst = this.privateSizeLabel(item);
       card.innerHTML = `
         <div class="text-xs text-purple-500 dark:text-purple-300 mb-1">${item.property_type} <span class="text-purple-400/60 dark:text-purple-300/60">~${bedEst}</span></div>
         <div class="text-base font-bold">$${this.formatNumber(item.avg_price)}</div>
@@ -1817,13 +1881,24 @@ const App = {
       ? `${townLabel} • ${data.launch_label} • ${statusText} • ${data.location_desc}`
       : `${townLabel} • ${data.launch_label} • ${statusText}`;
 
+    this._btoData = data;
+    this._renderBtoFiltered(data);
+    this.updateSeoForSearch('bto', data);
+    this._loadBtoMap(data);
+  },
+
+  /** Everything on a BTO page that follows the room buttons; re-run on every button click */
+  _renderBtoFiltered(data) {
+    const townLabel = data.town.replace(/\w\S*/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+    const flats = data.flats.filter(f => this.selectedFlatTypes.size === 0 || this.roomGroupsOfBto(f).some(g => this.selectedFlatTypes.has(g)));
+    const comparison = (data.comparison || []).filter(c => this.roomFilterAllows(this.roomGroupOfHdb(c.resale_flat_type)));
     // Provisional notice: an "upcoming" launch's data comes from unofficial pre-launch
     // previews (no HDB Annex A exists yet) until it flips to "open"/"closed".
     const isProvisional = data.status === 'upcoming';
 
     const waitLabel = data.waiting_months ? `~${Math.floor(data.waiting_months / 12)}y ${data.waiting_months % 12}mo wait` : 'Wait TBD';
     document.getElementById('badge-trend').innerHTML = `⏳ ${waitLabel}`;
-    const totalUnits = data.flats.reduce((s, f) => s + (f.units || 0), 0);
+    const totalUnits = flats.reduce((s, f) => s + (f.units || 0), 0);
     document.getElementById('badge-volume').innerHTML = `<span class="w-2 h-2 rounded-full bg-orange-400"></span> ${totalUnits} total units`;
 
     // Stat cards — reuse the existing 4 slots, but relabel them: this page shows a
@@ -1834,7 +1909,7 @@ const App = {
     document.getElementById('stat-range-label').textContent = 'Classification';
     document.getElementById('stat-popular-label').textContent = 'Town';
 
-    const prices = data.flats.flatMap(f => [f.price_min, f.price_max]).filter(Boolean);
+    const prices = flats.flatMap(f => [f.price_min, f.price_max]).filter(Boolean);
     document.getElementById('stat-median').textContent = prices.length
       ? `$${this.formatNumber(Math.min(...prices) / 1000)}k–$${this.formatNumber(Math.max(...prices) / 1000)}k` : '--';
     document.getElementById('stat-psf').textContent = waitLabel;
@@ -1843,14 +1918,14 @@ const App = {
 
     // Flats table
     const priceCards = document.getElementById('price-type-cards');
-    priceCards.innerHTML = data.flats.length ? data.flats.map(f => `
+    priceCards.innerHTML = flats.length ? flats.map(f => `
       <div class="bg-gray-100 dark:bg-dark-700 rounded-xl border border-orange-500/10 p-3">
         <div class="text-xs text-orange-500 dark:text-orange-300 mb-1">${f.bto_label}</div>
         <div class="text-base font-bold">${f.price_min != null ? `$${this.formatNumber(f.price_min)}–$${this.formatNumber(f.price_max)}` : 'Price TBD'}</div>
         <div class="text-xs text-gray-400 mt-0.5">${this.sqmToSqft(f.floor_area_sqm)} sqft</div>
         <div class="text-xs text-gray-600 dark:text-gray-500 mt-1">${f.units} units</div>
       </div>
-    `).join('') : '<p class="text-sm text-gray-400 col-span-full">Flat details not yet released for this launch.</p>';
+    `).join('') : `<p class="text-sm text-gray-400 col-span-full">${data.flats.length ? 'No flats of the selected room type in this project.' : 'Flat details not yet released for this launch.'}</p>`;
 
     if (isProvisional) {
       priceCards.innerHTML += `<p class="text-xs text-amber-500 dark:text-amber-400 col-span-full mt-1">⚠️ Provisional — HDB has not yet released official project details or prices for this launch. Figures above are pre-launch estimates from third-party BTO trackers.</p>`;
@@ -1859,8 +1934,8 @@ const App = {
     // BTO vs nearby resale comparison
     const compContainer = document.getElementById('bto-comparison-container');
     if (compContainer) {
-      if (data.comparison && data.comparison.length) {
-        const rows = data.comparison.map(c => {
+      if (comparison.length) {
+        const rows = comparison.map(c => {
           const flat = data.flats.find(f => f.resale_flat_type === c.resale_flat_type);
           const label = c.resale_flat_type ? c.resale_flat_type.charAt(0) + c.resale_flat_type.slice(1).toLowerCase() : '';
           const btoRange = flat && flat.price_min != null ? `$${this.formatNumber(flat.price_min)}–$${this.formatNumber(flat.price_max)}` : 'TBD';
@@ -1895,38 +1970,51 @@ const App = {
             full 99-year lease but a ${waitLabel}. Not financial advice.
           </p>`;
       } else {
-        compContainer.innerHTML = '<p class="text-sm text-gray-400">Details at launch.</p>';
+        compContainer.innerHTML = `<p class="text-sm text-gray-400">${data.comparison?.length ? 'No comparison for the selected room type.' : 'Details at launch.'}</p>`;
       }
     }
 
     this.renderBtoProjectResale(data);
+  },
 
-    this.updateSeoForSearch('bto', data);
-
-    // Map
-    if (data.lat && data.lng) {
-      TransactionMap.loadBtoSite(data.lat, data.lng, this.lastResolvedData);
-      API.getNearbyHDB(data.lat, data.lng).then(hdbData => {
-        if (hdbData.transactions && hdbData.transactions.length > 0) {
-          TransactionMap.addNearbyHDB(hdbData.transactions);
-        }
-        if (hdbData.nearby_projects && hdbData.nearby_projects.length > 0) {
-          TransactionMap.addNearbyProjects(hdbData.nearby_projects, null);
-        }
-      }).catch(err => {
-        console.warn('Failed to load nearby transactions:', err.message);
-      });
-    } else {
+  /** Site pin plus nearby HDB sales (those follow the room buttons); the nearby fetch is cached per site */
+  _loadBtoMap(data) {
+    if (!(data.lat && data.lng)) {
       // Upcoming/unpriced launch — no site to plot yet
       document.getElementById('map-section')?.classList.add('hidden');
+      return;
     }
+    TransactionMap.loadBtoSite(data.lat, data.lng, this.lastResolvedData);
+    const key = `${data.lat},${data.lng}`;
+    const draw = hdbData => {
+      if (this._btoData !== data || !this.lastResolvedData?.isBto) return; // user moved on while this loaded
+      const txs = (hdbData.transactions || []).filter(tx => this.roomFilterAllows(this.roomGroupOfHdb(tx.flat_type)));
+      if (txs.length > 0) TransactionMap.addNearbyHDB(txs);
+      if (hdbData.nearby_projects && hdbData.nearby_projects.length > 0) {
+        TransactionMap.addNearbyProjects(hdbData.nearby_projects, null);
+      }
+    };
+    if (this._btoNearby?.key === key) return draw(this._btoNearby.data);
+    API.getNearbyHDB(data.lat, data.lng).then(hdbData => {
+      this._btoNearby = { key, data: hdbData };
+      draw(hdbData);
+    }).catch(err => {
+      console.warn('Failed to load nearby transactions:', err.message);
+    });
   },
 
   // The project's own resale transactions once it's past MOP (null project_resale → nothing shown)
   renderBtoProjectResale(data) {
     const container = document.getElementById('bto-resale-container');
-    const r = data.project_resale;
     if (!container) return;
+    // Follow the room buttons: keep only the selected groups' rows and recount from them
+    const keep = t => this.roomFilterAllows(this.roomGroupOfHdb(t.flat_type));
+    const r = data.project_resale && {
+      ...data.project_resale,
+      by_type: data.project_resale.by_type.filter(keep),
+      transactions: data.project_resale.transactions.filter(keep),
+    };
+    if (r && this.selectedFlatTypes.size) r.total_count = r.by_type.reduce((n, t) => n + t.count, 0);
     // Studio Apartments: 30-year lease, can't be resold on the open market — explain the absence
     const studioOnly = data.flats.length > 0 && data.flats.every(f => /^Studio Apartment/i.test(f.bto_label));
     if (!r && studioOnly && data.status === 'closed') {
@@ -1934,6 +2022,10 @@ const App = {
       return;
     }
     if (!r) return;
+    if (!r.by_type.length) {
+      container.innerHTML = '<p class="text-xs text-gray-400">No resale transactions yet for the selected room type.</p>';
+      return;
+    }
 
     const typeLabel = t => t.charAt(0) + t.slice(1).toLowerCase();
     const summaryRows = r.by_type.map(t => {
@@ -2023,7 +2115,7 @@ const App = {
 
   // ─── Town comparison (/compare/<a>-vs-<b>[-vs-<c>][/<flat-type>]) ───────────
 
-  COMPARE_FLAT_TYPES: { '2-room': '2 ROOM', '3-room': '3 ROOM', '4-room': '4 ROOM', '5-room': '5 ROOM', 'executive': 'EXECUTIVE' },
+  COMPARE_FLAT_TYPES: { '2-room': '2 ROOM', '3-room': '3 ROOM', '4-room': '4 ROOM', '5-room': '5 ROOM' },
   // Tailwind classes matching Charts.seriesPalette, so each card's dot matches its trend line
   COMPARE_DOT_CLASSES: ['bg-brand-500', 'bg-purple-500', 'bg-amber-500'],
   _compare: null, // { towns: [...], flatType } for the comparison on screen
@@ -2093,7 +2185,8 @@ const App = {
     const subtitle = document.getElementById('compare-subtitle');
     if (subtitle) subtitle.textContent = 'Loading…';
     try {
-      const results = await Promise.all(unique.map(t => API.getAreaOverview(t, flatType || 'ALL')));
+      const ftParam = flatType ? this.ROOM_GROUPS[flatType].join(',') : 'ALL';
+      const results = await Promise.all(unique.map(t => API.getAreaOverview(t, ftParam)));
       this.renderCompareResults(results, flatType);
     } catch (err) {
       console.error('Compare error:', err);
@@ -2116,7 +2209,7 @@ const App = {
     document.getElementById('new-search-fab')?.classList.remove('hidden');
 
     const names = towns.map(t => this._titleCase(t));
-    const ftLabel = flatType ? this._titleCase(flatType) : 'All flat types';
+    const ftLabel = flatType ? this.roomLabel(flatType) : 'All flat types';
     document.getElementById('compare-title').textContent = names.join(' vs ');
     document.getElementById('compare-subtitle').textContent =
       `${ftLabel} • HDB resale • Data as of ${this.formatMonth(datas[0]?.data_as_of)}`;
@@ -2167,7 +2260,7 @@ const App = {
           ${stat('1-Year Change', fmtPct(d.price_trend?.['1y_change']))}
           ${stat('Sales (12m)', this.formatNumber(ts.total_transactions_12m))}
           ${flatType ? '' : stat('Most Popular', ts.most_popular_type ? this._titleCase(ts.most_popular_type) : '--')}
-        </div>` : `<p class="text-sm text-gray-400 dark:text-gray-500">No ${flatType ? this._titleCase(flatType) + ' ' : ''}resale transactions in the last 12 months.</p>`}
+        </div>` : `<p class="text-sm text-gray-400 dark:text-gray-500">No ${flatType ? this.roomLabel(flatType) + ' ' : ''}resale transactions in the last 12 months.</p>`}
       </div>`;
     }).join('');
     document.querySelectorAll('#compare-cards [data-remove-town]').forEach(btn => {
@@ -2201,7 +2294,7 @@ const App = {
     const selCls = 'px-3 py-2 rounded-lg text-sm bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-200 hover:border-brand-500/50 cursor-pointer outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500';
     const addOptions = (this._towns || []).filter(t => !towns.includes(t))
       .map(t => `<option value="${t}">${this._titleCase(t)}</option>`).join('');
-    const ftOptions = [['', 'All flat types'], ...Object.values(this.COMPARE_FLAT_TYPES).map(ft => [ft, this._titleCase(ft)])]
+    const ftOptions = [['', 'All flat types'], ...Object.values(this.COMPARE_FLAT_TYPES).map(ft => [ft, this.roomLabel(ft)])]
       .map(([v, l]) => `<option value="${v}"${(flatType || '') === v ? ' selected' : ''}>${l}</option>`).join('');
     el.innerHTML = `
       ${towns.length < 3 ? `<select id="compare-more-select" aria-label="Add a town to compare" class="${selCls}"><option value="">+ Add town</option>${addOptions}</select>` : ''}
@@ -2219,7 +2312,7 @@ const App = {
     const a = parseFloat(areaSqm);
     if (isNaN(a)) return '--';
     // Landed properties have different space usage
-    const isLanded = ['TERRACE', 'SEMI-DETACHED', 'DETACHED', 'STRATA TERRACE', 'STRATA SEMI-DETACHED', 'STRATA DETACHED'].includes(propertyType);
+    const isLanded = this.LANDED_TYPES.includes(propertyType);
     if (isLanded) {
       if (a < 100) return '2-bed';
       if (a < 150) return '3-bed';

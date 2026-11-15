@@ -330,15 +330,16 @@ describe('App.parseCompareRoute', () => {
     expect(r.flatType).toBe('4 ROOM');
   });
   it('keeps hyphenated town slugs intact', () => {
-    const r = App.parseCompareRoute('/compare/kallang-whampoa-vs-ang-mo-kio/executive');
+    const r = App.parseCompareRoute('/compare/kallang-whampoa-vs-ang-mo-kio/5-room');
     expect([...r.slugs]).toEqual(['kallang-whampoa', 'ang-mo-kio']);
-    expect(r.flatType).toBe('EXECUTIVE');
+    expect(r.flatType).toBe('5 ROOM');
   });
   it.each([
     '/compare/bedok',
     '/compare/bedok-vs-bedok',
     '/compare/a-vs-b-vs-c-vs-d',
     '/compare/bedok-vs-tampines/6-room',
+    '/compare/bedok-vs-tampines/executive', // retired: Executive is part of 5 Room+
     '/compare/bedok-vs-',
     '/compare/',
     '/hdb/bedok',
@@ -355,9 +356,9 @@ describe('App.buildComparePath', () => {
     expect(App.buildComparePath(['TOA PAYOH', 'KALLANG/WHAMPOA'], '5 ROOM')).toBe('/compare/kallang-whampoa-vs-toa-payoh/5-room');
   });
   it('round-trips through parseCompareRoute', () => {
-    const r = App.parseCompareRoute(App.buildComparePath(['YISHUN', 'SEMBAWANG', 'WOODLANDS'], 'EXECUTIVE'));
+    const r = App.parseCompareRoute(App.buildComparePath(['YISHUN', 'SEMBAWANG', 'WOODLANDS'], '5 ROOM'));
     expect([...r.slugs]).toEqual(['sembawang', 'woodlands', 'yishun']);
-    expect(r.flatType).toBe('EXECUTIVE');
+    expect(r.flatType).toBe('5 ROOM');
   });
 });
 
@@ -777,5 +778,53 @@ describe('BTO slug routing', () => {
     await App.selectAc(0);
     expect(calls.slugs).toHaveLength(0);
     expect(calls.search).toBe(1);
+  });
+});
+
+describe('room button groups', () => {
+  const reset = () => App.selectedFlatTypes.clear();
+  afterEach(reset);
+
+  it('expands selected groups to real flat types for the API', () => {
+    expect(App._getFlatTypeParam()).toBe('ALL');
+    App.selectedFlatTypes.add('2 ROOM');
+    App.selectedFlatTypes.add('5 ROOM');
+    expect(App._getFlatTypeParam()).toBe('1 ROOM,2 ROOM,5 ROOM,EXECUTIVE,MULTI-GENERATION');
+  });
+
+  it('labels the top group 5 Room+', () => {
+    expect(App.roomLabel('5 ROOM')).toBe('5 Room+');
+    expect(App.roomLabel('4 ROOM')).toBe('4 Room');
+  });
+
+  it('groups HDB flat types', () => {
+    expect(App.roomGroupOfHdb('1 ROOM')).toBe('2 ROOM');
+    expect(App.roomGroupOfHdb('EXECUTIVE')).toBe('5 ROOM');
+    expect(App.roomGroupOfHdb('MULTI-GENERATION')).toBe('5 ROOM');
+    expect(App.roomGroupOfHdb('CONDOMINIUM')).toBeNull();
+  });
+
+  it('groups private units by floor area; landed is always 5 ROOM+', () => {
+    expect(App.roomGroupOfPrivate(64.9, 'CONDOMINIUM')).toBe('2 ROOM');
+    expect(App.roomGroupOfPrivate(65, 'APARTMENT')).toBe('3 ROOM');
+    expect(App.roomGroupOfPrivate(85, 'APARTMENT')).toBe('4 ROOM');
+    expect(App.roomGroupOfPrivate(110, 'CONDOMINIUM')).toBe('5 ROOM');
+    expect(App.roomGroupOfPrivate(40, 'TERRACE')).toBe('5 ROOM');
+    expect(App.roomGroupOfPrivate(null, 'CONDOMINIUM')).toBeNull();
+  });
+
+  it('sorts BTO flats: Flexi by resale type, Studio as 2 RM, 3Gen as 5 RM+, unsplit rows under both', () => {
+    expect(App.roomGroupsOfBto({ bto_label: '2-Room Flexi (Type 1)', resale_flat_type: '2 ROOM' })).toEqual(['2 ROOM']);
+    expect(App.roomGroupsOfBto({ bto_label: 'Studio Apartment (Type 1)', resale_flat_type: null })).toEqual(['2 ROOM']);
+    expect(App.roomGroupsOfBto({ bto_label: '3Gen', resale_flat_type: 'MULTI-GENERATION' })).toEqual(['5 ROOM']);
+    expect(App.roomGroupsOfBto({ bto_label: '4-Room / 5-Room (split unrecoverable)', resale_flat_type: null })).toEqual(['4 ROOM', '5 ROOM']);
+  });
+
+  it('roomFilterAllows lets everything through when nothing is selected', () => {
+    expect(App.roomFilterAllows(null)).toBe(true);
+    App.selectedFlatTypes.add('3 ROOM');
+    expect(App.roomFilterAllows('3 ROOM')).toBe(true);
+    expect(App.roomFilterAllows('4 ROOM')).toBe(false);
+    expect(App.roomFilterAllows(null)).toBe(false);
   });
 });

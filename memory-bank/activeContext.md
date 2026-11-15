@@ -362,3 +362,4 @@ Conventions (full detail in CLAUDE.md and the `seed-bto-launch` skill):
 - Town matching is case-insensitive; months are `YYYY-MM` strings; percentiles are computed in JS.
 - Street matching cascade: exact → compressed → expanded → keyword fallback (`findDbStreets()`).
 - Writable state (feedback) lives in `feedback.db`, never in `resale.db`.
+- Room groups: `ROOM_GROUPS` (app.js) / `FLAT_GROUPS` (server) must stay in sync; private grouping uses the same floor-area cut-offs as `estimateBedrooms()`. Room-group change is committed-ready but undeployed; 2-room/5-room page medians shift on deploy (1-room, Executive, 3Gen now included).

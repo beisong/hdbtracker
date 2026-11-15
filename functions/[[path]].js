@@ -55,7 +55,7 @@ function isBot(userAgent) {
 // /about, /methodology and /data-sources are handled earlier via STATIC_PAGES.
 const SPA_ROUTE_PATTERNS = [
   /^\/$/,
-  /^\/hdb\/[^/]+(?:\/[^/]+)?$/,
+  /^\/hdb\/[^/]+(?:\/[2-5]-room)?$/, // /hdb/<town>[/<2-5>-room]; /executive pages were retired → real 404
   /^\/bto$/,
   /^\/bto\/[^/]+$/,
   /^\/private\/[^/]+$/,
@@ -63,7 +63,7 @@ const SPA_ROUTE_PATTERNS = [
   /^\/postal\/\d{6}$/,
   /^\/check$/,
   /^\/check\/\d{6}$/,
-  /^\/compare\/[^/]+(?:\/[^/]+)?$/,
+  /^\/compare\/[^/]+(?:\/[2-5]-room)?$/,
 ];
 
 // Renamed pages → permanent redirect. Provisional Nov 2026 BTO slugs replaced by HDB's

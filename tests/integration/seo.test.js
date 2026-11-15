@@ -91,6 +91,19 @@ describe('GET /api/seo/metadata', () => {
     expect(res.body.canonical).toContain('/hdb/bedok');
   });
 
+  it('labels the 5-room page 5 Room+ and no longer routes /executive', async () => {
+    const five = await request.get('/api/seo/metadata?route=/hdb/bedok/5-room');
+    expect(five.body.title).not.toContain('5 Room ');
+    if (five.body.title.includes('Room')) expect(five.body.title).toContain('5 Room+');
+    const exec = await request.get('/api/seo/metadata?route=/hdb/bedok/executive');
+    expect(exec.body.title).not.toContain('Executive');
+  });
+
+  it('keeps /executive pages out of the sitemap', async () => {
+    const res = await request.get('/api/seo/sitemap');
+    expect(res.body.urls.some(u => u.url.endsWith('/executive'))).toBe(false);
+  });
+
   it('does not treat an unknown flat-type slug as a flat-type page', async () => {
     const res = await request.get('/api/seo/metadata?route=/hdb/bedok/not-a-type');
     expect(res.status).toBe(200);

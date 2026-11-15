@@ -45,7 +45,7 @@ npm run deploy:frontend # Deploy frontend only (npm test, bump ?v=N, wrangler vi
 ```
 
 ```bash
-npm test                # Run unit + integration tests (373 tests, Vitest + supertest)
+npm test                # Run unit + integration tests (386 tests, Vitest + supertest)
 python3 -m pytest tests/python -q  # Python data-script tests (141; needs pip install pytest pyproj)
 npm run test:smoke      # Smoke tests against live worthit-api.fly.dev (19 tests)
 npm run test:smoke-local # Smoke tests against localhost:3000
@@ -107,7 +107,7 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Units**: DB stores sqm/psm. All display values are converted to sqft/psf via `sqmToSqft()` / `psmToPsf()` helpers in `app.js` (factor: 1 sqm = 10.7639 sqft). DB schema and server SQL are unchanged.
 
-**Flat type selection**: multi-select (empty Set = All). Server's `flat_type` param accepts comma-separated list; `addFlatClause()` builds `= ?` or `IN (?,?)` accordingly.
+**Flat type selection**: five buttons — All, 2 RM, 3 RM, 4 RM, 5 RM+ — multi-select (empty Set = All). Each button is a *group* of real flat types (`ROOM_GROUPS` in `app.js`, `FLAT_GROUPS` in `server/index.js` — keep in sync): 2 RM = 1-room + 2-room, 5 RM+ = 5-room + Executive + 3Gen (`MULTI-GENERATION`). `selectedFlatTypes` holds group keys; `_getFlatTypeParam()` expands them to the comma-separated real types the server's `flat_type` param takes (`addFlatClause()` builds `= ?` or `IN (?,?)`). The same groups drive `/hdb/<town>/<2-5>-room` pages (title "5 Room+"; `/executive` pages were retired — the edge returns 404 for `/hdb/<town>/executive` and `/compare/…/executive`, and the sitemap omits them), compare pages, BTO pages (`_renderBtoFiltered()`: flat cards, vs-resale table, post-MOP resales, nearby HDB markers; Studio = 2 RM, unsplit "4-Room / 5-Room" rows show under both) and the transaction list (`applyTransactionFilters()`; private rows are grouped by floor area — <65 / 65–85 / 85–110 / 110+ sqm, landed always 5 RM+ — matching `estimateBedrooms()`). Price cards and private summaries/medians are unfiltered by design. Private price cards are one per property type × size group (`PRIVATE_SIZE_GROUP` SQL in `server/index.js`, same cut-offs → `size_group`), because one average over a mixed project (e.g. 40–160 sqm) gave a misleading single "~2-bed" label.
 
 **Valuation / Check My Price** (`GET /api/valuation`): subject block by `postal` or `block`+`street` (from `hdb_block_coords`). Without `price` returns `block_facts` (flat types, standard areas, storey ranges, remaining lease — all inferred from the block's transaction history; lease = newest tx's `remaining_lease_years` minus elapsed time, NOT `lease_commence_date` which the test fixture lacks). With `price`: comps ladder 500m → 1000m → drop lease band → town fallback (12-month window, lease ±10y, `MIN_COMPS=8`); comps storey-adjusted via lease-banded town×type buckets (`computeStoreyFactor`, clamped ±10%); `deal_score = clamp(50 − 250×deviation, 0, 100)` (≥70 Good deal / 45–69 Fair / <45 Premium). Frontend: `#valuation-section` card (`index.html`), shown after postal searches and via 💰 buttons on transaction rows; deep link `/check/<postal>?price=` (noindex, canonical → `/check`).
 
@@ -131,13 +131,13 @@ The DB is never bundled in Docker — it lives on a Fly.io persistent volume at 
 
 **Trend charts**: dual-line (blue HDB + purple private) for town/district searches; single line for project search. Y-axis is $/sqm (`avg_psm`) — size-neutral. Trend % uses 3-month rolling avg at each end of the window.
 
-**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. `npm run deploy` / `deploy:frontend` bump `N` automatically (`scripts/bump-version.js`, which also updates the number below) — don't bump it by hand. Current: `v=38`.
+**Frontend cache busting**: `public/_headers` sets `index.html` to `no-cache, must-revalidate`; JS/CSS to `max-age=31536000, immutable`. `?v=N` query strings on all local `<script>`/`<link>` tags. `npm run deploy` / `deploy:frontend` bump `N` automatically (`scripts/bump-version.js`, which also updates the number below) — don't bump it by hand. Current: `v=39`.
 
 **Light/Dark theme**: `App.initTheme()` / `App.toggleTheme()` toggle `.dark` class on `<html>`. Anti-FOUC inline script reads `localStorage('theme')` before first paint. Map tiles swap between CARTO light/dark. Charts re-render on toggle.
 
 **UI style guide**: `design.md` (repo root) defines the design tokens, component classes, dark-mode and mobile rules — read it before adding or restyling any UI.
 
-**Testing**: 373 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite), plus 141 pytest tests in `tests/python/` for the data scripts (mocked HTTP, no real downloads; not run by `npm test` or the deploy scripts). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
+**Testing**: 386 unit + integration tests in `tests/` (Vitest + supertest + fixture SQLite), plus 141 pytest tests in `tests/python/` for the data scripts (mocked HTTP, no real downloads; not run by `npm test` or the deploy scripts). 19 smoke tests in `tests/smoke/` hitting live API. Deploy scripts (`deploy`, `deploy:api`, `deploy:frontend`) all prepend `npm test &&` — failing tests block deploys.
 
 **WAL checkpoint**: always run `PRAGMA wal_checkpoint(TRUNCATE)` on the SQLite DB before uploading to Fly.io. Otherwise data still in the WAL file is silently lost.
 

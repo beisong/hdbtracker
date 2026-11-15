@@ -85,6 +85,15 @@ describe('GET /api/private/project-overview', () => {
       expect(entry).toHaveProperty('avg_psm');
     }
   });
+
+  // Cards are per size group (not one per property type); cut-offs match the room buttons: 65 / 85 / 110 sqm.
+  it('prices_by_type carries a size_group consistent with the unit area', async () => {
+    const res = await request.get('/api/private/project-overview?project=SKY+HABITAT');
+    const bandOf = a => (a < 65 ? '2 ROOM' : a < 85 ? '3 ROOM' : a < 110 ? '4 ROOM' : '5 ROOM');
+    for (const entry of res.body.prices_by_type) {
+      expect(entry.size_group).toBe(bandOf(entry.avg_area));
+    }
+  });
 });
 
 describe('GET /api/private/project-overview?slug=', () => {
